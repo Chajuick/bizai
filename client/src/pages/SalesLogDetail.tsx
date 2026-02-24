@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { useLocation, useParams } from "wouter";
 import {
@@ -13,6 +13,8 @@ import {
   Sparkles,
   CheckCircle2,
   XCircle,
+  Pencil,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -181,7 +183,48 @@ export default function SalesLogDetail() {
   const { data: log, isLoading, refetch } = trpc.salesLogs.get.useQuery({ id: logId });
   const analyzeMutation = trpc.salesLogs.analyze.useMutation();
   const deleteMutation = trpc.salesLogs.delete.useMutation();
+  const updateMutation = trpc.salesLogs.update.useMutation();
   const utils = trpc.useUtils();
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    clientName: "",
+    contactPerson: "",
+    location: "",
+    visitedAt: "",
+    rawContent: "",
+  });
+
+  const startEdit = () => {
+    if (!log) return;
+    setEditForm({
+      clientName: log.clientName ?? "",
+      contactPerson: log.contactPerson ?? "",
+      location: log.location ?? "",
+      visitedAt: new Date(log.visitedAt).toISOString().slice(0, 16),
+      rawContent: log.rawContent,
+    });
+    setIsEditing(true);
+  };
+
+  const handleSave = async () => {
+    try {
+      await updateMutation.mutateAsync({
+        id: logId,
+        clientName: editForm.clientName || undefined,
+        contactPerson: editForm.contactPerson || undefined,
+        location: editForm.location || undefined,
+        visitedAt: editForm.visitedAt,
+        rawContent: editForm.rawContent,
+      });
+      await refetch();
+      utils.salesLogs.list.invalidate();
+      setIsEditing(false);
+      toast.success("수정되었습니다.");
+    } catch {
+      toast.error("수정에 실패했습니다.");
+    }
+  };
 
   // ✅ 배너 상태는 mutation 상태로 자동 결정 (별도 state 필요 없음)
   const bannerState: "idle" | "pending" | "success" | "error" = useMemo(() => {
@@ -304,40 +347,74 @@ export default function SalesLogDetail() {
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            {!log.isProcessed && (
-              <button
-                onClick={handleAnalyze}
-                disabled={analyzeMutation.isPending}
-                className={[
-                  "inline-flex items-center gap-2 px-3 py-2 rounded-2xl text-sm font-bold text-white transition",
-                  "disabled:opacity-60 disabled:cursor-not-allowed",
-                ].join(" ")}
-                style={{
-                  background: "linear-gradient(135deg, rgba(139,92,246,1), rgba(37,99,235,1))",
-                  boxShadow: "0 10px 24px rgba(99,102,241,0.18)",
-                }}
-              >
-                {analyzeMutation.isPending ? (
-                  <Loader2 size={16} className="animate-spin" />
-                ) : (
-                  <Sparkles size={16} />
+            {isEditing ? (
+              <>
+                <button
+                  onClick={handleSave}
+                  disabled={updateMutation.isPending}
+                  className={[
+                    "inline-flex items-center gap-2 px-3 py-2 rounded-2xl text-sm font-bold text-white transition",
+                    "disabled:opacity-60 disabled:cursor-not-allowed",
+                  ].join(" ")}
+                  style={{ background: "linear-gradient(135deg, #10b981, #059669)" }}
+                >
+                  {updateMutation.isPending ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
+                  저장
+                </button>
+                <button
+                  onClick={() => setIsEditing(false)}
+                  className="w-10 h-10 rounded-2xl border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center justify-center transition"
+                  aria-label="취소"
+                >
+                  <XCircle size={16} />
+                </button>
+              </>
+            ) : (
+              <>
+                {!log.isProcessed && (
+                  <button
+                    onClick={handleAnalyze}
+                    disabled={analyzeMutation.isPending}
+                    className={[
+                      "inline-flex items-center gap-2 px-3 py-2 rounded-2xl text-sm font-bold text-white transition",
+                      "disabled:opacity-60 disabled:cursor-not-allowed",
+                    ].join(" ")}
+                    style={{
+                      background: "linear-gradient(135deg, rgba(139,92,246,1), rgba(37,99,235,1))",
+                      boxShadow: "0 10px 24px rgba(99,102,241,0.18)",
+                    }}
+                  >
+                    {analyzeMutation.isPending ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <Sparkles size={16} />
+                    )}
+                    AI 분석
+                  </button>
                 )}
-                AI 분석
-              </button>
-            )}
 
-            <button
-              onClick={handleDelete}
-              disabled={deleteMutation.isPending}
-              className={[
-                "w-10 h-10 rounded-2xl border flex items-center justify-center transition",
-                "disabled:opacity-60 disabled:cursor-not-allowed",
-                "border-red-200 text-red-600 hover:bg-red-50",
-              ].join(" ")}
-              aria-label="삭제"
-            >
-              <Trash2 size={16} />
-            </button>
+                <button
+                  onClick={startEdit}
+                  className="w-10 h-10 rounded-2xl border border-slate-200 text-slate-600 hover:bg-slate-50 flex items-center justify-center transition"
+                  aria-label="수정"
+                >
+                  <Pencil size={16} />
+                </button>
+
+                <button
+                  onClick={handleDelete}
+                  disabled={deleteMutation.isPending}
+                  className={[
+                    "w-10 h-10 rounded-2xl border flex items-center justify-center transition",
+                    "disabled:opacity-60 disabled:cursor-not-allowed",
+                    "border-red-200 text-red-600 hover:bg-red-50",
+                  ].join(" ")}
+                  aria-label="삭제"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -355,23 +432,79 @@ export default function SalesLogDetail() {
         />
       </div>
 
-      {/* Meta */}
-      <Card>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {log.clientName && (
-            <MetaItem icon={Building2} label="고객사" value={log.clientName} tone="blue" />
-          )}
-          {log.contactPerson && (
-            <MetaItem icon={User} label="담당자" value={log.contactPerson} tone="sky" />
-          )}
-          <MetaItem icon={Calendar} label="방문일시" value={visitedLabel} tone="amber" />
-          {log.location && (
-            <MetaItem icon={MapPin} label="장소" value={log.location} tone="violet" />
-          )}
-        </div>
-      </Card>
+      {/* Meta / Edit Form */}
+      {isEditing ? (
+        <Card>
+          <p className="text-xs font-extrabold tracking-[0.14em] text-slate-400 uppercase mb-4">편집 모드</p>
+          <div className="space-y-3">
+            <label className="block">
+              <span className="text-xs font-semibold text-slate-500 mb-1 block">방문일시</span>
+              <input
+                type="datetime-local"
+                value={editForm.visitedAt}
+                onChange={e => setEditForm(f => ({ ...f, visitedAt: e.target.value }))}
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-300"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-semibold text-slate-500 mb-1 block">고객사</span>
+              <input
+                type="text"
+                value={editForm.clientName}
+                onChange={e => setEditForm(f => ({ ...f, clientName: e.target.value }))}
+                placeholder="고객사명"
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-300"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-semibold text-slate-500 mb-1 block">담당자</span>
+              <input
+                type="text"
+                value={editForm.contactPerson}
+                onChange={e => setEditForm(f => ({ ...f, contactPerson: e.target.value }))}
+                placeholder="담당자명"
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-300"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-semibold text-slate-500 mb-1 block">장소</span>
+              <input
+                type="text"
+                value={editForm.location}
+                onChange={e => setEditForm(f => ({ ...f, location: e.target.value }))}
+                placeholder="방문 장소"
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-300"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-semibold text-slate-500 mb-1 block">내용</span>
+              <textarea
+                value={editForm.rawContent}
+                onChange={e => setEditForm(f => ({ ...f, rawContent: e.target.value }))}
+                rows={8}
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-300 resize-none"
+              />
+            </label>
+          </div>
+        </Card>
+      ) : (
+        <>
+          <Card>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {log.clientName && (
+                <MetaItem icon={Building2} label="고객사" value={log.clientName} tone="blue" />
+              )}
+              {log.contactPerson && (
+                <MetaItem icon={User} label="담당자" value={log.contactPerson} tone="sky" />
+              )}
+              <MetaItem icon={Calendar} label="방문일시" value={visitedLabel} tone="amber" />
+              {log.location && (
+                <MetaItem icon={MapPin} label="장소" value={log.location} tone="violet" />
+              )}
+            </div>
+          </Card>
 
-      {/* AI Summary */}
+          {/* AI Summary */}
       {log.aiSummary && (
         <div className="mt-4">
           <Card className="border-violet-100 bg-gradient-to-b from-violet-50/60 to-white">
@@ -455,6 +588,8 @@ export default function SalesLogDetail() {
             </p>
           </Card>
         </div>
+      )}
+        </>
       )}
     </div>
   );

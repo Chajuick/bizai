@@ -1,3 +1,5 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle, Home } from "lucide-react";
@@ -6,45 +8,46 @@ import { useLocation } from "wouter";
 export default function NotFound() {
   const [, setLocation] = useLocation();
 
-  const handleGoHome = () => {
-    setLocation("/");
-  };
-
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
-      <Card className="w-full max-w-lg mx-4 shadow-lg border-0 bg-white/80 backdrop-blur-sm">
-        <CardContent className="pt-8 pb-8 text-center">
-          <div className="flex justify-center mb-6">
-            <div className="relative">
-              <div className="absolute inset-0 bg-red-100 rounded-full animate-pulse" />
-              <AlertCircle className="relative h-16 w-16 text-red-500" />
-            </div>
+    <div className="min-h-screen w-full flex items-center justify-center bg-white p-5">
+      <Card className="w-full max-w-md rounded-3xl border border-slate-100 bg-white shadow-[0_16px_50px_rgba(15,23,42,0.08)]">
+        <CardContent className="pt-10 pb-9 text-center">
+          <div className="mx-auto w-16 h-16 rounded-3xl bg-blue-50 border border-blue-100 flex items-center justify-center">
+            <AlertCircle className="h-7 w-7 text-blue-600" />
           </div>
 
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">404</h1>
-
-          <h2 className="text-xl font-semibold text-slate-700 mb-4">
-            Page Not Found
-          </h2>
-
-          <p className="text-slate-600 mb-8 leading-relaxed">
-            Sorry, the page you are looking for doesn't exist.
-            <br />
-            It may have been moved or deleted.
+          <p className="mt-5 text-[11px] font-extrabold tracking-[0.18em] text-slate-400 uppercase">
+            NOT FOUND
           </p>
 
-          <div
-            id="not-found-button-group"
-            className="flex flex-col sm:flex-row gap-3 justify-center"
-          >
+          <h1 className="mt-2 text-3xl font-black text-slate-900">페이지를 찾을 수 없어요</h1>
+          <p className="mt-2 text-sm text-slate-500 leading-relaxed">
+            주소가 잘못되었거나, 페이지가 이동/삭제되었을 수 있어요.
+          </p>
+
+          <div className="mt-7 flex flex-col gap-2">
             <Button
-              onClick={handleGoHome}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg transition-all duration-200 shadow-md hover:shadow-lg"
+              onClick={() => setLocation("/")}
+              className="w-full rounded-2xl text-white font-bold"
+              style={{
+                background: "rgb(37, 99, 235)",
+                boxShadow: "0 10px 26px rgba(37,99,235,0.20)",
+              }}
             >
               <Home className="w-4 h-4 mr-2" />
-              Go Home
+              홈으로 가기
+            </Button>
+
+            <Button
+              variant="outline"
+              onClick={() => window.history.back()}
+              className="w-full rounded-2xl font-bold"
+            >
+              이전 페이지
             </Button>
           </div>
+
+          <p className="mt-6 text-xs text-slate-400">문제가 계속되면 관리자에게 알려주세요.</p>
         </CardContent>
       </Card>
     </div>

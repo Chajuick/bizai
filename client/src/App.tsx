@@ -41,10 +41,13 @@ function Router() {
   const { isAuthenticated, loading } = useAuth();
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--blueprint-bg)' }}>
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-2 border-blue-500/30 border-t-blue-400 rounded-full animate-spin" />
-          <p className="text-sm font-mono text-blue-400/60 tracking-widest">LOADING...</p>
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="flex flex-col items-center gap-3">
+          <div className="relative w-12 h-12">
+            <div className="absolute inset-0 rounded-full border-4 border-slate-200" />
+            <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-blue-600 animate-spin" />
+          </div>
+          <p className="text-sm font-semibold text-slate-500">불러오는 중…</p>
         </div>
       </div>
     );
@@ -62,9 +65,9 @@ function App() {
             theme="light"
             toastOptions={{
               style: {
-                background: 'var(--blueprint-surface)',
-                border: '1px solid var(--blueprint-border)',
-                color: 'var(--blueprint-text)',
+                background: "var(--blueprint-surface)",
+                border: "1px solid var(--blueprint-border)",
+                color: "var(--blueprint-text)",
               },
             }}
           />

@@ -10,7 +10,8 @@
       "Bash(pnpm db\\:push:*)",
       "Bash(pnpm add:*)",
       "Bash(pnpm install:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(head:*)"
     ],
     "deny": [],
     "ask": []

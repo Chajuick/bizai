@@ -2,6 +2,8 @@ import "dotenv/config";
 import express from "express";
 import { createServer } from "http";
 import net from "net";
+import path from "path";
+import fs from "fs";
 import multer from "multer";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
@@ -41,13 +43,30 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   // Audio upload endpoint for voice recording
   const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 16 * 1024 * 1024 } });
+
+  // 로컬 오디오 임시 저장 폴더
+  const audioUploadDir = path.join(process.cwd(), "uploads", "audio");
+  if (!fs.existsSync(audioUploadDir)) fs.mkdirSync(audioUploadDir, { recursive: true });
+  app.use("/api/audio-files", express.static(audioUploadDir));
+
   app.post("/api/upload-audio", upload.single("audio"), async (req: any, res: any) => {
     try {
       if (!req.file) return res.status(400).json({ error: "No file" });
       const suffix = Math.random().toString(36).slice(2, 8);
       const key = `audio/${Date.now()}-${suffix}.webm`;
-      const { url } = await storagePut(key, req.file.buffer, "audio/webm");
-      res.json({ url, key });
+
+      // Forge 스토리지 시도 → 실패하면 로컬 저장
+      try {
+        const { url } = await storagePut(key, req.file.buffer, "audio/webm");
+        res.json({ url, key });
+      } catch {
+        const filename = `${Date.now()}-${suffix}.webm`;
+        fs.writeFileSync(path.join(audioUploadDir, filename), req.file.buffer);
+        const proto = req.headers["x-forwarded-proto"] || req.protocol || "http";
+        const host = req.headers.host;
+        const localUrl = `${proto}://${host}/api/audio-files/${filename}`;
+        res.json({ url: localUrl, key: filename });
+      }
     } catch (err) {
       console.error("[upload-audio]", err);
       res.status(500).json({ error: "Upload failed" });
