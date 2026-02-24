@@ -8,6 +8,9 @@ import {
   deleteSalesLog,
   createPromise,
   getAttachmentsBySalesLog,
+  findBestClientMatch,
+  findOrCreateClient,
+  createClient,
 } from "../db";
 import { invokeLLM } from "../_core/llm";
 import { transcribeAudio } from "../_core/voiceTranscription";
@@ -128,8 +131,19 @@ export const salesLogsRouter = router({
       })
     )
     .mutation(async ({ ctx, input }) => {
+      let clientId = input.clientId;
+      let clientName = input.clientName;
+
+      // clientName 있고 clientId 없으면 → 신규 고객사 등록 (매칭은 프론트에서 확인 후 처리)
+      if (clientName && !clientId) {
+        const newClient = await createClient({ userId: ctx.user.id, name: clientName });
+        clientId = (newClient as any).insertId;
+      }
+
       const result = await createSalesLog({
         ...input,
+        clientId,
+        clientName,
         userId: ctx.user.id,
         visitedAt: new Date(input.visitedAt),
         isProcessed: false,
@@ -141,7 +155,7 @@ export const salesLogsRouter = router({
     .input(
       z.object({
         id: z.number(),
-        clientId: z.number().optional(),
+        clientId: z.number().nullable().optional(), // null = clientId 초기화
         clientName: z.string().optional(),
         contactPerson: z.string().optional(),
         location: z.string().optional(),
@@ -173,12 +187,34 @@ export const salesLogsRouter = router({
 
       if (!analysis) throw new Error("AI 분석에 실패했습니다.");
 
+      // AI가 추출한 clientName으로 기존 고객사 자동 연결 (또는 신규 등록)
+      let resolvedClientId = log.clientId ?? undefined;
+      let resolvedClientName: string | undefined = undefined;
+      if (analysis.clientName && !log.clientId) {
+        const match = await findBestClientMatch(ctx.user.id, analysis.clientName);
+        if (match) {
+          resolvedClientId = match.id;
+          resolvedClientName = match.name; // 정규 고객사명 (예: "주나산" → "나산")
+        } else {
+          // 매칭 없음 → 신규 고객사로 자동 등록
+          const newClient = await findOrCreateClient(ctx.user.id, analysis.clientName);
+          resolvedClientId = newClient.id;
+          resolvedClientName = newClient.name;
+        }
+      }
+
       // 영업일지 업데이트
       await updateSalesLog(input.id, ctx.user.id, {
         aiSummary: analysis.summary,
         aiExtracted: analysis,
         isProcessed: true,
-        ...(analysis.clientName && !log.clientName ? { clientName: analysis.clientName } : {}),
+        ...(resolvedClientId ? { clientId: resolvedClientId } : {}),
+        // 매칭된 정규 이름 우선, 없으면 AI 추출 이름 (기존 값 없을 때만)
+        ...(resolvedClientName
+          ? { clientName: resolvedClientName }
+          : analysis.clientName && !log.clientName
+            ? { clientName: analysis.clientName }
+            : {}),
         ...(analysis.contactPerson && !log.contactPerson ? { contactPerson: analysis.contactPerson } : {}),
       });
 
@@ -191,8 +227,8 @@ export const salesLogsRouter = router({
           const pr = await createPromise({
             userId: ctx.user.id,
             salesLogId: input.id,
-            clientId: log.clientId ?? undefined,
-            clientName: analysis.clientName || log.clientName || undefined,
+            clientId: resolvedClientId,
+            clientName: resolvedClientName || analysis.clientName || log.clientName || undefined,
             title: p.title,
             scheduledAt,
             amount: p.amount ? String(p.amount) : undefined,
@@ -203,7 +239,18 @@ export const salesLogsRouter = router({
         }
       }
 
-      return { analysis, promisesCreated: createdPromises.length };
+      // 퍼지 매칭으로 연결됐고 원본 이름과 다를 때 → 프론트에서 확인 모달 표시
+      const matchSuggestion =
+        resolvedClientId && resolvedClientName && analysis.clientName &&
+        analysis.clientName.toLowerCase() !== resolvedClientName.toLowerCase()
+          ? {
+              originalName: analysis.clientName as string,
+              matchedId: resolvedClientId,
+              matchedName: resolvedClientName,
+            }
+          : null;
+
+      return { analysis, promisesCreated: createdPromises.length, matchSuggestion };
     }),
 
   // 음성 파일 변환

@@ -6,12 +6,22 @@ import {
   createClient,
   updateClient,
   deleteClient,
+  findBestClientMatch,
+  findOrCreateClient,
 } from "../db";
 
 export const clientsRouter = router({
   list: protectedProcedure
-    .input(z.object({ search: z.string().optional() }).optional())
-    .query(({ ctx, input }) => getClients(ctx.user.id, input?.search)),
+    .input(z.object({ search: z.string().optional(), limit: z.number().optional() }).optional())
+    .query(({ ctx, input }) => getClients(ctx.user.id, input?.search, input?.limit)),
+
+  findBestMatch: protectedProcedure
+    .input(z.object({ name: z.string().min(1) }))
+    .query(({ ctx, input }) => findBestClientMatch(ctx.user.id, input.name)),
+
+  findOrCreate: protectedProcedure
+    .input(z.object({ name: z.string().min(1) }))
+    .mutation(({ ctx, input }) => findOrCreateClient(ctx.user.id, input.name)),
 
   get: protectedProcedure
     .input(z.object({ id: z.number() }))

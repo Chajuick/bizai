@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, lte, like, sql } from "drizzle-orm";
+import { and, desc, eq, gte, lt, lte, like, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   InsertUser,
@@ -66,13 +66,83 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+// ─── Client fuzzy matching ────────────────────────────────────────────────────
+function normalizeCompanyName(name: string): string {
+  return name
+    .replace(/\(\s*주\s*\)/g, "")   // (주)나산 → 나산
+    .replace(/㈜/g, "")              // ㈜나산 → 나산
+    .replace(/\s*주식회사\s*/g, "")  // 주식회사 나산 → 나산
+    .replace(/\(\s*유\s*\)/g, "")
+    .replace(/\s*유한회사\s*/g, "")
+    .replace(/^주(?=[가-힣]{2,})/g, "") // 주나산 → 나산 (비공식 (주) 표기)
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function levenshteinSimilarity(a: string, b: string): number {
+  if (!a || !b) return 0;
+  if (a === b) return 1;
+  if (a.includes(b) || b.includes(a)) return 0.9;
+  const m = a.length, n = b.length;
+  const dp = Array.from({ length: m + 1 }, (_, i) =>
+    Array.from({ length: n + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0))
+  );
+  for (let i = 1; i <= m; i++) {
+    for (let j = 1; j <= n; j++) {
+      dp[i][j] =
+        a[i - 1] === b[j - 1]
+          ? dp[i - 1][j - 1]
+          : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1]);
+    }
+  }
+  return 1 - dp[m][n] / Math.max(m, n);
+}
+
+// 이름으로 고객사 찾거나 없으면 신규 생성
+export async function findOrCreateClient(
+  userId: number,
+  name: string
+): Promise<{ id: number; name: string; isNew: boolean }> {
+  const all = await getClients(userId);
+  const normTarget = normalizeCompanyName(name);
+  const existing = all.find((c) => normalizeCompanyName(c.name) === normTarget);
+  if (existing) return { id: existing.id, name: existing.name, isNew: false };
+  const result = await createClient({ userId, name });
+  return { id: (result as any).insertId, name, isNew: true };
+}
+
+export async function findBestClientMatch(
+  userId: number,
+  name: string,
+  minConfidence = 0.7
+): Promise<{ id: number; name: string; confidence: number } | null> {
+  const allClients = await getClients(userId);
+  if (!allClients.length || !name) return null;
+  const normInput = normalizeCompanyName(name);
+  if (!normInput) return null;
+  let best: { id: number; name: string; confidence: number } | null = null;
+  for (const c of allClients) {
+    const normClient = normalizeCompanyName(c.name);
+    const sim = Math.max(
+      levenshteinSimilarity(normInput, normClient),
+      normInput.includes(normClient) || normClient.includes(normInput) ? 0.85 : 0
+    );
+    if (sim >= minConfidence && (!best || sim > best.confidence)) {
+      best = { id: c.id, name: c.name, confidence: sim };
+    }
+  }
+  return best;
+}
+
 // ─── Clients ──────────────────────────────────────────────────────────────────
-export async function getClients(userId: number, search?: string) {
+export async function getClients(userId: number, search?: string, limit?: number) {
   const db = await getDb();
   if (!db) return [];
   const conditions = [eq(clients.userId, userId), eq(clients.isActive, true)];
   if (search) conditions.push(like(clients.name, `%${search}%`));
-  return db.select().from(clients).where(and(...conditions)).orderBy(desc(clients.updatedAt));
+  const q = db.select().from(clients).where(and(...conditions)).orderBy(desc(clients.updatedAt));
+  return limit ? q.limit(limit) : q;
 }
 
 export async function getClientById(id: number, userId: number) {
@@ -261,6 +331,10 @@ export async function getDashboardStats(userId: number) {
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
   const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59);
 
+  // KST(UTC+9) 기준 오늘 자정: 이 시각 이전의 일정만 "지연"으로 간주
+  const kstNow = new Date(now.getTime() + 9 * 60 * 60 * 1000);
+  const kstTodayMidnight = new Date(kstNow.toISOString().slice(0, 10) + "T00:00:00+09:00");
+
   // 이번 달 영업일지 수
   const [logsCount] = await db
     .select({ count: sql<number>`COUNT(*)` })
@@ -285,11 +359,18 @@ export async function getDashboardStats(userId: number) {
     .from(deliveries)
     .where(and(eq(deliveries.userId, userId), eq(deliveries.billingStatus, "paid"), gte(deliveries.createdAt, startOfMonth), lte(deliveries.createdAt, endOfMonth)));
 
-  // 지연된 일정 수
+  // 지연된 일정 수 (KST 기준 오늘 자정 이전 날의 일정만)
   const [overduePromises] = await db
     .select({ count: sql<number>`COUNT(*)` })
     .from(promises)
-    .where(and(eq(promises.userId, userId), eq(promises.status, "scheduled"), lte(promises.scheduledAt, now)));
+    .where(and(eq(promises.userId, userId), eq(promises.status, "scheduled"), lt(promises.scheduledAt, kstTodayMidnight)));
+
+  // 임박 일정 수 (지금부터 12시간 이내)
+  const twelveHoursLater = new Date(now.getTime() + 12 * 60 * 60 * 1000);
+  const [imminentPromises] = await db
+    .select({ count: sql<number>`COUNT(*)` })
+    .from(promises)
+    .where(and(eq(promises.userId, userId), eq(promises.status, "scheduled"), gte(promises.scheduledAt, now), lte(promises.scheduledAt, twelveHoursLater)));
 
   // 최근 영업일지 5개
   const recentLogs = await db
@@ -314,6 +395,7 @@ export async function getDashboardStats(userId: number) {
     activeOrdersTotal: Number(activeOrders?.total ?? 0),
     monthlyRevenue: Number(monthlyRevenue?.total ?? 0),
     overdueCount: Number(overduePromises?.count ?? 0),
+    imminentCount: Number(imminentPromises?.count ?? 0),
     recentLogs,
     upcomingPromises: upcomingPromisesList,
   };
