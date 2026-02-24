@@ -1,0 +1,330 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/* ─────────────────────────────────────────────
+   Toss-like Light Theme (keep bp-* structure)
+   ───────────────────────────────────────────── */
+:root {
+  /* Blueprint variables now represent "BizAI Light" tokens */
+  --blueprint-bg: #f8fafc;                /* slate-50 */
+  --blueprint-surface: #ffffff;           /* card */
+  --blueprint-surface-2: #f1f5f9;         /* slate-100 */
+  --blueprint-border: rgba(15, 23, 42, 0.08); /* subtle slate border */
+  --blueprint-grid: rgba(15, 23, 42, 0.03);   /* very light grid */
+  --blueprint-line: rgba(37, 99, 235, 0.28);  /* brand line */
+
+  --blueprint-accent: #2563eb;            /* blue-600 */
+  --blueprint-accent-bright: #1d4ed8;     /* blue-700 */
+  --blueprint-cyan: #0ea5e9;              /* sky-500 (cleaner than neon cyan) */
+
+  --blueprint-text: #0f172a;              /* slate-900 */
+  --blueprint-text-muted: #475569;        /* slate-600 */
+  --blueprint-text-dim: #64748b;          /* slate-500 */
+
+  --blueprint-success: #10b981;           /* emerald-500 */
+  --blueprint-warning: #f59e0b;           /* amber-500 */
+  --blueprint-danger: #ef4444;            /* red-500 */
+  --blueprint-gold: #f59e0b;              /* same as warning for light */
+
+  /* shadcn/tailwind tokens → light */
+  --radius: 1rem;
+
+  --background: oklch(0.985 0.005 240);   /* near white */
+  --foreground: oklch(0.18 0.02 240);     /* slate-ish */
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.02 240);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0.02 240);
+
+  --primary: oklch(0.62 0.19 250);        /* blue */
+  --primary-foreground: oklch(0.99 0.01 250);
+
+  --secondary: oklch(0.97 0.01 240);      /* slate-50 */
+  --secondary-foreground: oklch(0.24 0.02 240);
+
+  --muted: oklch(0.97 0.01 240);
+  --muted-foreground: oklch(0.5 0.02 240);
+
+  --accent: oklch(0.95 0.02 240);
+  --accent-foreground: oklch(0.22 0.02 240);
+
+  --destructive: oklch(0.62 0.22 25);
+  --destructive-foreground: oklch(0.99 0.01 25);
+
+  --border: oklch(0.88 0.01 240);         /* slate-200 */
+  --input: oklch(0.97 0.01 240);
+  --ring: oklch(0.62 0.19 250);
+
+  --chart-1: oklch(0.62 0.19 250);
+  --chart-2: oklch(0.68 0.16 210);
+  --chart-3: oklch(0.66 0.14 160);
+  --chart-4: oklch(0.75 0.17 95);
+  --chart-5: oklch(0.62 0.22 25);
+
+  --sidebar: oklch(0.99 0.005 240);
+  --sidebar-foreground: oklch(0.22 0.02 240);
+  --sidebar-primary: oklch(0.62 0.19 250);
+  --sidebar-primary-foreground: oklch(0.99 0.01 250);
+  --sidebar-accent: oklch(0.96 0.01 240);
+  --sidebar-accent-foreground: oklch(0.28 0.02 240);
+  --sidebar-border: oklch(0.88 0.01 240);
+  --sidebar-ring: oklch(0.62 0.19 250);
+}
+
+/* Optional: keep .dark if you want later. For now, light is default.
+   If you plan to re-enable dark mode, we can reintroduce blueprint-dark tokens. */
+.dark {
+  /* keep as-is or redefine later; for now let it behave like light to avoid mismatch */
+  --background: oklch(0.985 0.005 240);
+  --foreground: oklch(0.18 0.02 240);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.02 240);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0.02 240);
+  --border: oklch(0.88 0.01 240);
+  --input: oklch(0.97 0.01 240);
+  --ring: oklch(0.62 0.19 250);
+  --sidebar: oklch(0.99 0.005 240);
+  --sidebar-foreground: oklch(0.22 0.02 240);
+  --sidebar-border: oklch(0.88 0.01 240);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  html {
+    color-scheme: light; /* ✅ 중요: 다크에서 라이트로 */
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    background-color: var(--blueprint-bg);
+
+    /* ✅ Grid는 '토스'에서는 거의 안 보이게: 아주 약하게 */
+    background-image:
+      linear-gradient(var(--blueprint-grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--blueprint-grid) 1px, transparent 1px);
+    background-size: 40px 40px;
+
+    min-height: 100vh;
+    font-family: 'NanumSquareRound', -apple-system, BlinkMacSystemFont,
+                  'Segoe UI', Roboto, 'Noto Sans KR', sans-serif;
+  }
+
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [type="button"]:not(:disabled),
+  [type="submit"]:not(:disabled),
+  [type="reset"]:not(:disabled),
+  a[href],
+  select:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled) {
+    @apply cursor-pointer;
+  }
+
+  /* Scrollbar (light) */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(15, 23, 42, 0.12);
+    border-radius: 999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(15, 23, 42, 0.18);
+  }
+
+  /* Selection (light) */
+  ::selection {
+    background: rgba(37, 99, 235, 0.18);
+    color: var(--blueprint-text);
+  }
+}
+
+@layer components {
+  .container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  .flex { min-height: 0; min-width: 0; }
+  @media (min-width: 640px) {
+    .container { padding-left: 1.5rem; padding-right: 1.5rem; }
+  }
+  @media (min-width: 1024px) {
+    .container { padding-left: 2rem; padding-right: 2rem; max-width: 1280px; }
+  }
+
+  /* ✅ Toss-like Card (keep class name .bp-card) */
+  .bp-card {
+    background: var(--blueprint-surface);
+    border: 1px solid var(--blueprint-border);
+    border-radius: 24px;
+    position: relative;
+    overflow: hidden;
+
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+  }
+
+  .bp-card:hover {
+    border-color: rgba(37, 99, 235, 0.22);
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+    transform: translateY(-1px);
+  }
+
+  /* 기존 “상단 네온 라인” 제거(토스 느낌 해침) */
+  .bp-card::before { display: none; }
+
+  /* ✅ Section Header → 토스식(작고 차분) */
+  .bp-section-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: 'NanumSquareRound', -apple-system, BlinkMacSystemFont,
+               'Segoe UI', Roboto, 'Noto Sans KR', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(100, 116, 139, 0.9); /* slate-500 */
+  }
+  .bp-section-header::before { content: ''; } /* // 제거 */
+
+  /* ✅ Status Badges (light) */
+  .badge-scheduled { background: rgba(37,99,235,0.10); color: #1d4ed8; border: 1px solid rgba(37,99,235,0.18); }
+  .badge-completed { background: rgba(16,185,129,0.10); color: #059669; border: 1px solid rgba(16,185,129,0.18); }
+  .badge-canceled  { background: rgba(100,116,139,0.10); color: #475569; border: 1px solid rgba(100,116,139,0.18); }
+  .badge-overdue   { background: rgba(239,68,68,0.10); color: #dc2626; border: 1px solid rgba(239,68,68,0.18); }
+  .badge-proposal  { background: rgba(245,158,11,0.10); color: #b45309; border: 1px solid rgba(245,158,11,0.18); }
+  .badge-negotiation { background: rgba(249,115,22,0.10); color: #c2410c; border: 1px solid rgba(249,115,22,0.18); }
+  .badge-confirmed { background: rgba(16,185,129,0.10); color: #059669; border: 1px solid rgba(16,185,129,0.18); }
+  .badge-pending   { background: rgba(100,116,139,0.10); color: #475569; border: 1px solid rgba(100,116,139,0.18); }
+  .badge-delivered { background: rgba(37,99,235,0.10); color: #1d4ed8; border: 1px solid rgba(37,99,235,0.18); }
+  .badge-paid      { background: rgba(16,185,129,0.10); color: #059669; border: 1px solid rgba(16,185,129,0.18); }
+  .badge-unbilled  { background: rgba(245,158,11,0.10); color: #b45309; border: 1px solid rgba(245,158,11,0.18); }
+  .badge-billed    { background: rgba(14,165,233,0.10); color: #0284c7; border: 1px solid rgba(14,165,233,0.18); }
+
+  /* ✅ FAB (light: solid brand, no neon gradient) */
+  .fab {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 999px;
+    background: var(--blueprint-accent);
+    border: 1px solid rgba(37, 99, 235, 0.18);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 18px 40px rgba(37, 99, 235, 0.28);
+    transition: transform 0.15s, box-shadow 0.15s, background-color 0.15s;
+    z-index: 50;
+  }
+  .fab:hover {
+    transform: translateY(-1px) scale(1.02);
+    box-shadow: 0 22px 46px rgba(37, 99, 235, 0.32);
+    background: #1d4ed8;
+  }
+  .fab:active { transform: scale(0.96); }
+
+  /* Glow (tone down in light) */
+  .glow-blue { box-shadow: 0 0 0 rgba(0,0,0,0); }
+  .text-glow { text-shadow: none; }
+
+  /* ✅ Mobile Nav (light) */
+  .mobile-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    height: 64px;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(18px);
+    border-top: 1px solid rgba(15, 23, 42, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    z-index: 100;
+    padding: 0 8px;
+  }
+
+  /* Page enter animation */
+  .page-enter { animation: fadeSlideIn 0.25s ease-out; }
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Voice recording (keep) */
+  @keyframes pulse-ring {
+    0% { transform: scale(1); opacity: 0.8; }
+    50% { transform: scale(1.15); opacity: 0.4; }
+    100% { transform: scale(1); opacity: 0.8; }
+  }
+  @keyframes waveform {
+    0%, 100% { height: 4px; }
+    50% { height: 20px; }
+  }
+  .recording-pulse { animation: pulse-ring 1.2s ease-in-out infinite; }
+  .waveform-bar { animation: waveform 0.8s ease-in-out infinite; }
+  .waveform-bar:nth-child(2) { animation-delay: 0.1s; }
+  .waveform-bar:nth-child(3) { animation-delay: 0.2s; }
+  .waveform-bar:nth-child(4) { animation-delay: 0.3s; }
+  .waveform-bar:nth-child(5) { animation-delay: 0.4s; }
+
+  /* ✅ Recharts (light) */
+  .recharts-cartesian-grid-horizontal line,
+  .recharts-cartesian-grid-vertical line {
+    stroke: rgba(15, 23, 42, 0.06) !important;
+  }
+  .recharts-text {
+    fill: #94a3b8 !important;
+    font-size: 11px !important;
+  }
+}

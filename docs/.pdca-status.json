@@ -1,0 +1,147 @@
+{
+  "version": "2.0",
+  "lastUpdated": "2026-02-24T08:57:47.157Z",
+  "activeFeatures": [
+    "_core",
+    "client",
+    "server"
+  ],
+  "primaryFeature": "_core",
+  "features": {
+    "_core": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-24T07:01:03.523Z",
+        "lastUpdated": "2026-02-24T08:57:47.157Z"
+      },
+      "lastFile": "C:\\Users\\USER\\Downloads\\sales-manager\\server\\_core\\voiceTranscription.ts"
+    },
+    "client": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-24T07:04:53.211Z",
+        "lastUpdated": "2026-02-24T07:04:53.212Z"
+      },
+      "lastFile": "C:\\Users\\USER\\Downloads\\sales-manager\\client\\src\\pages\\LandingPage.tsx"
+    },
+    "server": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-24T08:39:57.087Z",
+        "lastUpdated": "2026-02-24T08:41:37.373Z"
+      },
+      "lastFile": "C:\\Users\\USER\\Downloads\\sales-manager\\server\\routers\\salesLogs.ts"
+    }
+  },
+  "pipeline": {
+    "currentPhase": 1,
+    "level": "Dynamic",
+    "phaseHistory": []
+  },
+  "session": {
+    "startedAt": "2026-02-24T04:35:09.263Z",
+    "onboardingCompleted": false,
+    "lastActivity": "2026-02-24T08:57:47.157Z"
+  },
+  "history": [
+    {
+      "timestamp": "2026-02-24T07:01:03.523Z",
+      "feature": "_core",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:04:28.015Z",
+      "feature": "_core",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:04:53.212Z",
+      "feature": "client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T07:14:30.207Z",
+      "feature": "_core",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T08:30:35.921Z",
+      "feature": "_core",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T08:31:00.269Z",
+      "feature": "_core",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T08:35:32.646Z",
+      "feature": "_core",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T08:35:51.917Z",
+      "feature": "_core",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T08:36:06.399Z",
+      "feature": "_core",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T08:39:57.087Z",
+      "feature": "server",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T08:41:37.373Z",
+      "feature": "server",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T08:56:46.046Z",
+      "feature": "_core",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T08:57:30.644Z",
+      "feature": "_core",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-24T08:57:47.157Z",
+      "feature": "_core",
+      "phase": "do",
+      "action": "updated"
+    }
+  ]
+}
