@@ -15,6 +15,13 @@
       "when": 1771901062619,
       "tag": "0001_tan_hellcat",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1771941367764,
+      "tag": "0002_bright_iron_lad",
+      "breakpoints": true
     }
   ]
 }

@@ -76,6 +76,7 @@ export const promises = mysqlTable("promises", {
   clientName: varchar("clientName", { length: 200 }),
   title: varchar("title", { length: 300 }).notNull(),
   description: text("description"),
+  amount: decimal("amount", { precision: 15, scale: 2 }),
   scheduledAt: timestamp("scheduledAt").notNull(),
   status: mysqlEnum("status", ["scheduled", "completed", "canceled", "overdue"])
     .default("scheduled")

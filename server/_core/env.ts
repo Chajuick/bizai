@@ -14,4 +14,5 @@ export const ENV = {
   // STT(음성→텍스트) 전용 설정 (없으면 Forge API로 폴백)
   sttApiUrl: process.env.STT_API_URL ?? "",
   sttApiKey: process.env.STT_API_KEY ?? "",
+  sttModel: process.env.STT_MODEL ?? "whisper-1",
 };

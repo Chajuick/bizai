@@ -115,7 +115,9 @@ export async function transcribeAudio(
       }
       
       audioBuffer = Buffer.from(await response.arrayBuffer());
-      mimeType = response.headers.get('content-type') || 'audio/mpeg';
+      mimeType = response.headers.get('content-type') || 'audio/webm';
+      // Express가 .webm을 video/webm으로 서빙하는 경우 정규화
+      if (mimeType.startsWith('video/webm')) mimeType = 'audio/webm';
       
       // Check file size (16MB limit)
       const sizeMB = audioBuffer.length / (1024 * 1024);
@@ -142,7 +144,7 @@ export async function transcribeAudio(
     const audioBlob = new Blob([new Uint8Array(audioBuffer)], { type: mimeType });
     formData.append("file", audioBlob, filename);
     
-    formData.append("model", "whisper-1");
+    formData.append("model", ENV.sttModel);
     formData.append("response_format", "verbose_json");
     
     // Add prompt - use custom prompt if provided, otherwise generate based on language
@@ -202,6 +204,7 @@ export async function transcribeAudio(
 function getFileExtension(mimeType: string): string {
   const mimeToExt: Record<string, string> = {
     'audio/webm': 'webm',
+    'video/webm': 'webm',
     'audio/mp3': 'mp3',
     'audio/mpeg': 'mp3',
     'audio/wav': 'wav',

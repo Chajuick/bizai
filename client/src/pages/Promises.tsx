@@ -73,6 +73,8 @@ export default function Promises() {
     productService: "",
     amount: "",
     status: "proposal" as const,
+    contractDate: "",
+    notes: "",
   });
 
   // ✅ 더보기 액션 확인 다이얼로그 상태
@@ -220,6 +222,8 @@ export default function Promises() {
         productService: orderForm.productService,
         amount: Number(orderForm.amount),
         status: orderForm.status,
+        contractDate: orderForm.contractDate || undefined,
+        notes: orderForm.notes || undefined,
       });
 
       utils.orders.list.invalidate();
@@ -228,7 +232,7 @@ export default function Promises() {
 
       setShowOrderForm(false);
       setSelectedPromise(null);
-      setOrderForm({ productService: "", amount: "", status: "proposal" });
+      setOrderForm({ productService: "", amount: "", status: "proposal", contractDate: "", notes: "" });
 
       if (selectedPromise?.id) {
         await completeMutation.mutateAsync({ id: selectedPromise.id });
@@ -404,6 +408,13 @@ export default function Promises() {
                       <button
                         onClick={() => {
                           setSelectedPromise(p);
+                          setOrderForm({
+                            productService: "",
+                            amount: p.amount ? String(Math.round(Number(p.amount))) : "",
+                            status: "proposal",
+                            contractDate: new Date(p.scheduledAt).toISOString().split("T")[0],
+                            notes: p.description || "",
+                          });
                           setShowOrderForm(true);
                         }}
                         className="w-9 h-9 rounded-2xl border border-slate-200 hover:bg-slate-50 transition flex items-center justify-center"
@@ -595,12 +606,7 @@ export default function Promises() {
               <DialogTitle className="text-slate-900 font-black">
                 수주 생성
               </DialogTitle>
-              <button
-                onClick={() => setShowOrderForm(false)}
-                className="w-9 h-9 rounded-2xl border border-slate-200 hover:bg-slate-50 transition flex items-center justify-center"
-              >
-                <X size={16} className="text-slate-700" />
-              </button>
+
             </div>
             {selectedPromise && (
               <p className="text-sm mt-2 text-slate-600">
@@ -658,21 +664,52 @@ export default function Promises() {
               />
             </div>
 
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">
+                  초기 상태
+                </Label>
+                <select
+                  value={orderForm.status}
+                  onChange={(e: any) =>
+                    setOrderForm((f) => ({ ...f, status: e.target.value }))
+                  }
+                  className="w-full px-3 py-2 rounded-2xl border border-slate-200 bg-white text-slate-900"
+                >
+                  <option value="proposal">제안</option>
+                  <option value="negotiation">협상</option>
+                  <option value="confirmed">확정</option>
+                </select>
+              </div>
+
+              <div>
+                <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">
+                  계약일
+                </Label>
+                <Input
+                  type="date"
+                  value={orderForm.contractDate}
+                  onChange={(e) =>
+                    setOrderForm((f) => ({ ...f, contractDate: e.target.value }))
+                  }
+                  className="rounded-2xl border-slate-200"
+                />
+              </div>
+            </div>
+
             <div>
               <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">
-                초기 상태
+                메모
               </Label>
-              <select
-                value={orderForm.status}
-                onChange={(e: any) =>
-                  setOrderForm((f) => ({ ...f, status: e.target.value }))
+              <Textarea
+                value={orderForm.notes}
+                onChange={(e) =>
+                  setOrderForm((f) => ({ ...f, notes: e.target.value }))
                 }
-                className="w-full px-3 py-2 rounded-2xl border border-slate-200 bg-white text-slate-900"
-              >
-                <option value="proposal">제안</option>
-                <option value="negotiation">협상</option>
-                <option value="confirmed">확정</option>
-              </select>
+                rows={2}
+                className="rounded-2xl border-slate-200 resize-none"
+                placeholder="일정 메모에서 자동 입력"
+              />
             </div>
 
             <Button
