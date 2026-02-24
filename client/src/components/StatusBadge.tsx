@@ -3,6 +3,7 @@ const statusMap: Record<string, { label: string; cls: string }> = {
   completed:   { label: "완료", cls: "badge-completed" },
   canceled:    { label: "취소", cls: "badge-canceled" },
   overdue:     { label: "지연", cls: "badge-overdue" },
+  imminent:    { label: "임박", cls: "badge-imminent" },
   proposal:    { label: "제안", cls: "badge-proposal" },
   negotiation: { label: "협상", cls: "badge-negotiation" },
   confirmed:   { label: "확정", cls: "badge-confirmed" },

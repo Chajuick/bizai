@@ -241,6 +241,7 @@
   .badge-completed { background: rgba(16,185,129,0.10); color: #059669; border: 1px solid rgba(16,185,129,0.18); }
   .badge-canceled  { background: rgba(100,116,139,0.10); color: #475569; border: 1px solid rgba(100,116,139,0.18); }
   .badge-overdue   { background: rgba(239,68,68,0.10); color: #dc2626; border: 1px solid rgba(239,68,68,0.18); }
+  .badge-imminent  { background: rgba(249,115,22,0.10); color: #ea580c; border: 1px solid rgba(249,115,22,0.22); }
   .badge-proposal  { background: rgba(245,158,11,0.10); color: #b45309; border: 1px solid rgba(245,158,11,0.18); }
   .badge-negotiation { background: rgba(249,115,22,0.10); color: #c2410c; border: 1px solid rgba(249,115,22,0.18); }
   .badge-confirmed { background: rgba(16,185,129,0.10); color: #059669; border: 1px solid rgba(16,185,129,0.18); }

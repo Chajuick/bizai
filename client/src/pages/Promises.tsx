@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
+import { usePromiseAlerts } from "@/hooks/usePromiseAlerts";
 import {
   Plus,
   Calendar,
@@ -25,6 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import StatusBadge from "@/components/StatusBadge";
+import ClientNameInput from "@/components/ClientNameInput";
 
 // ✅ 추가 (shadcn)
 import {
@@ -47,9 +49,12 @@ import {
 } from "@/components/ui/alert-dialog";
 
 type PromiseStatus = "scheduled" | "completed" | "canceled" | "overdue";
+type EffectiveStatus = PromiseStatus | "imminent";
+type TabKey = PromiseStatus | "all" | "imminent";
 
-const statusTabs: { key: PromiseStatus | "all"; label: string }[] = [
+const statusTabs: { key: TabKey; label: string }[] = [
   { key: "all", label: "전체" },
+  { key: "imminent", label: "임박" },
   { key: "scheduled", label: "예정" },
   { key: "completed", label: "완료" },
   { key: "overdue", label: "지연" },
@@ -57,11 +62,12 @@ const statusTabs: { key: PromiseStatus | "all"; label: string }[] = [
 ];
 
 export default function Promises() {
-  const [activeTab, setActiveTab] = useState<PromiseStatus | "all">("all");
+  const [activeTab, setActiveTab] = useState<TabKey>("all");
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [form, setForm] = useState({
     clientName: "",
+    clientId: undefined as number | undefined,
     title: "",
     description: "",
     scheduledAt: "",
@@ -84,8 +90,11 @@ export default function Promises() {
     title: string;
   }>(null);
 
+  // "임박" 탭은 서버에 "scheduled"로 조회 후 클라이언트에서 필터
+  const queryStatus: PromiseStatus | undefined =
+    activeTab === "all" || activeTab === "imminent" ? undefined : activeTab;
   const { data: promises, isLoading } = trpc.promises.list.useQuery(
-    activeTab !== "all" ? { status: activeTab } : undefined
+    queryStatus ? { status: queryStatus } : undefined
   );
 
   const createMutation = trpc.promises.create.useMutation();
@@ -96,20 +105,44 @@ export default function Promises() {
   const createOrderMutation = trpc.orders.create.useMutation();
   const utils = trpc.useUtils();
 
-  const now = new Date();
-
   const list = useMemo(() => {
+    const nowMs = Date.now();
+    // KST 기준 오늘 자정(00:00 KST)을 UTC ms로 계산
+    const kstNow = new Date(nowMs + 9 * 60 * 60 * 1000);
+    const kstTodayMidnightMs = new Date(kstNow.toISOString().slice(0, 10) + "T00:00:00+09:00").getTime();
+
     const rows = promises ?? [];
     return rows.map((p) => {
-      const overdue = p.status === "scheduled" && new Date(p.scheduledAt) < now;
-      const effectiveStatus: PromiseStatus = overdue ? "overdue" : p.status;
-      return { ...p, overdue, effectiveStatus };
+      const scheduledMs = new Date(p.scheduledAt).getTime();
+      // 지연: KST 기준 오늘 날짜보다 이전 날의 일정만
+      const overdue = p.status === "scheduled" && scheduledMs < kstTodayMidnightMs;
+      // 임박: 미래이고 12시간 이내
+      const imminent = p.status === "scheduled" && !overdue && scheduledMs > nowMs && scheduledMs - nowMs <= 12 * 60 * 60 * 1000;
+      const effectiveStatus: EffectiveStatus = overdue ? "overdue" : imminent ? "imminent" : p.status;
+      return { ...p, overdue, imminent, effectiveStatus };
     });
-  }, [promises, now]);
+  }, [promises]);
+
+  // 탭별 표시 목록: 전체=지연→임박→나머지 정렬, 임박=임박만 필터
+  const displayList = useMemo(() => {
+    if (activeTab === "imminent") return list.filter((p) => p.imminent);
+    if (activeTab === "all") {
+      return [...list].sort((a, b) => {
+        const rank = (p: typeof a) => (p.overdue ? 0 : p.imminent ? 1 : 2);
+        return rank(a) - rank(b);
+      });
+    }
+    return list;
+  }, [list, activeTab]);
+
+  // 알림: 지연·임박 일정이 있으면 브라우저 알림 (세션 당 1회)
+  const overdueInList = list.filter((p) => p.overdue).length;
+  const imminentInList = list.filter((p) => p.imminent).length;
+  usePromiseAlerts(overdueInList, imminentInList);
 
   const resetForm = () => {
     setEditingId(null);
-    setForm({ clientName: "", title: "", description: "", scheduledAt: "" });
+    setForm({ clientName: "", clientId: undefined, title: "", description: "", scheduledAt: "" });
   };
 
   const openCreate = () => {
@@ -125,9 +158,11 @@ export default function Promises() {
     }
     try {
       await createMutation.mutateAsync({
-        ...form,
+        clientId: form.clientId,
         clientName: form.clientName || undefined,
+        title: form.title,
         description: form.description || undefined,
+        scheduledAt: form.scheduledAt,
       });
       utils.promises.list.invalidate();
       utils.dashboard.stats.invalidate();
@@ -143,6 +178,7 @@ export default function Promises() {
     setEditingId(promise.id);
     setForm({
       clientName: promise.clientName || "",
+      clientId: promise.clientId ?? undefined,
       title: promise.title,
       description: promise.description || "",
       scheduledAt: new Date(promise.scheduledAt).toISOString().slice(0, 16),
@@ -317,7 +353,7 @@ export default function Promises() {
             />
           ))}
         </div>
-      ) : (list?.length ?? 0) === 0 ? (
+      ) : displayList.length === 0 ? (
         <div className="text-center py-16">
           <Calendar
             size={40}
@@ -330,11 +366,17 @@ export default function Promises() {
         </div>
       ) : (
         <div className="space-y-2">
-          {list.map((p: any) => (
+          {displayList.map((p: any) => (
             <div
               key={p.id}
               className="rounded-3xl border border-slate-100 bg-white p-4 hover:shadow-[0_12px_32px_rgba(15,23,42,0.06)] transition"
-              style={p.overdue ? { borderColor: "rgba(239,68,68,0.20)" } : {}}
+              style={
+                p.overdue
+                  ? { borderColor: "rgba(239,68,68,0.20)" }
+                  : p.imminent
+                  ? { borderColor: "rgba(249,115,22,0.22)" }
+                  : {}
+              }
             >
               <div className="flex items-start gap-3">
                 <div
@@ -345,6 +387,12 @@ export default function Promises() {
                           background: "rgba(239,68,68,0.08)",
                           borderColor: "rgba(239,68,68,0.18)",
                           color: "rgb(239,68,68)",
+                        }
+                      : p.imminent
+                      ? {
+                          background: "rgba(249,115,22,0.08)",
+                          borderColor: "rgba(249,115,22,0.20)",
+                          color: "rgb(234,88,12)",
                         }
                       : {
                           background: "rgba(37,99,235,0.08)",
@@ -388,6 +436,8 @@ export default function Promises() {
                     style={
                       p.overdue
                         ? { color: "rgb(239,68,68)" }
+                        : p.imminent
+                        ? { color: "rgb(234,88,12)" }
                         : { color: "rgb(37,99,235)" }
                     }
                   >
@@ -525,13 +575,11 @@ export default function Promises() {
               <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">
                 고객사 (선택)
               </Label>
-              <Input
+              <ClientNameInput
                 value={form.clientName}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, clientName: e.target.value }))
-                }
+                clientId={form.clientId}
+                onChange={(name, id) => setForm((f) => ({ ...f, clientName: name, clientId: id }))}
                 placeholder="(주)삼성전자"
-                className="rounded-2xl border-slate-200"
               />
             </div>
 

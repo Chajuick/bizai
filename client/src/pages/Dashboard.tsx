@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { trpc } from "@/lib/trpc";
+import { usePromiseAlerts } from "@/hooks/usePromiseAlerts";
 import { Link } from "wouter";
 import {
   BookOpen,
@@ -151,6 +152,9 @@ export default function Dashboard() {
   const now = new Date();
   const monthLabel = `${now.getMonth() + 1}월`;
 
+  // 브라우저 알림 (세션 당 1회)
+  usePromiseAlerts(stats?.overdueCount ?? 0, stats?.imminentCount ?? 0);
+
   // ✅ 차트 해석 한 줄 (간단 버전)
   const chartInsight = useMemo(() => {
     if (!trend || trend.length < 2) return null;
@@ -218,7 +222,9 @@ export default function Dashboard() {
               value={stats?.upcomingPromisesCount ?? 0}
               sub={
                 stats?.overdueCount
-                  ? `지연 ${stats.overdueCount}건`
+                  ? `지연 ${stats.overdueCount}건${stats.imminentCount ? ` · 임박 ${stats.imminentCount}건` : ""}`
+                  : stats?.imminentCount
+                  ? `임박 ${stats.imminentCount}건`
                   : "진행 예정"
               }
               color="#0ea5e9"
@@ -245,7 +251,7 @@ export default function Dashboard() {
           {/* Overdue Alert */}
           {(stats?.overdueCount ?? 0) > 0 && (
             <div
-              className="mb-6 p-3 rounded-2xl flex items-center gap-3"
+              className="mb-3 p-3 rounded-2xl flex items-center gap-3"
               style={{
                 background: "rgba(239,68,68,0.08)",
                 border: "1px solid rgba(239,68,68,0.16)",
@@ -256,13 +262,40 @@ export default function Dashboard() {
                 <strong>{stats?.overdueCount}건</strong>의 일정이 지연되었습니다.
               </p>
               <Link
-                href="/promises"
+                href="/promises?tab=overdue"
                 className="ml-auto text-xs font-semibold underline"
                 style={{ color: "#b91c1c" }}
               >
                 확인하기
               </Link>
             </div>
+          )}
+
+          {/* Imminent Alert */}
+          {(stats?.imminentCount ?? 0) > 0 && (
+            <div
+              className="mb-6 p-3 rounded-2xl flex items-center gap-3"
+              style={{
+                background: "rgba(249,115,22,0.08)",
+                border: "1px solid rgba(249,115,22,0.18)",
+              }}
+            >
+              <AlertTriangle size={16} style={{ color: "#f97316" }} />
+              <p className="text-sm" style={{ color: "#c2410c" }}>
+                <strong>{stats?.imminentCount}건</strong>의 일정이 12시간 이내에 예정되어 있습니다.
+              </p>
+              <Link
+                href="/promises"
+                className="ml-auto text-xs font-semibold underline"
+                style={{ color: "#c2410c" }}
+              >
+                확인하기
+              </Link>
+            </div>
+          )}
+          {/* 두 알림 모두 없을 때 mb-6 보정 */}
+          {(stats?.overdueCount ?? 0) === 0 && (stats?.imminentCount ?? 0) === 0 && (
+            <div className="mb-6" />
           )}
 
           {/* Revenue Chart */}
@@ -395,30 +428,63 @@ export default function Dashboard() {
                 />
               ) : (
                 <div className="space-y-2">
-                  {stats?.upcomingPromises?.map((p) => (
-                    <div
-                      key={p.id}
-                      className="flex items-start gap-3 p-3 rounded-2xl bg-slate-50 border border-slate-100"
-                    >
-                      <Calendar size={16} className="mt-0.5 shrink-0 text-sky-600" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-[color:var(--blueprint-text)] truncate">
-                          {p.title}
+                  {stats?.upcomingPromises?.map((p) => {
+                    const ms = new Date(p.scheduledAt).getTime();
+                    const nowMs = Date.now();
+                    const isImminent = ms > nowMs && ms - nowMs <= 12 * 60 * 60 * 1000;
+                    return (
+                      <div
+                        key={p.id}
+                        className="flex items-start gap-3 p-3 rounded-2xl border transition"
+                        style={
+                          isImminent
+                            ? { background: "rgba(249,115,22,0.06)", borderColor: "rgba(249,115,22,0.20)" }
+                            : { background: "rgba(248,250,252,1)", borderColor: "rgba(226,232,240,1)" }
+                        }
+                      >
+                        <Calendar
+                          size={16}
+                          className="mt-0.5 shrink-0"
+                          style={{ color: isImminent ? "rgb(234,88,12)" : "rgb(14,165,233)" }}
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <p className="text-sm font-semibold text-[color:var(--blueprint-text)] truncate">
+                              {p.title}
+                            </p>
+                            {isImminent && (
+                              <span
+                                className="text-[10px] px-1.5 py-0.5 rounded font-bold border font-mono"
+                                style={{
+                                  background: "rgba(249,115,22,0.10)",
+                                  color: "rgb(234,88,12)",
+                                  borderColor: "rgba(249,115,22,0.22)",
+                                }}
+                              >
+                                임박
+                              </span>
+                            )}
+                          </div>
+                          {p.clientName && (
+                            <p className="text-xs text-[color:var(--blueprint-text-dim)]">
+                              {p.clientName}
+                            </p>
+                          )}
+                        </div>
+                        <p
+                          className="text-xs shrink-0 font-semibold"
+                          style={{ color: isImminent ? "rgb(234,88,12)" : "rgb(100,116,139)" }}
+                        >
+                          {new Date(p.scheduledAt).toLocaleString("ko-KR", {
+                            month: "short",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
                         </p>
-                        {p.clientName && (
-                          <p className="text-xs text-[color:var(--blueprint-text-dim)]">
-                            {p.clientName}
-                          </p>
-                        )}
                       </div>
-                      <p className="text-xs shrink-0 font-semibold text-slate-500">
-                        {new Date(p.scheduledAt).toLocaleDateString("ko-KR", {
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </p>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

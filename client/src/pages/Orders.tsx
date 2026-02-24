@@ -18,6 +18,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import StatusBadge from "@/components/StatusBadge";
+import ClientNameInput from "@/components/ClientNameInput";
 
 // ✅ shadcn
 import {
@@ -58,6 +59,7 @@ export default function Orders() {
 
   const [form, setForm] = useState({
     clientName: "",
+    clientId: undefined as number | undefined,
     productService: "",
     amount: "",
     status: "proposal" as OrderStatus,
@@ -90,6 +92,7 @@ export default function Orders() {
     setEditingId(null);
     setForm({
       clientName: "",
+      clientId: undefined,
       productService: "",
       amount: "",
       status: "proposal",
@@ -112,8 +115,11 @@ export default function Orders() {
     }
     try {
       await createMutation.mutateAsync({
-        ...form,
+        clientId: form.clientId,
+        clientName: form.clientName,
+        productService: form.productService,
         amount: Number(form.amount),
+        status: form.status,
         contractDate: form.contractDate || undefined,
         expectedDeliveryDate: form.expectedDeliveryDate || undefined,
         notes: form.notes || undefined,
@@ -132,6 +138,7 @@ export default function Orders() {
     setEditingId(order.id);
     setForm({
       clientName: order.clientName,
+      clientId: order.clientId ?? undefined,
       productService: order.productService,
       amount: String(order.amount ?? ""),
       status: order.status,
@@ -423,6 +430,15 @@ export default function Orders() {
                     <button
                       onClick={() => {
                         setSelectedOrder(order);
+                        setDeliveryForm({
+                          revenueAmount: order.amount ? String(Math.round(Number(order.amount))) : "",
+                          deliveryStatus: "pending",
+                          deliveredAt: order.expectedDeliveryDate
+                            ? new Date(order.expectedDeliveryDate).toISOString().split("T")[0]
+                            : "",
+                          billingStatus: "unbilled",
+                          notes: "",
+                        });
                         setShowDeliveryForm(true);
                       }}
                       className="w-9 h-9 rounded-2xl border border-slate-200 hover:bg-slate-50 transition flex items-center justify-center"
@@ -497,11 +513,10 @@ export default function Orders() {
           <form onSubmit={editingId ? handleUpdate : handleCreate} className="space-y-4">
             <div>
               <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">고객사 *</Label>
-              <Input
+              <ClientNameInput
                 value={form.clientName}
-                onChange={(e) => setForm((f) => ({ ...f, clientName: e.target.value }))}
-                required
-                className="rounded-2xl border-slate-200"
+                clientId={form.clientId}
+                onChange={(name, id) => setForm((f) => ({ ...f, clientName: name, clientId: id }))}
                 placeholder="(주)OOO"
               />
             </div>
