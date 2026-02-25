@@ -250,7 +250,21 @@ export async function getOrders(userId: number, opts?: { status?: string; client
   const conditions = [eq(orders.userId, userId)];
   if (opts?.status) conditions.push(eq(orders.status, opts.status as any));
   if (opts?.clientId) conditions.push(eq(orders.clientId, opts.clientId));
-  return db.select().from(orders).where(and(...conditions)).orderBy(desc(orders.createdAt));
+
+  const [orderRows, deliveryCounts] = await Promise.all([
+    db.select().from(orders).where(and(...conditions)).orderBy(desc(orders.createdAt)),
+    db
+      .select({
+        orderId: deliveries.orderId,
+        count: sql<string>`COUNT(*)`,
+      })
+      .from(deliveries)
+      .where(eq(deliveries.userId, userId))
+      .groupBy(deliveries.orderId),
+  ]);
+
+  const countMap = new Map(deliveryCounts.map((r) => [r.orderId, Number(r.count)]));
+  return orderRows.map((o) => ({ ...o, deliveryCount: countMap.get(o.id) ?? 0 }));
 }
 
 export async function getOrderById(id: number, userId: number) {
@@ -280,12 +294,12 @@ export async function deleteOrder(id: number, userId: number) {
 }
 
 // ─── Deliveries ───────────────────────────────────────────────────────────────
-export async function getDeliveries(userId: number, opts?: { orderId?: number; billingStatus?: string }) {
+export async function getDeliveries(userId: number, opts?: { orderId?: number; deliveryStatus?: string }) {
   const db = await getDb();
   if (!db) return [];
   const conditions = [eq(deliveries.userId, userId)];
   if (opts?.orderId) conditions.push(eq(deliveries.orderId, opts.orderId));
-  if (opts?.billingStatus) conditions.push(eq(deliveries.billingStatus, opts.billingStatus as any));
+  if (opts?.deliveryStatus) conditions.push(eq(deliveries.deliveryStatus, opts.deliveryStatus as any));
   return db.select().from(deliveries).where(and(...conditions)).orderBy(desc(deliveries.createdAt));
 }
 
@@ -357,7 +371,7 @@ export async function getDashboardStats(userId: number) {
   const [monthlyRevenue] = await db
     .select({ total: sql<string>`COALESCE(SUM(revenueAmount), 0)` })
     .from(deliveries)
-    .where(and(eq(deliveries.userId, userId), eq(deliveries.billingStatus, "paid"), gte(deliveries.createdAt, startOfMonth), lte(deliveries.createdAt, endOfMonth)));
+    .where(and(eq(deliveries.userId, userId), eq(deliveries.deliveryStatus, "paid"), gte(deliveries.createdAt, startOfMonth), lte(deliveries.createdAt, endOfMonth)));
 
   // 지연된 일정 수 (KST 기준 오늘 자정 이전 날의 일정만)
   const [overduePromises] = await db
@@ -401,24 +415,66 @@ export async function getDashboardStats(userId: number) {
   };
 }
 
-// 월별 매출 트렌드 (최근 6개월)
+// 월별 매출 트렌드 (최근 6개월) — 수주 + 납품 분리
 export async function getRevenueTrend(userId: number) {
   const db = await getDb();
   if (!db) return [];
+
   const sixMonthsAgo = new Date();
   sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 5);
   sixMonthsAgo.setDate(1);
   sixMonthsAgo.setHours(0, 0, 0, 0);
 
-  const rows = await db
-    .select({
-      month: sql<string>`DATE_FORMAT(createdAt, '%Y-%m')`,
-      total: sql<string>`COALESCE(SUM(revenueAmount), 0)`,
-    })
-    .from(deliveries)
-    .where(and(eq(deliveries.userId, userId), eq(deliveries.billingStatus, "paid"), gte(deliveries.createdAt, sixMonthsAgo)))
-    .groupBy(sql`DATE_FORMAT(createdAt, '%Y-%m')`)
-    .orderBy(sql`DATE_FORMAT(createdAt, '%Y-%m')`);
+  // 최근 6개월 레이블 생성
+  const months: string[] = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date();
+    d.setMonth(d.getMonth() - i);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    months.push(`${y}-${m}`);
+  }
 
-  return rows.map((r) => ({ month: r.month, total: Number(r.total) }));
+  const [orderRows, deliveryRows] = await Promise.all([
+    db
+      .select({
+        month: sql<string>`DATE_FORMAT(createdAt, '%Y-%m')`,
+        total: sql<string>`COALESCE(SUM(amount), 0)`,
+      })
+      .from(orders)
+      .where(
+        and(
+          eq(orders.userId, userId),
+          gte(orders.createdAt, sixMonthsAgo),
+          sql`status != 'canceled'`
+        )
+      )
+      .groupBy(sql`DATE_FORMAT(createdAt, '%Y-%m')`)
+      .orderBy(sql`DATE_FORMAT(createdAt, '%Y-%m')`),
+
+    db
+      .select({
+        month: sql<string>`DATE_FORMAT(createdAt, '%Y-%m')`,
+        total: sql<string>`COALESCE(SUM(revenueAmount), 0)`,
+      })
+      .from(deliveries)
+      .where(
+        and(
+          eq(deliveries.userId, userId),
+          eq(deliveries.deliveryStatus, "paid"),
+          gte(deliveries.createdAt, sixMonthsAgo)
+        )
+      )
+      .groupBy(sql`DATE_FORMAT(createdAt, '%Y-%m')`)
+      .orderBy(sql`DATE_FORMAT(createdAt, '%Y-%m')`),
+  ]);
+
+  const orderMap = new Map(orderRows.map((r) => [r.month, Number(r.total)]));
+  const deliveryMap = new Map(deliveryRows.map((r) => [r.month, Number(r.total)]));
+
+  return months.map((m) => ({
+    month: m.slice(5) + "월", // "MM월" 형식
+    order: orderMap.get(m) ?? 0,
+    delivery: deliveryMap.get(m) ?? 0,
+  }));
 }

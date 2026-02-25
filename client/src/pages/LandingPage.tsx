@@ -9,7 +9,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-import LogoSlot from '@/components/ui/focuswin/logo-slot';
+import LogoSlot from '@/components/focuswin/logo-slot';
 
 export default function LandingPage() {
   const features = [

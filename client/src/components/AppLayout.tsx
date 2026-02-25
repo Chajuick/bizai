@@ -1,19 +1,10 @@
 import React, { useMemo, useState } from "react";
 import { useLocation, Link } from "wouter";
-import {
-  LayoutDashboard,
-  BookOpen,
-  Calendar,
-  ShoppingCart,
-  TrendingUp,
-  Users,
-  Menu,
-  X,
-} from "lucide-react";
+import { LayoutDashboard, BookOpen, Calendar, ShoppingCart, TrendingUp, Users, Menu, X } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 
-import LogoSlot from "@/components/ui/focuswin/logo-slot";
+import LogoSlot from "@/components/focuswin/logo-slot";
 
 const navItems = [
   { path: "/", label: "대시보드", icon: LayoutDashboard, shortLabel: "홈" },
@@ -44,7 +35,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }, [user?.name]);
 
   return (
-    <div className="min-h-screen flex bg-[color:var(--blueprint-bg)]">
+    <div className="h-[100dvh] overflow-hidden flex bg-[color:var(--blueprint-bg)]">
       {/* Desktop Sidebar */}
       <aside
         className="hidden lg:flex flex-col w-64 shrink-0 border-r"
@@ -54,17 +45,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         }}
       >
         {/* Logo */}
-        <div
-          className="p-6 border-b"
-          style={{ borderColor: "var(--blueprint-border)" }}
-        >
+        <div className="p-6 border-b" style={{ borderColor: "var(--blueprint-border)" }}>
           <div className="flex items-center gap-3">
             <LogoSlot src={LOGO_SRC} size={40} className="rounded-2xl" />
 
             <div className="min-w-0">
-              <p className="font-black text-[color:var(--blueprint-text)] text-sm tracking-tight">
-                BizAI
-              </p>
+              <p className="font-black text-[color:var(--blueprint-text)] text-sm tracking-tight">BizAI</p>
               <p className="text-xs text-slate-500 truncate">영업 관리 시스템</p>
             </div>
           </div>
@@ -75,7 +61,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <p className="bp-section-header mb-3">NAVIGATION</p>
 
           <div className="space-y-1">
-            {navItems.map((item) => {
+            {navItems.map(item => {
               const Icon = item.icon;
               const active = isActive(item.path);
 
@@ -85,34 +71,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     className={[
                       "group flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-semibold transition cursor-pointer",
                       "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-200",
-                      active
-                        ? "bg-blue-50 text-blue-700 border border-blue-100"
-                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
+                      active ? "bg-blue-50 text-blue-700 border border-blue-100" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900",
                     ].join(" ")}
-                    style={
-                      active
-                        ? { boxShadow: "0 10px 24px rgba(37,99,235,0.08)" }
-                        : undefined
-                    }
+                    style={active ? { boxShadow: "0 10px 24px rgba(37,99,235,0.08)" } : undefined}
                   >
-                    <Icon
-                      size={18}
-                      className={
-                        active
-                          ? "text-blue-700"
-                          : "text-slate-400 group-hover:text-slate-700"
-                      }
-                    />
+                    <Icon size={18} className={active ? "text-blue-700" : "text-slate-400 group-hover:text-slate-700"} />
 
                     <span className="flex-1">{item.label}</span>
 
                     {/* active indicator */}
-                    <span
-                      className={[
-                        "w-1.5 h-1.5 rounded-full transition",
-                        active ? "bg-blue-600" : "bg-transparent group-hover:bg-slate-300",
-                      ].join(" ")}
-                    />
+                    <span className={["w-1.5 h-1.5 rounded-full transition", active ? "bg-blue-600" : "bg-transparent group-hover:bg-slate-300"].join(" ")} />
                   </div>
                 </Link>
               );
@@ -121,10 +89,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </nav>
 
         {/* User */}
-        <div
-          className="p-4 border-t"
-          style={{ borderColor: "var(--blueprint-border)" }}
-        >
+        <div className="p-4 border-t" style={{ borderColor: "var(--blueprint-border)" }}>
           <div className="flex items-center gap-3 mb-3">
             <div
               className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-black text-white shrink-0"
@@ -137,9 +102,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-[color:var(--blueprint-text)] truncate">
-                {user?.name || "사용자"}
-              </p>
+              <p className="text-sm font-bold text-[color:var(--blueprint-text)] truncate">{user?.name || "사용자"}</p>
               <p className="text-xs text-slate-500 truncate">{user?.email || ""}</p>
             </div>
           </div>
@@ -163,10 +126,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
-          <div
-            className="absolute inset-0 bg-black/30 backdrop-blur-[2px]"
-            onClick={() => setSidebarOpen(false)}
-          />
+          <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" onClick={() => setSidebarOpen(false)} />
 
           <aside
             className="relative w-72 flex flex-col border-r"
@@ -175,28 +135,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               borderColor: "var(--blueprint-border)",
             }}
           >
-            <div
-              className="p-5 border-b flex items-center justify-between"
-              style={{ borderColor: "var(--blueprint-border)" }}
-            >
+            <div className="p-5 border-b flex items-center justify-between" style={{ borderColor: "var(--blueprint-border)" }}>
               <div className="flex items-center gap-3">
                 <LogoSlot src={LOGO_SRC} size={36} className="rounded-2xl" />
-                <span className="font-black text-[color:var(--blueprint-text)]">
-                  BizAI
-                </span>
+                <span className="font-black text-[color:var(--blueprint-text)]">BizAI</span>
               </div>
 
-              <button
-                onClick={() => setSidebarOpen(false)}
-                className="text-slate-500 hover:text-slate-900 p-2 rounded-xl hover:bg-slate-50 transition"
-                aria-label="메뉴 닫기"
-              >
+              <button onClick={() => setSidebarOpen(false)} className="text-slate-500 hover:text-slate-900 p-2 rounded-xl hover:bg-slate-50 transition" aria-label="메뉴 닫기">
                 <X size={18} />
               </button>
             </div>
 
             <nav className="flex-1 p-4 space-y-1">
-              {navItems.map((item) => {
+              {navItems.map(item => {
                 const Icon = item.icon;
                 const active = isActive(item.path);
                 return (
@@ -204,16 +155,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     <div
                       className={[
                         "flex items-center gap-3 px-3 py-3 rounded-2xl text-sm font-semibold transition cursor-pointer",
-                        active
-                          ? "bg-blue-50 text-blue-700 border border-blue-100"
-                          : "text-slate-700 hover:bg-slate-50",
+                        active ? "bg-blue-50 text-blue-700 border border-blue-100" : "text-slate-700 hover:bg-slate-50",
                       ].join(" ")}
                       onClick={() => setSidebarOpen(false)}
                     >
-                      <Icon
-                        size={18}
-                        className={active ? "text-blue-700" : "text-slate-400"}
-                      />
+                      <Icon size={18} className={active ? "text-blue-700" : "text-slate-400"} />
                       {item.label}
                     </div>
                   </Link>
@@ -221,10 +167,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               })}
             </nav>
 
-            <div
-              className="p-4 border-t pb-20"
-              style={{ borderColor: "var(--blueprint-border)" }}
-            >
+            <div className="p-4 border-t pb-20" style={{ borderColor: "var(--blueprint-border)" }}>
               <div className="flex items-center gap-3 mb-3">
                 <div
                   className="w-9 h-9 rounded-full flex items-center justify-center text-xs font-black text-white"
@@ -236,9 +179,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   {userInitial}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-bold text-[color:var(--blueprint-text)] truncate">
-                    {user?.name || "사용자"}
-                  </p>
+                  <p className="text-sm font-bold text-[color:var(--blueprint-text)] truncate">{user?.name || "사용자"}</p>
                   <p className="text-xs text-slate-500 truncate">{user?.email || ""}</p>
                 </div>
               </div>
@@ -272,11 +213,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             backdropFilter: "blur(18px)",
           }}
         >
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="p-2 text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-50 transition"
-            aria-label="메뉴 열기"
-          >
+          <button onClick={() => setSidebarOpen(true)} className="p-2 text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-50 transition" aria-label="메뉴 열기">
             <Menu size={20} />
           </button>
 
@@ -289,14 +226,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto pb-20 lg:pb-6">
+        <main className="flex-1 min-h-0 overflow-y-auto lg:pb-6" style={{ scrollbarGutter: "stable both-edges" }}>
           <div className="page-enter">{children}</div>
         </main>
       </div>
 
       {/* Mobile Bottom Nav */}
       <nav className="mobile-nav lg:hidden">
-        {navItems.map((item) => {
+        {navItems.map(item => {
           const Icon = item.icon;
           const active = isActive(item.path);
 
@@ -306,9 +243,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 className={[
                   "relative flex flex-col items-center gap-1 px-3 py-2 rounded-2xl",
                   "transition-all duration-200 cursor-pointer min-w-[52px]",
-                  active
-                    ? "text-blue-700"
-                    : "text-slate-500 hover:text-slate-800",
+                  active ? "text-blue-700" : "text-slate-500 hover:text-slate-800",
                 ].join(" ")}
                 style={{
                   transform: active ? "translateY(-1px)" : "translateY(0px)", // ✅ 미세하게 떠오르는 느낌

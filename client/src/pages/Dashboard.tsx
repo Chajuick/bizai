@@ -17,6 +17,7 @@ import {
   XAxis,
   YAxis,
   Tooltip,
+  Legend,
   ResponsiveContainer,
 } from "recharts";
 import StatusBadge from "@/components/StatusBadge";
@@ -155,22 +156,20 @@ export default function Dashboard() {
   // 브라우저 알림 (세션 당 1회)
   usePromiseAlerts(stats?.overdueCount ?? 0, stats?.imminentCount ?? 0);
 
-  // ✅ 차트 해석 한 줄 (간단 버전)
+  // 차트 해석 한 줄
   const chartInsight = useMemo(() => {
     if (!trend || trend.length < 2) return null;
 
-    const last = trend[trend.length - 1]?.total ?? 0;
-    const prev = trend[trend.length - 2]?.total ?? 0;
+    const last = trend[trend.length - 1]?.delivery ?? 0;
+    const prev = trend[trend.length - 2]?.delivery ?? 0;
 
-    if (prev <= 0 && last > 0) return `최근 한 달 매출이 새로 잡혔어요.`;
-    if (prev <= 0 && last <= 0) return `최근 2개월 매출 데이터가 부족해요.`;
+    if (prev <= 0 && last > 0) return `최근 한 달 납품 매출이 새로 잡혔어요.`;
+    if (prev <= 0 && last <= 0) return null;
 
     const diff = last - prev;
     const pct = (diff / prev) * 100;
     const sign = diff >= 0 ? "+" : "";
-    return `지난달 대비 ${sign}${pct.toFixed(0)}% (${sign}${formatKRW(
-      diff
-    )}원)`;
+    return `납품 지난달 대비 ${sign}${pct.toFixed(0)}% (${sign}${formatKRW(diff)}원)`;
   }, [trend]);
 
   return (
@@ -299,62 +298,84 @@ export default function Dashboard() {
           )}
 
           {/* Revenue Chart */}
-          {(trend?.length ?? 0) > 0 && (
-            <div className="bp-card p-4 mb-6">
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <div>
-                  <p className="bp-section-header">REVENUE TREND (6개월)</p>
-                  {/* ✅ 해석 한 줄 */}
-                  {chartInsight && (
-                    <p className="mt-1 text-xs text-slate-500">{chartInsight}</p>
-                  )}
-                </div>
-
-                {/* ✅ 작은 안내(전체 보기) */}
-                <Link
-                  href="/deliveries"
-                  className="text-xs font-semibold text-blue-600 hover:text-blue-700"
-                >
-                  자세히
-                </Link>
+          <div className="bp-card p-4 mb-6">
+            <div className="flex items-start justify-between gap-3 mb-3">
+              <div>
+                <p className="bp-section-header">REVENUE TREND (6개월)</p>
+                {chartInsight && (
+                  <p className="mt-1 text-xs text-slate-500">{chartInsight}</p>
+                )}
               </div>
-
-              <ResponsiveContainer width="100%" height={160}>
-                <AreaChart data={trend}>
-                  <defs>
-                    <linearGradient id="revGrad" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#2563eb" stopOpacity={0.18} />
-                      <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <XAxis
-                    dataKey="month"
-                    tick={{ fontSize: 10, fill: "#94a3b8" }}
-                    axisLine={false}
-                    tickLine={false}
-                  />
-                  <YAxis hide />
-                  <Tooltip
-                    contentStyle={{
-                      background: "var(--blueprint-surface)",
-                      border: "1px solid rgba(15,23,42,0.10)",
-                      borderRadius: "12px",
-                      fontSize: "12px",
-                      boxShadow: "0 12px 30px rgba(15,23,42,0.08)",
-                    }}
-                    formatter={(v: number) => [formatKRWFull(v), "매출"]}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="total"
-                    stroke="#2563eb"
-                    strokeWidth={2}
-                    fill="url(#revGrad)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              <Link
+                href="/deliveries"
+                className="text-xs font-semibold text-blue-600 hover:text-blue-700"
+              >
+                자세히
+              </Link>
             </div>
-          )}
+
+            <ResponsiveContainer width="100%" height={180}>
+              <AreaChart data={trend ?? []} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="orderGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.22} />
+                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="deliveryGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.22} />
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <XAxis
+                  dataKey="month"
+                  tick={{ fontSize: 10, fill: "#94a3b8" }}
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis hide />
+                <Tooltip
+                  contentStyle={{
+                    background: "var(--blueprint-surface)",
+                    border: "1px solid rgba(15,23,42,0.10)",
+                    borderRadius: "12px",
+                    fontSize: "12px",
+                    boxShadow: "0 12px 30px rgba(15,23,42,0.08)",
+                  }}
+                  formatter={(v: number, name: string) => [
+                    formatKRWFull(v),
+                    name === "order" ? "수주" : "납품",
+                  ]}
+                />
+                <Legend
+                  iconType="circle"
+                  iconSize={8}
+                  formatter={(name: string) => (
+                    <span style={{ fontSize: 11, color: "#64748b" }}>
+                      {name === "order" ? "수주" : "납품"}
+                    </span>
+                  )}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="order"
+                  stroke="#f59e0b"
+                  strokeWidth={2}
+                  fill="url(#orderGrad)"
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="delivery"
+                  stroke="#10b981"
+                  strokeWidth={2}
+                  fill="url(#deliveryGrad)"
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
 
           {/* Two Column */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

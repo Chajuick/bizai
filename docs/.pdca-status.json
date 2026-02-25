@@ -1,11 +1,14 @@
 {
   "version": "2.0",
-  "lastUpdated": "2026-02-24T13:55:53.172Z",
+  "lastUpdated": "2026-02-25T09:14:29.181Z",
   "activeFeatures": [
     "_core",
     "client",
     "server",
-    "drizzle"
+    "drizzle",
+    "deliveries",
+    "focuswin",
+    "orders"
   ],
   "primaryFeature": "_core",
   "features": {
@@ -31,9 +34,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-24T07:04:53.211Z",
-        "lastUpdated": "2026-02-24T13:55:53.172Z"
+        "lastUpdated": "2026-02-25T08:37:16.305Z"
       },
-      "lastFile": "C:\\Users\\Windows\\Desktop\\Coding\\Project\\Personal\\bizai\\client\\src\\pages\\Promises.tsx"
+      "lastFile": "C:\\Users\\USER\\Desktop\\Project\\private\\bizai\\client\\src\\pages\\Deliveries.tsx"
     },
     "server": {
       "phase": "do",
@@ -44,9 +47,9 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-24T08:39:57.087Z",
-        "lastUpdated": "2026-02-24T13:55:08.626Z"
+        "lastUpdated": "2026-02-25T09:04:29.114Z"
       },
-      "lastFile": "C:\\Users\\Windows\\Desktop\\Coding\\Project\\Personal\\bizai\\server\\routers\\salesLogs.ts"
+      "lastFile": "C:\\Users\\USER\\Desktop\\Project\\private\\bizai\\server\\db.ts"
     },
     "drizzle": {
       "phase": "do",
@@ -57,9 +60,48 @@
       "documents": {},
       "timestamps": {
         "started": "2026-02-24T13:54:06.393Z",
-        "lastUpdated": "2026-02-24T13:54:06.393Z"
+        "lastUpdated": "2026-02-25T08:15:56.827Z"
       },
-      "lastFile": "C:\\Users\\Windows\\Desktop\\Coding\\Project\\Personal\\bizai\\drizzle\\schema.ts"
+      "lastFile": "C:\\Users\\USER\\Desktop\\Project\\private\\bizai\\drizzle\\schema.ts"
+    },
+    "deliveries": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-25T08:09:27.878Z",
+        "lastUpdated": "2026-02-25T08:36:54.095Z"
+      },
+      "lastFile": "C:\\Users\\USER\\Desktop\\Project\\private\\bizai\\client\\src\\components\\focuswin\\deliveries\\delivery-list.tsx"
+    },
+    "focuswin": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-25T08:14:32.686Z",
+        "lastUpdated": "2026-02-25T08:36:29.870Z"
+      },
+      "lastFile": "C:\\Users\\USER\\Desktop\\Project\\private\\bizai\\client\\src\\components\\focuswin\\common\\step-progress.tsx"
+    },
+    "orders": {
+      "phase": "do",
+      "phaseNumber": 3,
+      "matchRate": null,
+      "iterationCount": 0,
+      "requirements": [],
+      "documents": {},
+      "timestamps": {
+        "started": "2026-02-25T08:16:45.669Z",
+        "lastUpdated": "2026-02-25T09:14:29.181Z"
+      },
+      "lastFile": "C:\\Users\\USER\\Desktop\\Project\\private\\bizai\\client\\src\\components\\focuswin\\orders\\order-item-card.tsx"
     }
   },
   "pipeline": {
@@ -70,7 +112,7 @@
   "session": {
     "startedAt": "2026-02-24T04:35:09.263Z",
     "onboardingCompleted": false,
-    "lastActivity": "2026-02-24T13:55:53.172Z"
+    "lastActivity": "2026-02-25T09:14:29.181Z"
   },
   "history": [
     {
@@ -292,6 +334,300 @@
     {
       "timestamp": "2026-02-24T13:55:53.172Z",
       "feature": "client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T04:13:39.900Z",
+      "feature": "client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T04:14:02.324Z",
+      "feature": "client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T04:15:06.844Z",
+      "feature": "client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T04:15:24.155Z",
+      "feature": "client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T04:15:36.105Z",
+      "feature": "client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T04:15:51.968Z",
+      "feature": "client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T04:16:05.499Z",
+      "feature": "client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T04:16:14.736Z",
+      "feature": "client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T04:28:00.715Z",
+      "feature": "server",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T04:28:44.979Z",
+      "feature": "client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T04:29:11.746Z",
+      "feature": "client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T04:29:37.612Z",
+      "feature": "client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T08:09:27.878Z",
+      "feature": "deliveries",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T08:10:15.091Z",
+      "feature": "deliveries",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T08:11:12.982Z",
+      "feature": "deliveries",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T08:11:42.634Z",
+      "feature": "deliveries",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T08:12:15.394Z",
+      "feature": "deliveries",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T08:12:46.894Z",
+      "feature": "client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T08:13:00.916Z",
+      "feature": "server",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T08:13:23.362Z",
+      "feature": "server",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T08:13:37.350Z",
+      "feature": "server",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T08:13:57.361Z",
+      "feature": "server",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T08:14:32.686Z",
+      "feature": "focuswin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T08:15:56.827Z",
+      "feature": "drizzle",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T08:16:15.578Z",
+      "feature": "server",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T08:16:28.062Z",
+      "feature": "client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T08:16:34.601Z",
+      "feature": "client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T08:16:45.669Z",
+      "feature": "orders",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T08:16:52.099Z",
+      "feature": "orders",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T08:16:59.034Z",
+      "feature": "orders",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T08:17:04.974Z",
+      "feature": "orders",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T08:17:11.121Z",
+      "feature": "orders",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T08:17:30.533Z",
+      "feature": "orders",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T08:36:29.870Z",
+      "feature": "focuswin",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T08:36:54.095Z",
+      "feature": "deliveries",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T08:37:06.534Z",
+      "feature": "client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T08:37:16.305Z",
+      "feature": "client",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T09:01:42.771Z",
+      "feature": "orders",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T09:04:29.114Z",
+      "feature": "server",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T09:04:37.239Z",
+      "feature": "orders",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T09:04:48.565Z",
+      "feature": "orders",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T09:04:58.819Z",
+      "feature": "orders",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T09:05:09.354Z",
+      "feature": "orders",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T09:05:19.913Z",
+      "feature": "orders",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T09:09:58.089Z",
+      "feature": "orders",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T09:14:02.204Z",
+      "feature": "orders",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T09:14:12.424Z",
+      "feature": "orders",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T09:14:22.580Z",
+      "feature": "orders",
+      "phase": "do",
+      "action": "updated"
+    },
+    {
+      "timestamp": "2026-02-25T09:14:29.181Z",
+      "feature": "orders",
       "phase": "do",
       "action": "updated"
     }

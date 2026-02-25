@@ -47,40 +47,40 @@
    ───────────────────────────────────────────── */
 :root {
   /* Blueprint variables now represent "BizAI Light" tokens */
-  --blueprint-bg: #f8fafc;                /* slate-50 */
-  --blueprint-surface: #ffffff;           /* card */
-  --blueprint-surface-2: #f1f5f9;         /* slate-100 */
+  --blueprint-bg: #f8fafc; /* slate-50 */
+  --blueprint-surface: #ffffff; /* card */
+  --blueprint-surface-2: #f1f5f9; /* slate-100 */
   --blueprint-border: rgba(15, 23, 42, 0.08); /* subtle slate border */
-  --blueprint-grid: rgba(15, 23, 42, 0.03);   /* very light grid */
-  --blueprint-line: rgba(37, 99, 235, 0.28);  /* brand line */
+  --blueprint-grid: rgba(15, 23, 42, 0.03); /* very light grid */
+  --blueprint-line: rgba(37, 99, 235, 0.28); /* brand line */
 
-  --blueprint-accent: #2563eb;            /* blue-600 */
-  --blueprint-accent-bright: #1d4ed8;     /* blue-700 */
-  --blueprint-cyan: #0ea5e9;              /* sky-500 (cleaner than neon cyan) */
+  --blueprint-accent: #2563eb; /* blue-600 */
+  --blueprint-accent-bright: #1d4ed8; /* blue-700 */
+  --blueprint-cyan: #0ea5e9; /* sky-500 (cleaner than neon cyan) */
 
-  --blueprint-text: #0f172a;              /* slate-900 */
-  --blueprint-text-muted: #475569;        /* slate-600 */
-  --blueprint-text-dim: #64748b;          /* slate-500 */
+  --blueprint-text: #0f172a; /* slate-900 */
+  --blueprint-text-muted: #475569; /* slate-600 */
+  --blueprint-text-dim: #64748b; /* slate-500 */
 
-  --blueprint-success: #10b981;           /* emerald-500 */
-  --blueprint-warning: #f59e0b;           /* amber-500 */
-  --blueprint-danger: #ef4444;            /* red-500 */
-  --blueprint-gold: #f59e0b;              /* same as warning for light */
+  --blueprint-success: #10b981; /* emerald-500 */
+  --blueprint-warning: #f59e0b; /* amber-500 */
+  --blueprint-danger: #ef4444; /* red-500 */
+  --blueprint-gold: #f59e0b; /* same as warning for light */
 
   /* shadcn/tailwind tokens → light */
   --radius: 1rem;
 
-  --background: oklch(0.985 0.005 240);   /* near white */
-  --foreground: oklch(0.18 0.02 240);     /* slate-ish */
+  --background: oklch(0.985 0.005 240); /* near white */
+  --foreground: oklch(0.18 0.02 240); /* slate-ish */
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.18 0.02 240);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.18 0.02 240);
 
-  --primary: oklch(0.62 0.19 250);        /* blue */
+  --primary: oklch(0.62 0.19 250); /* blue */
   --primary-foreground: oklch(0.99 0.01 250);
 
-  --secondary: oklch(0.97 0.01 240);      /* slate-50 */
+  --secondary: oklch(0.97 0.01 240); /* slate-50 */
   --secondary-foreground: oklch(0.24 0.02 240);
 
   --muted: oklch(0.97 0.01 240);
@@ -92,7 +92,7 @@
   --destructive: oklch(0.62 0.22 25);
   --destructive-foreground: oklch(0.99 0.01 25);
 
-  --border: oklch(0.88 0.01 240);         /* slate-200 */
+  --border: oklch(0.88 0.01 240); /* slate-200 */
   --input: oklch(0.97 0.01 240);
   --ring: oklch(0.62 0.19 250);
 
@@ -144,14 +144,18 @@
     background-color: var(--blueprint-bg);
 
     /* ✅ Grid는 '토스'에서는 거의 안 보이게: 아주 약하게 */
-    background-image:
-      linear-gradient(var(--blueprint-grid) 1px, transparent 1px),
-      linear-gradient(90deg, var(--blueprint-grid) 1px, transparent 1px);
+    background-image: linear-gradient(var(--blueprint-grid) 1px, transparent 1px), linear-gradient(90deg, var(--blueprint-grid) 1px, transparent 1px);
     background-size: 40px 40px;
 
     min-height: 100vh;
-    font-family: 'NanumSquareRound', -apple-system, BlinkMacSystemFont,
-                  'Segoe UI', Roboto, 'Noto Sans KR', sans-serif;
+    font-family:
+      "NanumSquareRound",
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      "Noto Sans KR",
+      sans-serif;
   }
 
   button:not(:disabled),
@@ -167,8 +171,13 @@
   }
 
   /* Scrollbar (light) */
-  ::-webkit-scrollbar { width: 8px; height: 8px; }
-  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
   ::-webkit-scrollbar-thumb {
     background: rgba(15, 23, 42, 0.12);
     border-radius: 999px;
@@ -192,12 +201,22 @@
     padding-left: 1rem;
     padding-right: 1rem;
   }
-  .flex { min-height: 0; min-width: 0; }
+  .flex {
+    min-height: 0;
+    min-width: 0;
+  }
   @media (min-width: 640px) {
-    .container { padding-left: 1.5rem; padding-right: 1.5rem; }
+    .container {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
   }
   @media (min-width: 1024px) {
-    .container { padding-left: 2rem; padding-right: 2rem; max-width: 1280px; }
+    .container {
+      padding-left: 2rem;
+      padding-right: 2rem;
+      max-width: 1280px;
+    }
   }
 
   /* ✅ Toss-like Card (keep class name .bp-card) */
@@ -209,7 +228,10 @@
     overflow: hidden;
 
     box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
-    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease,
+      transform 0.15s ease;
   }
 
   .bp-card:hover {
@@ -219,37 +241,99 @@
   }
 
   /* 기존 “상단 네온 라인” 제거(토스 느낌 해침) */
-  .bp-card::before { display: none; }
+  .bp-card::before {
+    display: none;
+  }
 
   /* ✅ Section Header → 토스식(작고 차분) */
   .bp-section-header {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-family: 'NanumSquareRound', -apple-system, BlinkMacSystemFont,
-               'Segoe UI', Roboto, 'Noto Sans KR', sans-serif;
+    font-family:
+      "NanumSquareRound",
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      Roboto,
+      "Noto Sans KR",
+      sans-serif;
     font-size: 0.7rem;
     font-weight: 800;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: rgba(100, 116, 139, 0.9); /* slate-500 */
   }
-  .bp-section-header::before { content: ''; } /* // 제거 */
+  .bp-section-header::before {
+    content: "";
+  } /* // 제거 */
 
   /* ✅ Status Badges (light) */
-  .badge-scheduled { background: rgba(37,99,235,0.10); color: #1d4ed8; border: 1px solid rgba(37,99,235,0.18); }
-  .badge-completed { background: rgba(16,185,129,0.10); color: #059669; border: 1px solid rgba(16,185,129,0.18); }
-  .badge-canceled  { background: rgba(100,116,139,0.10); color: #475569; border: 1px solid rgba(100,116,139,0.18); }
-  .badge-overdue   { background: rgba(239,68,68,0.10); color: #dc2626; border: 1px solid rgba(239,68,68,0.18); }
-  .badge-imminent  { background: rgba(249,115,22,0.10); color: #ea580c; border: 1px solid rgba(249,115,22,0.22); }
-  .badge-proposal  { background: rgba(245,158,11,0.10); color: #b45309; border: 1px solid rgba(245,158,11,0.18); }
-  .badge-negotiation { background: rgba(249,115,22,0.10); color: #c2410c; border: 1px solid rgba(249,115,22,0.18); }
-  .badge-confirmed { background: rgba(16,185,129,0.10); color: #059669; border: 1px solid rgba(16,185,129,0.18); }
-  .badge-pending   { background: rgba(100,116,139,0.10); color: #475569; border: 1px solid rgba(100,116,139,0.18); }
-  .badge-delivered { background: rgba(37,99,235,0.10); color: #1d4ed8; border: 1px solid rgba(37,99,235,0.18); }
-  .badge-paid      { background: rgba(16,185,129,0.10); color: #059669; border: 1px solid rgba(16,185,129,0.18); }
-  .badge-unbilled  { background: rgba(245,158,11,0.10); color: #b45309; border: 1px solid rgba(245,158,11,0.18); }
-  .badge-billed    { background: rgba(14,165,233,0.10); color: #0284c7; border: 1px solid rgba(14,165,233,0.18); }
+  .badge-scheduled {
+    background: rgba(37, 99, 235, 0.1);
+    color: #1d4ed8;
+    border: 1px solid rgba(37, 99, 235, 0.18);
+  }
+  .badge-completed {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.18);
+  }
+  .badge-canceled {
+    background: rgba(100, 116, 139, 0.1);
+    color: #475569;
+    border: 1px solid rgba(100, 116, 139, 0.18);
+  }
+  .badge-overdue {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.18);
+  }
+  .badge-imminent {
+    background: rgba(249, 115, 22, 0.1);
+    color: #ea580c;
+    border: 1px solid rgba(249, 115, 22, 0.22);
+  }
+  .badge-proposal {
+    background: rgba(245, 158, 11, 0.1);
+    color: #b45309;
+    border: 1px solid rgba(245, 158, 11, 0.18);
+  }
+  .badge-negotiation {
+    background: rgba(249, 115, 22, 0.1);
+    color: #c2410c;
+    border: 1px solid rgba(249, 115, 22, 0.18);
+  }
+  .badge-confirmed {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.18);
+  }
+  .badge-pending {
+    background: rgba(100, 116, 139, 0.1);
+    color: #475569;
+    border: 1px solid rgba(100, 116, 139, 0.18);
+  }
+  .badge-delivered {
+    background: rgba(37, 99, 235, 0.1);
+    color: #1d4ed8;
+    border: 1px solid rgba(37, 99, 235, 0.18);
+  }
+  .badge-paid {
+    background: rgba(16, 185, 129, 0.1);
+    color: #059669;
+    border: 1px solid rgba(16, 185, 129, 0.18);
+  }
+  .badge-unbilled {
+    background: rgba(245, 158, 11, 0.1);
+    color: #b45309;
+    border: 1px solid rgba(245, 158, 11, 0.18);
+  }
+  .badge-billed {
+    background: rgba(14, 165, 233, 0.1);
+    color: #0284c7;
+    border: 1px solid rgba(14, 165, 233, 0.18);
+  }
 
   /* ✅ FAB (light: solid brand, no neon gradient) */
   .fab {
@@ -266,7 +350,10 @@
     align-items: center;
     justify-content: center;
     box-shadow: 0 18px 40px rgba(37, 99, 235, 0.28);
-    transition: transform 0.15s, box-shadow 0.15s, background-color 0.15s;
+    transition:
+      transform 0.15s,
+      box-shadow 0.15s,
+      background-color 0.15s;
     z-index: 50;
   }
   .fab:hover {
@@ -274,50 +361,97 @@
     box-shadow: 0 22px 46px rgba(37, 99, 235, 0.32);
     background: #1d4ed8;
   }
-  .fab:active { transform: scale(0.96); }
+  .fab:active {
+    transform: scale(0.96);
+  }
 
   /* Glow (tone down in light) */
-  .glow-blue { box-shadow: 0 0 0 rgba(0,0,0,0); }
-  .text-glow { text-shadow: none; }
+  .glow-blue {
+    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+  }
+  .text-glow {
+    text-shadow: none;
+  }
 
   /* ✅ Mobile Nav (light) */
   .mobile-nav {
     position: fixed;
-    bottom: 0; left: 0; right: 0;
-    height: 64px;
-    background: rgba(255,255,255,0.92);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: auto;
+    min-height: 64px;
+
+    padding: 0 8px calc(env(safe-area-inset-bottom) + 8px);
+
+    background: rgba(255, 255, 255, 0.92);
     backdrop-filter: blur(18px);
     border-top: 1px solid rgba(15, 23, 42, 0.08);
+
     display: flex;
     align-items: center;
     justify-content: space-around;
+
     z-index: 100;
-    padding: 0 8px;
   }
 
   /* Page enter animation */
-  .page-enter { animation: fadeSlideIn 0.25s ease-out; }
+  .page-enter {
+    animation: fadeSlideIn 0.25s ease-out;
+  }
   @keyframes fadeSlideIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   /* Voice recording (keep) */
   @keyframes pulse-ring {
-    0% { transform: scale(1); opacity: 0.8; }
-    50% { transform: scale(1.15); opacity: 0.4; }
-    100% { transform: scale(1); opacity: 0.8; }
+    0% {
+      transform: scale(1);
+      opacity: 0.8;
+    }
+    50% {
+      transform: scale(1.15);
+      opacity: 0.4;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 0.8;
+    }
   }
   @keyframes waveform {
-    0%, 100% { height: 4px; }
-    50% { height: 20px; }
+    0%,
+    100% {
+      height: 4px;
+    }
+    50% {
+      height: 20px;
+    }
   }
-  .recording-pulse { animation: pulse-ring 1.2s ease-in-out infinite; }
-  .waveform-bar { animation: waveform 0.8s ease-in-out infinite; }
-  .waveform-bar:nth-child(2) { animation-delay: 0.1s; }
-  .waveform-bar:nth-child(3) { animation-delay: 0.2s; }
-  .waveform-bar:nth-child(4) { animation-delay: 0.3s; }
-  .waveform-bar:nth-child(5) { animation-delay: 0.4s; }
+  .recording-pulse {
+    animation: pulse-ring 1.2s ease-in-out infinite;
+  }
+  .waveform-bar {
+    animation: waveform 0.8s ease-in-out infinite;
+  }
+  .waveform-bar:nth-child(2) {
+    animation-delay: 0.1s;
+  }
+  .waveform-bar:nth-child(3) {
+    animation-delay: 0.2s;
+  }
+  .waveform-bar:nth-child(4) {
+    animation-delay: 0.3s;
+  }
+  .waveform-bar:nth-child(5) {
+    animation-delay: 0.4s;
+  }
 
   /* ✅ Recharts (light) */
   .recharts-cartesian-grid-horizontal line,

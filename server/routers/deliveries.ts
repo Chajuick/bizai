@@ -13,13 +13,13 @@ export const deliveriesRouter = router({
     .input(
       z.object({
         orderId: z.number().optional(),
-        billingStatus: z.enum(["unbilled", "billed", "paid"]).optional(),
+        deliveryStatus: z.enum(["pending", "delivered", "invoiced", "paid"]).optional(),
       }).optional()
     )
     .query(({ ctx, input }) =>
       getDeliveries(ctx.user.id, {
         orderId: input?.orderId,
-        billingStatus: input?.billingStatus,
+        deliveryStatus: input?.deliveryStatus,
       })
     ),
 
@@ -31,7 +31,6 @@ export const deliveriesRouter = router({
         revenueAmount: z.number().positive(),
         deliveryStatus: z.enum(["pending", "delivered", "invoiced", "paid"]).default("pending"),
         deliveredAt: z.string().optional(),
-        billingStatus: z.enum(["unbilled", "billed", "paid"]).default("unbilled"),
         notes: z.string().optional(),
       })
     )
@@ -51,7 +50,6 @@ export const deliveriesRouter = router({
         deliveryStatus: z.enum(["pending", "delivered", "invoiced", "paid"]).optional(),
         deliveredAt: z.string().optional(),
         revenueAmount: z.number().positive().optional(),
-        billingStatus: z.enum(["unbilled", "billed", "paid"]).optional(),
         notes: z.string().optional(),
       })
     )

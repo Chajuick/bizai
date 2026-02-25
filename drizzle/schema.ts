@@ -123,9 +123,6 @@ export const deliveries = mysqlTable("deliveries", {
     .notNull(),
   deliveredAt: timestamp("deliveredAt"),
   revenueAmount: decimal("revenueAmount", { precision: 15, scale: 2 }).notNull(),
-  billingStatus: mysqlEnum("billingStatus", ["unbilled", "billed", "paid"])
-    .default("unbilled")
-    .notNull(),
   notes: text("notes"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
