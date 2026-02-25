@@ -111,3 +111,6 @@ temp/
 
 # Data
 uploads/
+
+# Claude
+docs/
