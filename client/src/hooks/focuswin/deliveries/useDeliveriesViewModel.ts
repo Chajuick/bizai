@@ -1,13 +1,10 @@
 // client/src/hooks/focuswin/deliveries/useDeliveriesViewModel.ts
-"use client";
 
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
-import type {
-  DeliveryFormState,
-  DeleteConfirmState,
-  DeliveryStatus,
-} from "@/components/focuswin/deliveries/deliveries.types";
+import { formatKRW } from "@/lib/format";
+import type { DeliveryRow, DeliveryFormState, DeleteConfirmState, DeliveryStatus } from "@/types/delivery";
 
 export function useDeliveriesViewModel() {
   const [activeTab, setActiveTab] = useState<DeliveryStatus | "all">("all");
@@ -63,18 +60,80 @@ export function useDeliveriesViewModel() {
     return { paid, pending };
   }, [deliveries]);
 
-  const formatKRW = (n: number) => {
-    if (n >= 100_000_000) return `${(n / 100_000_000).toFixed(1)}억원`;
-    if (n >= 10_000) return `${(n / 10_000).toFixed(0)}만원`;
-    return `${n.toLocaleString()}원`;
-  };
-
   const invalidateAll = () => {
     utils.deliveries.list.invalidate();
     utils.dashboard.stats.invalidate();
   };
 
+  const hasData = (deliveries?.length ?? 0) > 0;
   const isSubmitting = createMutation.isPending || updateMutation.isPending;
+
+  const handleEdit = (d: DeliveryRow) => {
+    setEditingId(d.id);
+    setForm({
+      orderId: d.orderId ? String(d.orderId) : "",
+      clientName: d.clientName || "",
+      revenueAmount: String(d.revenueAmount ?? ""),
+      deliveryStatus: d.deliveryStatus,
+      deliveredAt: d.deliveredAt ? new Date(d.deliveredAt).toISOString().split("T")[0] : "",
+      notes: d.notes || "",
+    });
+    setShowForm(true);
+  };
+
+  const handleCreateOrUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!form.clientName || !form.revenueAmount) {
+      toast.error("필수 항목을 입력해주세요.");
+      return;
+    }
+    const payload = {
+      orderId: Number(form.orderId) || 0,
+      clientName: form.clientName,
+      revenueAmount: Number(form.revenueAmount),
+      deliveryStatus: form.deliveryStatus,
+      deliveredAt: form.deliveredAt || undefined,
+      notes: form.notes || undefined,
+    };
+    try {
+      if (!editingId) {
+        await createMutation.mutateAsync(payload);
+        toast.success("납품 건이 등록되었습니다.");
+      } else {
+        await updateMutation.mutateAsync({ id: editingId, ...payload });
+        toast.success("납품 건이 수정되었습니다.");
+      }
+      invalidateAll();
+      setShowForm(false);
+      resetForm();
+    } catch {
+      toast.error(editingId ? "수정에 실패했습니다." : "등록에 실패했습니다.");
+    }
+  };
+
+  const handleStatusUpdate = async (id: number, deliveryStatus: DeliveryStatus) => {
+    try {
+      await updateMutation.mutateAsync({ id, deliveryStatus });
+      invalidateAll();
+      toast.success("상태가 변경되었습니다.");
+    } catch {
+      toast.error("상태 변경에 실패했습니다.");
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!deleteMutation) {
+      toast.error("삭제 API가 아직 연결되어 있지 않아요.");
+      return;
+    }
+    try {
+      await deleteMutation.mutateAsync({ id });
+      invalidateAll();
+      toast.success("삭제되었습니다.");
+    } catch {
+      toast.error("삭제에 실패했습니다.");
+    }
+  };
 
   return {
     activeTab,
@@ -90,6 +149,7 @@ export function useDeliveriesViewModel() {
     deliveries,
     orders,
     isLoading,
+    hasData,
     stats,
     formatKRW,
     createMutation,
@@ -99,5 +159,9 @@ export function useDeliveriesViewModel() {
     openCreate,
     invalidateAll,
     isSubmitting,
+    handleEdit,
+    handleCreateOrUpdate,
+    handleStatusUpdate,
+    handleDelete,
   };
 }

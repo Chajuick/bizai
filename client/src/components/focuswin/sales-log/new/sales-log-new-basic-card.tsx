@@ -3,22 +3,14 @@ import UiCard from "./ui-card";
 import UiField from "./ui-field";
 import { Input } from "@/components/ui/input";
 import ClientNameInput from "@/components/ClientNameInput";
-
-type FormState = {
-  clientName: string;
-  clientId?: number;
-  contactPerson: string;
-  location: string;
-  visitedAt: string;
-  audioUrl: string;
-};
+import type { SalesLogFormState } from "@/types/salesLog";
 
 export default function SalesLogNewBasicCard({
   form,
   setForm,
 }: {
-  form: FormState;
-  setForm: React.Dispatch<React.SetStateAction<any>>;
+  form: SalesLogFormState;
+  setForm: React.Dispatch<React.SetStateAction<SalesLogFormState>>;
 }) {
   return (
     <UiCard title="기본 정보" desc="필수는 아니지만, 입력하면 검색/정리가 훨씬 쉬워져요." icon={Building2}>
@@ -27,7 +19,7 @@ export default function SalesLogNewBasicCard({
           <ClientNameInput
             value={form.clientName}
             clientId={form.clientId}
-            onChange={(name, id) => setForm((f: any) => ({ ...f, clientName: name, clientId: id }))}
+            onChange={(name, id) => setForm((f: SalesLogFormState) => ({ ...f, clientName: name, clientId: id }))}
             placeholder="(주)삼성전자"
           />
         </UiField>
@@ -35,7 +27,7 @@ export default function SalesLogNewBasicCard({
         <UiField label="담당자">
           <Input
             value={form.contactPerson}
-            onChange={(e) => setForm((f: any) => ({ ...f, contactPerson: e.target.value }))}
+            onChange={(e) => setForm((f: SalesLogFormState) => ({ ...f, contactPerson: e.target.value }))}
             placeholder="홍길동 부장"
             className="rounded-2xl bg-white border-slate-200 focus-visible:ring-2 focus-visible:ring-blue-200"
           />
@@ -45,7 +37,7 @@ export default function SalesLogNewBasicCard({
           <Input
             type="datetime-local"
             value={form.visitedAt}
-            onChange={(e) => setForm((f: any) => ({ ...f, visitedAt: e.target.value }))}
+            onChange={(e) => setForm((f: SalesLogFormState) => ({ ...f, visitedAt: e.target.value }))}
             className="rounded-2xl bg-white border-slate-200 focus-visible:ring-2 focus-visible:ring-blue-200"
           />
         </UiField>
@@ -53,7 +45,7 @@ export default function SalesLogNewBasicCard({
         <UiField label="장소 (선택)">
           <Input
             value={form.location}
-            onChange={(e) => setForm((f: any) => ({ ...f, location: e.target.value }))}
+            onChange={(e) => setForm((f: SalesLogFormState) => ({ ...f, location: e.target.value }))}
             placeholder="서울 강남구"
             className="rounded-2xl bg-white border-slate-200 focus-visible:ring-2 focus-visible:ring-blue-200"
           />

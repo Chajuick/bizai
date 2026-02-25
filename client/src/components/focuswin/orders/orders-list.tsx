@@ -1,5 +1,5 @@
 import OrderItemCard from "./order-item-card";
-import type { OrderStatus } from "@/hooks/focuswin/orders/useOrdersViewModel";
+import type { OrderRow, OrderStatus } from "@/types/order";
 
 export default function OrdersList({
   orders,
@@ -10,13 +10,13 @@ export default function OrdersList({
   statusChanging,
   onOpenDelivery,
 }: {
-  orders: any[];
+  orders: OrderRow[];
   formatKRW: (n: number) => string;
-  onEdit: (order: any) => void;
-  onDeleteRequest: (order: any) => void;
+  onEdit: (order: OrderRow) => void;
+  onDeleteRequest: (order: OrderRow) => void;
   onStatusChange: (id: number, status: OrderStatus) => void;
   statusChanging: boolean;
-  onOpenDelivery: (order: any) => void;
+  onOpenDelivery: (order: OrderRow) => void;
 }) {
   return (
     <div className="space-y-2">

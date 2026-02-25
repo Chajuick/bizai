@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { trpc } from "@/lib/trpc";
 import { usePromiseAlerts } from "@/hooks/usePromiseAlerts";
 import { Link } from "wouter";
+import { formatKRW } from "@/lib/format";
 import {
   BookOpen,
   Calendar,
@@ -21,16 +22,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import StatusBadge from "@/components/StatusBadge";
-
-function formatKRW(n: number) {
-  if (n >= 100_000_000) return `${(n / 100_000_000).toFixed(1)}억`;
-  if (n >= 10_000) return `${(n / 10_000).toFixed(0)}만`;
-  return n.toLocaleString();
-}
-
-function formatKRWFull(n: number) {
-  return `${n.toLocaleString()}원`;
-}
 
 function ClickableCard({
   children,
@@ -129,17 +120,16 @@ function EmptyState({
       </p>
 
       <div className="mt-4 flex justify-center">
-        <Link href={ctaHref}>
-          <button
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-bold text-white"
-            style={{
-              background: "var(--blueprint-accent)",
-              boxShadow: "0 10px 26px rgba(37,99,235,0.20)",
-            }}
-          >
-            <Plus size={16} />
-            {ctaLabel}
-          </button>
+        <Link
+          href={ctaHref}
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-bold text-white"
+          style={{
+            background: "var(--blueprint-accent)",
+            boxShadow: "0 10px 26px rgba(37,99,235,0.20)",
+          }}
+        >
+          <Plus size={16} />
+          {ctaLabel}
         </Link>
       </div>
     </div>
@@ -169,7 +159,7 @@ export default function Dashboard() {
     const diff = last - prev;
     const pct = (diff / prev) * 100;
     const sign = diff >= 0 ? "+" : "";
-    return `납품 지난달 대비 ${sign}${pct.toFixed(0)}% (${sign}${formatKRW(diff)}원)`;
+    return `납품 지난달 대비 ${sign}${pct.toFixed(0)}% (${sign}${formatKRW(diff)})`;
   }, [trend]);
 
   return (
@@ -183,17 +173,16 @@ export default function Dashboard() {
           </h1>
         </div>
 
-        <Link href="/sales-logs/new">
-          <button
-            className="flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-bold text-white transition active:scale-[0.99]"
-            style={{
-              background: "var(--blueprint-accent)",
-              boxShadow: "0 10px 26px rgba(37,99,235,0.22)",
-            }}
-          >
-            <Plus size={16} />
-            일지 작성
-          </button>
+        <Link
+          href="/sales-logs/new"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-bold text-white transition active:scale-[0.99]"
+          style={{
+            background: "var(--blueprint-accent)",
+            boxShadow: "0 10px 26px rgba(37,99,235,0.22)",
+          }}
+        >
+          <Plus size={16} />
+          일지 작성
         </Link>
       </div>
 
@@ -233,14 +222,14 @@ export default function Dashboard() {
               icon={ShoppingCart}
               label="진행 수주"
               value={stats?.activeOrdersCount ?? 0}
-              sub={`${formatKRW(stats?.activeOrdersTotal ?? 0)}원`}
+              sub={formatKRW(stats?.activeOrdersTotal ?? 0)}
               color="#f59e0b"
               href="/orders"
             />
             <KPICard
               icon={TrendingUp}
               label={`${monthLabel} 매출`}
-              value={`${formatKRW(stats?.monthlyRevenue ?? 0)}원`}
+              value={formatKRW(stats?.monthlyRevenue ?? 0)}
               sub="수금 완료"
               color="#10b981"
               href="/deliveries"
@@ -342,7 +331,7 @@ export default function Dashboard() {
                     boxShadow: "0 12px 30px rgba(15,23,42,0.08)",
                   }}
                   formatter={(v: number, name: string) => [
-                    formatKRWFull(v),
+                    formatKRW(v),
                     name === "order" ? "수주" : "납품",
                   ]}
                 />
@@ -514,10 +503,8 @@ export default function Dashboard() {
       )}
 
       {/* FAB */}
-      <Link href="/sales-logs/new">
-        <button className="fab lg:hidden" aria-label="일지 작성">
-          <Plus size={24} color="white" />
-        </button>
+      <Link href="/sales-logs/new" className="fab lg:hidden" aria-label="일지 작성">
+        <Plus size={24} color="white" />
       </Link>
     </div>
   );

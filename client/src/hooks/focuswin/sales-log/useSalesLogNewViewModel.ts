@@ -3,36 +3,19 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toLocalDatetimeInputValue } from "@/lib/utils";
 import { toast } from "sonner";
+import type {
+  MatchSuggestion,
+  PreSaveState,
+  SalesLogFormState,
+  AnalyzeOutput,
+} from "@/types/salesLog";
 
-export type MatchSuggestion = {
-  logId: number;
-  originalName: string;
-  matchedId: number;
-  matchedName: string;
-};
-
-type FormState = {
-  clientName: string;
-  clientId?: number;
-  contactPerson: string;
-  location: string;
-  visitedAt: string;
-  rawContent: string;
-  audioUrl: string;
-  transcribedText: string;
-};
-
-type PreSaveState = {
-  typedName: string;
-  matchedId: number;
-  matchedName: string;
-  analyze: boolean;
-};
+export type { MatchSuggestion };
 
 export function useSalesLogNewViewModel() {
   const [, navigate] = useLocation();
 
-  const [form, setForm] = useState<FormState>({
+  const [form, setForm] = useState<SalesLogFormState>({
     clientName: "",
     clientId: undefined,
     contactPerson: "",
@@ -89,7 +72,7 @@ export function useSalesLogNewViewModel() {
 
     if (analyze && result.id) {
       try {
-        const analysisResult: any = await analyzeMutation.mutateAsync({ id: result.id });
+        const analysisResult: AnalyzeOutput = await analyzeMutation.mutateAsync({ id: result.id });
 
         // ✅ matchSuggestion이 있으면 이동 보류하고 모달 띄우기
         if (analysisResult.matchSuggestion) {
@@ -214,7 +197,7 @@ export function useSalesLogNewViewModel() {
   }, [analyzeMutation.isPending, analyzeMutation.isSuccess, analyzeMutation.isError]);
 
   const bannerMessage = useMemo(() => {
-    const d: any = analyzeMutation.data;
+    const d = analyzeMutation.data;
     if (!d) return undefined;
     return `일정 ${d.promisesCreated ?? 0}개가 자동 등록되었습니다.`;
   }, [analyzeMutation.data]);

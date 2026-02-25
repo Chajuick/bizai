@@ -1,5 +1,4 @@
 // client/src/components/focuswin/clients/client-form-dialog.tsx
-"use client";
 
 import { Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -7,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import type { ClientFormState } from "./clients.types";
+import type { ClientFormState } from "@/types/client";
 
 export default function ClientFormDialog({
   open,

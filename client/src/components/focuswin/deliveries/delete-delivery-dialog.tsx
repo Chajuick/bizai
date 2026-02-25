@@ -1,5 +1,4 @@
 // client/src/components/focuswin/deliveries/delete-delivery-dialog.tsx
-"use client";
 
 import {
   AlertDialog,

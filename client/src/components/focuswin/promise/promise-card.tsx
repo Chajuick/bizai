@@ -1,12 +1,11 @@
-"use client";
-
 import * as React from "react";
 import { Calendar, CheckCircle, Clock, Edit2, MoreHorizontal, ShoppingCart, Trash2, XCircle } from "lucide-react";
+import type { EnhancedPromise } from "@/types/promise";
 
 import { WorkItemCard } from "@/components/focuswin/common/work-item-card";
 import StatusBadge from "@/components/StatusBadge";
 import { IconButton } from "@/components/focuswin/button";
-import Chip from "../chip";
+import Chip from "../common/chip";
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
@@ -21,12 +20,12 @@ export default function PromiseCard({
   onDeleteRequest,
   completePending,
 }: {
-  p: any;
-  onCreateOrder: (p: any) => void;
+  p: EnhancedPromise;
+  onCreateOrder: (p: EnhancedPromise) => void;
   onComplete: (id: number) => void;
-  onEdit: (p: any) => void;
-  onCancelRequest: (p: any) => void;
-  onDeleteRequest: (p: any) => void;
+  onEdit: (p: EnhancedPromise) => void;
+  onCancelRequest: (p: EnhancedPromise) => void;
+  onDeleteRequest: (p: EnhancedPromise) => void;
   completePending?: boolean;
 }) {
   const isScheduled = p.status === "scheduled";

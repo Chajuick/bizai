@@ -1,6 +1,6 @@
 import { ArrowLeft, Check, Loader2, Pencil, Sparkles, Trash2, XCircle } from "lucide-react";
 import PageHeader from "@/components/focuswin/page-header";
-import Chip from "@/components/focuswin/chip";
+import Chip from "@/components/focuswin/common/chip";
 
 type Props = {
   title: string;

@@ -1,14 +1,14 @@
-"use client";
-
 import { Link } from "wouter";
 import { BookOpen, ChevronRight } from "lucide-react";
+import { WorkItemCard } from "@/components/focuswin/common/work-item-card";
+import type { SalesLogRow } from "@/types/salesLog";
 
 export default function ClientRecentLogs({
   logs,
   loading,
   clientName,
 }: {
-  logs?: any[];
+  logs?: SalesLogRow[];
   loading: boolean;
   clientName: string;
 }) {
@@ -55,27 +55,41 @@ export default function ClientRecentLogs({
         </div>
       ) : (
         <div className="space-y-2">
-          {logs?.slice(0, 5).map((log: any) => (
-            <Link key={log.id} href={`/sales-logs/${log.id}`}>
-              <div className="group flex items-start gap-3 p-3 rounded-2xl border border-slate-100 hover:bg-slate-50 transition cursor-pointer">
-                <div className="w-9 h-9 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
-                  <BookOpen size={14} className="text-blue-600" />
-                </div>
+          {logs?.slice(0, 5).map((log) => (
+            <Link key={log.id} href={`/sales-logs/${log.id}`} className="block">
+              <WorkItemCard interactive className="p-3">
+                <WorkItemCard.Icon className="w-9 h-9">
+                  <BookOpen size={14} />
+                </WorkItemCard.Icon>
 
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-slate-900 line-clamp-2">
-                    {log.aiSummary ||
-                      (log.rawContent ? String(log.rawContent).slice(0, 120) : "")}
-                  </p>
-                  <p className="mt-1 text-xs font-semibold text-slate-500">
-                    {log.visitedAt ? new Date(log.visitedAt).toLocaleDateString("ko-KR") : ""}
-                  </p>
-                </div>
+                <div className="min-w-0 flex-1">
+                  <WorkItemCard.Header
+                    title={
+                      <div className="text-sm font-semibold text-slate-900 line-clamp-2 whitespace-normal">
+                        {log.aiSummary ||
+                          (log.rawContent ? String(log.rawContent).slice(0, 120) : "")}
+                      </div>
+                    }
+                    actions={
+                      <div className="w-8 h-8 rounded-2xl bg-white border border-slate-100 flex items-center justify-center transition group-hover:bg-blue-50 group-hover:border-blue-100 shrink-0">
+                        <ChevronRight size={16} className="text-slate-400 group-hover:text-blue-600" />
+                      </div>
+                    }
+                  />
 
-                <div className="w-8 h-8 rounded-2xl bg-white border border-slate-100 flex items-center justify-center transition group-hover:bg-blue-50 group-hover:border-blue-100 shrink-0">
-                  <ChevronRight size={16} className="text-slate-400 group-hover:text-blue-600" />
+                  <WorkItemCard.Footer
+                    left={
+                      <WorkItemCard.ScheduleMeta
+                        value={
+                          log.visitedAt
+                            ? new Date(log.visitedAt).toLocaleDateString("ko-KR")
+                            : ""
+                        }
+                      />
+                    }
+                  />
                 </div>
-              </div>
+              </WorkItemCard>
             </Link>
           ))}
         </div>

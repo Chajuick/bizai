@@ -6,14 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import ClientNameInput from "@/components/ClientNameInput";
+import type { PromiseFormState } from "@/types/promise";
 
-export type PromiseFormState = {
-  clientName: string;
-  clientId?: number;
-  title: string;
-  description: string;
-  scheduledAt: string;
-};
+export type { PromiseFormState };
 
 export default function PromiseFormDialog({
   open,
