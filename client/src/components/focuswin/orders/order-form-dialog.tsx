@@ -6,18 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-import type { OrderStatus } from "@/hooks/focuswin/orders/useOrdersViewModel";
-
-type FormState = {
-  clientName: string;
-  clientId: number | undefined;
-  productService: string;
-  amount: string;
-  status: OrderStatus;
-  contractDate: string;
-  expectedDeliveryDate: string;
-  notes: string;
-};
+import type { OrderFormState, OrderStatus } from "@/types/order";
 
 export default function OrderFormDialog({
   open,
@@ -31,8 +20,8 @@ export default function OrderFormDialog({
   open: boolean;
   onOpenChange: (o: boolean) => void;
   editing: boolean;
-  form: FormState;
-  setForm: React.Dispatch<React.SetStateAction<FormState>>;
+  form: OrderFormState;
+  setForm: React.Dispatch<React.SetStateAction<OrderFormState>>;
   onSubmit: (e: React.FormEvent) => void;
   isSubmitting: boolean;
 }) {

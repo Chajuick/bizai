@@ -1,5 +1,21 @@
-// client/src/components/focuswin/deliveries/deliveries.types.ts
+import type { RouterOutputs } from "./router";
+
+/** tRPC 응답에서 추론한 납품 행 타입 */
+export type DeliveryRow = RouterOutputs["deliveries"]["list"][number];
+
 export type DeliveryStatus = "pending" | "delivered" | "invoiced" | "paid";
+
+/** 납품 생성/수정 폼 상태 */
+export type DeliveryFormState = {
+  orderId: string;
+  clientName: string;
+  revenueAmount: string;
+  deliveryStatus: DeliveryStatus;
+  deliveredAt: string;
+  notes: string;
+};
+
+export type DeleteConfirmState = null | { id: number; title: string };
 
 export const deliveryTabs: { key: DeliveryStatus | "all"; label: string }[] = [
   { key: "all", label: "전체" },
@@ -15,14 +31,3 @@ export const deliveryStatusLabels: Record<DeliveryStatus, string> = {
   invoiced: "청구완료",
   paid: "수금완료",
 };
-
-export type DeliveryFormState = {
-  orderId: string;
-  clientName: string;
-  revenueAmount: string;
-  deliveryStatus: DeliveryStatus;
-  deliveredAt: string;
-  notes: string;
-};
-
-export type DeleteConfirmState = null | { id: number; title: string };

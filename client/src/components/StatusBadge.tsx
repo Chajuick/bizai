@@ -1,34 +1,38 @@
-const statusMap: Record<string, { label: string; cls: string }> = {
-  scheduled:   { label: "예정", cls: "badge-scheduled" },
-  completed:   { label: "완료", cls: "badge-completed" },
-  canceled:    { label: "취소", cls: "badge-canceled" },
-  overdue:     { label: "지연", cls: "badge-overdue" },
-  imminent:    { label: "임박", cls: "badge-imminent" },
-  proposal:    { label: "제안", cls: "badge-proposal" },
-  negotiation: { label: "협상", cls: "badge-negotiation" },
-  confirmed:   { label: "확정", cls: "badge-confirmed" },
-  pending:     { label: "대기", cls: "badge-pending" },
-  delivered:   { label: "납품완료", cls: "badge-delivered" },
-  invoiced:    { label: "청구완료", cls: "badge-billed" },
-  paid:        { label: "수금완료", cls: "badge-paid" },
-  unbilled:    { label: "미청구", cls: "badge-unbilled" },
-  billed:      { label: "청구완료", cls: "badge-billed" },
+import Chip, { type ChipTone } from "@/components/focuswin/common/chip";
+
+type StatusInfo = { label: string; tone: ChipTone };
+
+const statusMap: Record<string, StatusInfo> = {
+  scheduled:   { label: "예정",   tone: "blue"    },
+  completed:   { label: "완료",   tone: "emerald" },
+  canceled:    { label: "취소",   tone: "slate"   },
+  overdue:     { label: "지연",   tone: "red"     },
+  imminent:    { label: "임박",   tone: "orange"  },
+  proposal:    { label: "제안",   tone: "amber"   },
+  negotiation: { label: "협상",   tone: "orange"  },
+  confirmed:   { label: "확정",   tone: "emerald" },
+  pending:     { label: "대기",   tone: "slate"   },
+  delivered:   { label: "납품완료", tone: "blue"  },
+  invoiced:    { label: "청구완료", tone: "sky"   },
+  paid:        { label: "수금완료", tone: "emerald"},
+  unbilled:    { label: "미청구", tone: "amber"   },
+  billed:      { label: "청구완료", tone: "sky"   },
 };
 
-interface StatusBadgeProps {
+export default function StatusBadge({
+  status,
+  size = "sm",
+}: {
   status: string;
   size?: "sm" | "md";
-}
-
-export default function StatusBadge({ status, size = "sm" }: StatusBadgeProps) {
+}) {
   if (!status) return null;
-  
-  const info = statusMap[status] ?? { label: status, cls: "badge-pending" };
-  const sizeClass = size === "sm" ? "text-[10px] px-2 py-0.5" : "text-xs px-2.5 py-1";
-
+  const info = statusMap[status] ?? { label: status, tone: "slate" as ChipTone };
   return (
-    <span className={`inline-flex items-center rounded font-medium font-mono ${sizeClass} ${info.cls}`}>
-      {info.label}
-    </span>
+    <Chip
+      label={info.label}
+      tone={info.tone}
+      size={size === "md" ? "sm" : "xs"}
+    />
   );
 }

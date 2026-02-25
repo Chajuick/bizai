@@ -5,14 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import type { OrderQuickFormState } from "@/types/order";
+import type { EnhancedPromise } from "@/types/promise";
 
-export type OrderFormState = {
-  productService: string;
-  amount: string;
-  status: "proposal" | "negotiation" | "confirmed";
-  contractDate: string;
-  notes: string;
-};
+export type { OrderQuickFormState };
+/** @deprecated OrderFormState → OrderQuickFormState 로 변경되었습니다. @/types/order 에서 import하세요. */
+export type OrderFormState = OrderQuickFormState;
 
 export default function CreateOrderDialog({
   open,
@@ -25,9 +23,9 @@ export default function CreateOrderDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  selectedPromise: any | null;
-  orderForm: OrderFormState;
-  setOrderForm: React.Dispatch<React.SetStateAction<OrderFormState>>;
+  selectedPromise: EnhancedPromise | null;
+  orderForm: OrderQuickFormState;
+  setOrderForm: React.Dispatch<React.SetStateAction<OrderQuickFormState>>;
   onSubmit: (e: React.FormEvent) => void;
   isSubmitting?: boolean;
 }) {
@@ -93,7 +91,7 @@ export default function CreateOrderDialog({
               </Label>
               <select
                 value={orderForm.status}
-                onChange={(e) => setOrderForm((f) => ({ ...f, status: e.target.value as any }))}
+                onChange={(e) => setOrderForm((f) => ({ ...f, status: e.target.value as OrderQuickFormState["status"] }))}
                 className="w-full px-3 py-2 rounded-2xl border border-slate-200 bg-white text-slate-900"
               >
                 <option value="proposal">제안</option>

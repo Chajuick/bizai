@@ -2,14 +2,7 @@ import { useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { toLocalDatetimeInputValue } from "@/lib/utils";
 import { toast } from "sonner";
-
-type EditForm = {
-  clientName: string;
-  contactPerson: string;
-  location: string;
-  visitedAt: string;
-  rawContent: string;
-};
+import type { SalesLogEditForm } from "@/types/salesLog";
 
 export function useSalesLogDetailViewModel(logId: number) {
   const utils = trpc.useUtils();
@@ -24,7 +17,7 @@ export function useSalesLogDetailViewModel(logId: number) {
   const update = trpc.salesLogs.update.useMutation();
 
   const [isEditing, setIsEditing] = useState(false);
-  const [editForm, setEditForm] = useState<EditForm>({
+  const [editForm, setEditForm] = useState<SalesLogEditForm>({
     clientName: "",
     contactPerson: "",
     location: "",
@@ -75,7 +68,7 @@ export function useSalesLogDetailViewModel(logId: number) {
   }, [analyze.isPending, analyze.isSuccess, analyze.isError]);
 
   const bannerMessage = useMemo(() => {
-    const d: any = analyze.data;
+    const d = analyze.data;
     if (!d) return undefined;
     return `일정 ${d.promisesCreated ?? 0}개가 자동 등록되었습니다.`;
   }, [analyze.data]);

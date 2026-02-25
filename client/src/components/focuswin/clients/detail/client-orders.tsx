@@ -1,21 +1,16 @@
-"use client";
-
 import { Link } from "wouter";
 import { ShoppingCart } from "lucide-react";
 import StatusBadge from "@/components/StatusBadge";
+import { WorkItemCard } from "@/components/focuswin/common/work-item-card";
+import type { OrderRow } from "@/types/order";
 
-function formatKRW(n: number) {
-  const v = Number(n || 0);
-  if (v >= 100_000_000) return `${(v / 100_000_000).toFixed(1)}억원`;
-  if (v >= 10_000) return `${(v / 10_000).toFixed(0)}만원`;
-  return `${v.toLocaleString()}원`;
-}
+import { formatKRW } from "@/lib/format";
 
 export default function ClientOrders({
   orders,
   loading,
 }: {
-  orders?: any[];
+  orders?: OrderRow[];
   loading: boolean;
 }) {
   return (
@@ -58,27 +53,27 @@ export default function ClientOrders({
         </div>
       ) : (
         <div className="space-y-2">
-          {orders?.map((order: any) => (
-            <div
-              key={order.id}
-              className="flex items-start gap-3 p-3 rounded-2xl border border-slate-100"
-            >
-              <div className="w-9 h-9 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center shrink-0">
-                <ShoppingCart size={14} className="text-blue-600" />
-              </div>
+          {orders?.map((order) => (
+            <WorkItemCard key={order.id} className="p-3">
+              <WorkItemCard.Icon
+                className="w-9 h-9"
+                variant={order.status === "canceled" ? "slate" : "primary"}
+              >
+                <ShoppingCart size={14} />
+              </WorkItemCard.Icon>
 
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
+              <div className="min-w-0 flex-1">
+                <WorkItemCard.Header
+                  title={order.productService}
+                  tags={<StatusBadge status={order.status} />}
+                />
+                <WorkItemCard.Body>
                   <p className="text-sm font-black text-slate-900">
-                    {order.productService}
+                    {formatKRW(Number(order.amount))}
                   </p>
-                  <StatusBadge status={order.status} />
-                </div>
-                <p className="mt-1 text-sm font-black text-slate-900">
-                  {formatKRW(Number(order.amount))}
-                </p>
+                </WorkItemCard.Body>
               </div>
-            </div>
+            </WorkItemCard>
           ))}
         </div>
       )}

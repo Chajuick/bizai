@@ -1,5 +1,3 @@
-"use client";
-
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Clock } from "lucide-react";
@@ -131,11 +129,11 @@ function Header({ title, tags, actions, className }: HeaderProps) {
 
       {/* ✅ 오른쪽 액션 영역 폭 고정 + 우측 정렬 */}
       {actions ? (
-        <div className="shrink-0 min-w-[88px] flex justify-end text-right">
+        <div className="shrink-0 sm:min-w-[88px] flex justify-end text-right">
           {actions}
         </div>
       ) : (
-        <div className="shrink-0 min-w-[88px]" />
+        <div className="shrink-0 sm:min-w-[88px]" />
       )}
     </div>
   );
@@ -155,7 +153,7 @@ function Footer({ left, right, className }: FooterProps) {
   if (!left && !right) return null;
 
   return (
-    <div className={cn("mt-3 flex items-end justify-between gap-3", className)}>
+    <div className={cn("mt-1 flex items-end justify-between gap-3", className)}>
       <div className="min-w-0">{left}</div>
       <div className="shrink-0">{right}</div>
     </div>
@@ -174,7 +172,7 @@ function Meta({ icon, label, value, tone = "muted", className }: MetaProps) {
   return (
     <div
       className={cn(
-        "flex items-center gap-2 text-xs font-semibold",
+        "flex items-center gap-2 text-xs",
         tone === "muted" ? "text-slate-500" : "text-slate-700",
         className
       )}

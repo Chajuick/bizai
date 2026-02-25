@@ -1,6 +1,5 @@
 // hooks/focuswin/promise/usePromiseActions.ts
 import { trpc } from "@/lib/trpc";
-import { toast } from "sonner";
 
 export function usePromiseActions() {
   const utils = trpc.useUtils();
@@ -93,6 +92,5 @@ export function usePromiseActions() {
     createOrderAndCompletePromise,
 
     isBusy,
-    toast,
   };
 }

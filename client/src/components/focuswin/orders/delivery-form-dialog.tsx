@@ -5,14 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
-import type { DeliveryStatus } from "@/hooks/focuswin/orders/useOrdersViewModel";
-
-type DeliveryFormState = {
-  revenueAmount: string;
-  deliveryStatus: DeliveryStatus;
-  deliveredAt: string;
-  notes: string;
-};
+import type { OrderDeliveryFormState, OrderRow } from "@/types/order";
+import type { DeliveryStatus } from "@/types/delivery";
 
 export default function DeliveryFormDialog({
   open,
@@ -25,9 +19,9 @@ export default function DeliveryFormDialog({
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
-  selectedOrder: any | null;
-  deliveryForm: DeliveryFormState;
-  setDeliveryForm: React.Dispatch<React.SetStateAction<DeliveryFormState>>;
+  selectedOrder: OrderRow | null;
+  deliveryForm: OrderDeliveryFormState;
+  setDeliveryForm: React.Dispatch<React.SetStateAction<OrderDeliveryFormState>>;
   onSubmit: (e: React.FormEvent) => void;
   isSubmitting: boolean;
 }) {

@@ -1,11 +1,4 @@
-"use client";
-
-function formatKRW(n: number) {
-  const v = Number(n || 0);
-  if (v >= 100_000_000) return `${(v / 100_000_000).toFixed(1)}억원`;
-  if (v >= 10_000) return `${(v / 10_000).toFixed(0)}만원`;
-  return `${v.toLocaleString()}원`;
-}
+import { formatKRW } from "@/lib/format";
 
 export default function ClientKpiCards({
   logsCount,

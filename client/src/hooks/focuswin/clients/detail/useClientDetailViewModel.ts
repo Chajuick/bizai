@@ -1,5 +1,3 @@
-"use client";
-
 import { useLocation, useParams } from "wouter";
 import { trpc } from "@/lib/trpc";
 
@@ -15,8 +13,8 @@ export function useClientDetailViewModel() {
 
   const totalOrderAmount =
     ordersQuery.data
-      ?.filter((o: any) => o.status !== "canceled")
-      .reduce((sum: number, o: any) => sum + Number(o.amount || 0), 0) ?? 0;
+      ?.filter((o) => o.status !== "canceled")
+      .reduce((sum, o) => sum + Number(o.amount || 0), 0) ?? 0;
 
   return {
     clientId,

@@ -1,6 +1,4 @@
 // client/src/components/focuswin/deliveries/delivery-form-dialog.tsx
-"use client";
-
 import { Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -8,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 
-import type { DeliveryFormState, DeliveryStatus } from "./deliveries.types";
+import type { DeliveryFormState, DeliveryStatus } from "@/types/delivery";
 
 export default function DeliveryFormDialog({
   open,

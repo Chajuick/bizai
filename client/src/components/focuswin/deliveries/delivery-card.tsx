@@ -1,5 +1,3 @@
-"use client";
-
 import * as React from "react";
 import { TrendingUp, MoreHorizontal, Pencil, Trash2, Package, FileText, BadgeCheck } from "lucide-react";
 
@@ -8,7 +6,7 @@ import { WorkItemCard } from "@/components/focuswin/common/work-item-card";
 import { StepProgress } from "@/components/focuswin/common/step-progress";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
-import type { DeliveryStatus } from "./deliveries.types";
+import type { DeliveryRow, DeliveryStatus } from "@/types/delivery";
 
 const DELIVERY_STEPS = [
   { key: "pending", label: "대기" },
@@ -51,10 +49,10 @@ export default function DeliveryCard({
   onStatusUpdate,
   statusUpdatePending,
 }: {
-  deliveries: any[];
+  deliveries: DeliveryRow[];
   formatKRW: (n: number) => string;
-  onEdit: (d: any) => void;
-  onAskDelete: (d: any) => void;
+  onEdit: (d: DeliveryRow) => void;
+  onAskDelete: (d: DeliveryRow) => void;
   onStatusUpdate: (id: number, status: DeliveryStatus) => void;
   statusUpdatePending: boolean;
 }) {

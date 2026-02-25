@@ -1,7 +1,8 @@
 import * as React from "react";
 import { BookOpen, Brain, ChevronRight, Mic, MapPin } from "lucide-react";
 import { WorkItemCard } from "@/components/focuswin/common/work-item-card"; // 경로 맞게
-import Chip from "../chip";
+import Chip from "../common/chip";
+import type { SalesLogRow } from "@/types/salesLog";
 
 export default function SalesLogCard({
   log,
@@ -10,7 +11,7 @@ export default function SalesLogCard({
   description,
   className = "",
 }: {
-  log: any;
+  log: SalesLogRow;
   title: React.ReactNode;
   subtitle?: React.ReactNode;
   description?: React.ReactNode;
@@ -41,24 +42,23 @@ export default function SalesLogCard({
               {log.isProcessed ? <Chip icon={Brain} label="AI" tone="violet" /> : null}
             </div>
           }
-          actions={
-            <div className="flex flex-col items-end gap-2 shrink-0">
-              {/* ✅ location이 날짜 자리로 */}
-              {log.location ? (
-                <div className="max-w-[220px]">
-                  <WorkItemCard.Meta icon={<MapPin size={14} />} value={log.location} className="justify-end" />
-                </div>
-              ) : (
-                <div className="h-[18px]" /> // 자리 유지(카드 흔들림 방지)
-              )}
-            </div>
-          }
         />
 
         <WorkItemCard.Body>
           <div className="flex items-center justify-between gap-3">
             {/* 왼쪽: 설명 */}
-            <div className="min-w-0 flex-1">{description ? <p className="text-sm text-slate-600 line-clamp-2">{description}</p> : null}</div>
+            <div>
+              <div className="min-w-0 flex-1">
+                {description ? (
+                  <p className="text-sm text-slate-600 line-clamp-1">
+                    {description}
+                  </p>
+                ) : null}
+              </div>
+              <div className="max-w-[220px] mt-1">
+                {log.location && <WorkItemCard.Meta icon={<MapPin size={14} />} value={log.location} />}
+              </div>
+            </div>
 
             {/* 오른쪽: chevron 버튼 (Body의 가운데 정렬됨) */}
             <div className="shrink-0">

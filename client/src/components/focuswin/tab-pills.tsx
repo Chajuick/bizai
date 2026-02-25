@@ -21,7 +21,7 @@ export default function TabPills<T extends string>({
   itemClassName?: string;
 }) {
   return (
-    <div className={`flex items-center gap-2 overflow-x-auto pb-1 ${className}`}>
+    <div role="tablist" className={`flex items-center gap-2 overflow-x-auto pb-1 ${className}`}>
       {tabs.map((tab) => {
         const active = value === tab.key;
 
@@ -29,6 +29,8 @@ export default function TabPills<T extends string>({
           <button
             key={tab.key}
             type="button"
+            role="tab"
+            aria-selected={active}
             onClick={() => onChange(tab.key)}
             disabled={tab.disabled}
             className={[

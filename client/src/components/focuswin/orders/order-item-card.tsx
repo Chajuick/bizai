@@ -5,7 +5,7 @@ import { StepProgress } from "@/components/focuswin/common/step-progress";
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
-import type { OrderStatus } from "@/hooks/focuswin/orders/useOrdersViewModel";
+import type { OrderRow, OrderStatus } from "@/types/order";
 
 const ORDER_STEPS = [
   { key: "proposal", label: "제안" },
@@ -39,7 +39,7 @@ export default function OrderItemCard({
   statusChanging,
   onOpenDelivery,
 }: {
-  order: any;
+  order: OrderRow;
   formatKRW: (n: number) => string;
   onEdit: () => void;
   onDelete: () => void;

@@ -1,5 +1,3 @@
-"use client";
-
 import { Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -11,11 +9,12 @@ import ClientKpiCards from "@/components/focuswin/clients/detail/client-kpi-card
 import ClientRecentLogs from "@/components/focuswin/clients/detail/client-recent-logs";
 import ClientOrders from "@/components/focuswin/clients/detail/client-orders";
 import PageShell from "@/components/focuswin/common/page-shell";
+import SkeletonCardList from "@/components/focuswin/skeleton-card-list";
 
 export default function ClientDetail() {
   const vm = useClientDetailViewModel();
 
-  if (vm.isLoading) return <div className="p-6">Loading...</div>;
+  if (vm.isLoading) return <PageShell><SkeletonCardList count={5} variant="detailed" /></PageShell>;
 
   if (!vm.client) {
     return (

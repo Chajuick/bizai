@@ -1,20 +1,18 @@
-"use client";
-
 import { useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
-import { Plus } from "lucide-react";
+import { formatKRW } from "@/lib/format";
+import type {
+  OrderRow,
+  OrderStatus,
+  OrderFormState,
+  OrderDeliveryFormState,
+  DeliveryStatus,
+} from "@/types";
+import { orderStatusTabs } from "@/types";
 
-export type OrderStatus = "proposal" | "negotiation" | "confirmed" | "canceled";
-export type DeliveryStatus = "pending" | "delivered" | "invoiced" | "paid";
-
-export const statusTabs: { key: OrderStatus | "all"; label: string }[] = [
-  { key: "all", label: "전체" },
-  { key: "proposal", label: "제안" },
-  { key: "negotiation", label: "협상" },
-  { key: "confirmed", label: "확정" },
-  { key: "canceled", label: "취소" },
-];
+export type { OrderStatus, DeliveryStatus };
+export const statusTabs = orderStatusTabs;
 
 export function useOrdersViewModel() {
   const [activeTab, setActiveTab] = useState<OrderStatus | "all">("all");
@@ -22,25 +20,25 @@ export function useOrdersViewModel() {
   const [showForm, setShowForm] = useState(false);
   const [showDeliveryForm, setShowDeliveryForm] = useState(false);
 
-  const [selectedOrder, setSelectedOrder] = useState<any | null>(null); // 원하면 TRPC 타입으로 바꿔줄게
+  const [selectedOrder, setSelectedOrder] = useState<OrderRow | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
 
   const [confirm, setConfirm] = useState<null | { id: number; title: string }>(null);
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<OrderFormState>({
     clientName: "",
-    clientId: undefined as number | undefined,
+    clientId: undefined,
     productService: "",
     amount: "",
-    status: "proposal" as OrderStatus,
+    status: "proposal",
     contractDate: "",
     expectedDeliveryDate: "",
     notes: "",
   });
 
-  const [deliveryForm, setDeliveryForm] = useState({
+  const [deliveryForm, setDeliveryForm] = useState<OrderDeliveryFormState>({
     revenueAmount: "",
-    deliveryStatus: "pending" as DeliveryStatus,
+    deliveryStatus: "pending",
     deliveredAt: "",
     notes: "",
   });
@@ -101,7 +99,7 @@ export function useOrdersViewModel() {
     }
   };
 
-  const handleEdit = (order: any) => {
+  const handleEdit = (order: OrderRow) => {
     setEditingId(order.id);
     setForm({
       clientName: order.clientName,
@@ -146,7 +144,7 @@ export function useOrdersViewModel() {
     }
   };
 
-  const requestDelete = (order: any) => setConfirm({ id: order.id, title: order.productService });
+  const requestDelete = (order: OrderRow) => setConfirm({ id: order.id, title: order.productService });
 
   const handleDelete = async (id: number) => {
     try {
@@ -170,7 +168,7 @@ export function useOrdersViewModel() {
     }
   };
 
-  const openDeliveryForm = (order: any) => {
+  const openDeliveryForm = (order: OrderRow) => {
     setSelectedOrder(order);
     setDeliveryForm({
       revenueAmount: order.amount ? String(Math.round(Number(order.amount))) : "",
@@ -225,12 +223,6 @@ export function useOrdersViewModel() {
     return { total, confirmed };
   }, [orders]);
 
-  const formatKRW = (n: number) => {
-    if (n >= 100_000_000) return `${(n / 100_000_000).toFixed(1)}억원`;
-    if (n >= 10_000) return `${(n / 10_000).toFixed(0)}만원`;
-    return `${n.toLocaleString()}원`;
-  };
-
   return {
     // state
     activeTab,
@@ -276,7 +268,5 @@ export function useOrdersViewModel() {
     resetDeliveryForm,
     handleCreateDelivery,
 
-    // icons (page에서 FAB에 쓰려고)
-    icons: { Plus },
   };
 }

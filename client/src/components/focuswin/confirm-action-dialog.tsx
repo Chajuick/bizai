@@ -9,12 +9,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import type { ConfirmState } from "@/types/promise";
 
-export type ConfirmState = null | {
-  type: "delete" | "cancel";
-  id: number;
-  title: string;
-};
+export type { ConfirmState };
 
 export default function ConfirmActionDialog({
   confirm,

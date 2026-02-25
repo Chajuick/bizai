@@ -1,12 +1,12 @@
-"use client";
-
+import type React from "react";
 import { Phone, Mail, MapPin, Users } from "lucide-react";
+import type { ClientRow } from "@/types/client";
 
 function getInitial(name: string) {
   return (name || "").trim()?.[0] ?? "C";
 }
 
-export default function ClientProfileCard({ client }: { client: any }) {
+export default function ClientProfileCard({ client }: { client: ClientRow }) {
   return (
     <div
       className="rounded-3xl border border-slate-100 bg-white p-4 mb-4"
@@ -56,7 +56,7 @@ function Row({
   label,
   value,
 }: {
-  icon: any;
+  icon: React.ElementType;
   label: string;
   value: string;
 }) {
