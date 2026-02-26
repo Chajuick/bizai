@@ -1,1 +1,0 @@
-ALTER TABLE `promises` ADD `amount` decimal(15,2);

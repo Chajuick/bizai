@@ -43,7 +43,7 @@ function DropdownMenuContent({
         className={cn(
           // base
           "z-50 min-w-[10rem] overflow-hidden",
-          // toss-like surface
+          // fowin-like surface
           "rounded-2xl border border-slate-100 bg-white text-slate-900 shadow-xl",
           // motion (subtle)
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
@@ -86,9 +86,9 @@ function DropdownMenuItem({
       className={cn(
         // layout
         "relative flex items-center gap-2",
-        // toss spacing
+        // fowin spacing
         "px-3 py-2",
-        // toss rounding
+        // fowin rounding
         "rounded-xl",
         // interactive
         "cursor-pointer select-none outline-none",

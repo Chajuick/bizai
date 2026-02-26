@@ -1,37 +1,41 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import AppLayout from "./components/AppLayout";
-import Dashboard from "./pages/Dashboard";
-import SalesLogs from "./pages/SalesLogs";
-import SalesLogDetail from "./pages/SalesLogDetail";
-import SalesLogNew from "./pages/SalesLogNew";
-import Promises from "./pages/Promises";
-import Orders from "./pages/Orders";
-import Deliveries from "./pages/Deliveries";
-import Clients from "./pages/Clients";
-import ClientDetail from "./pages/ClientDetail";
-import LandingPage from "./pages/LandingPage";
+import DashHome from "./pages/Dash/DashHome";
+import SaleList from "./pages/Sale/SaleList";
+import SaleDeta from "./pages/Sale/SaleDeta";
+import SaleRegi from "./pages/Sale/SaleRegi";
+import ScheList from "./pages/Sche/ScheList";
+import OrdeList from "./pages/Orde/OrdeList";
+import ShipList from "./pages/Ship/SaleList";
+import ClieList from "./pages/Clie/ClieList";
+import ClieDeta from "./pages/Clie/ClieDeta";
+import LandPage from "./pages/Publ/LandPage";
+import ErroPage from "@/pages/Publ/ErroPage";
+import DevsShow from "./pages/Devs/DevsShow";
 import { useAuth } from "./_core/hooks/useAuth";
+
+const DEV = import.meta.env.DEV;
 
 function AuthenticatedApp() {
   return (
     <AppLayout>
       <Switch>
-        <Route path="/" component={Dashboard} />
-        <Route path="/sales-logs" component={SalesLogs} />
-        <Route path="/sales-logs/new" component={SalesLogNew} />
-        <Route path="/sales-logs/:id" component={SalesLogDetail} />
-        <Route path="/promises" component={Promises} />
-        <Route path="/orders" component={Orders} />
-        <Route path="/deliveries" component={Deliveries} />
-        <Route path="/clients" component={Clients} />
-        <Route path="/clients/:id" component={ClientDetail} />
-        <Route path="/404" component={NotFound} />
-        <Route component={NotFound} />
+        <Route path="/" component={DashHome} />
+        <Route path="/sale-list" component={SaleList} />
+        <Route path="/sale-list/regi" component={SaleRegi} />
+        <Route path="/sale-list/:id" component={SaleDeta} />
+        <Route path="/sche-list" component={ScheList} />
+        <Route path="/orde-list" component={OrdeList} />
+        <Route path="/ship-list" component={ShipList} />
+        <Route path="/clie-list" component={ClieList} />
+        <Route path="/clie-list/:id" component={ClieDeta} />
+        <Route path="/404" component={ErroPage} />
+        {DEV ? <Route path="/__dev/components" component={DevsShow} /> : null}
+        <Route component={ErroPage} />
       </Switch>
     </AppLayout>
   );
@@ -52,7 +56,7 @@ function Router() {
       </div>
     );
   }
-  if (!isAuthenticated) return <LandingPage />;
+  if (!isAuthenticated) return <LandPage />;
   return <AuthenticatedApp />;
 }
 

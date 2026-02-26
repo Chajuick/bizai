@@ -8,6 +8,7 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -27,11 +28,13 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -43,7 +46,7 @@
 }
 
 /* ─────────────────────────────────────────────
-   Toss-like Light Theme (keep bp-* structure)
+   Fowin-like Light Theme (keep bp-* structure)
    ───────────────────────────────────────────── */
 :root {
   /* Blueprint variables now represent "BizAI Light" tokens */
@@ -51,12 +54,12 @@
   --blueprint-surface: #ffffff; /* card */
   --blueprint-surface-2: #f1f5f9; /* slate-100 */
   --blueprint-border: rgba(15, 23, 42, 0.08); /* subtle slate border */
-  --blueprint-grid: rgba(15, 23, 42, 0.03); /* very light grid */
+  --blueprint-grid: rgba(15, 23, 42, 0.03); /* very light grid (optional utility) */
   --blueprint-line: rgba(37, 99, 235, 0.28); /* brand line */
 
   --blueprint-accent: #2563eb; /* blue-600 */
   --blueprint-accent-bright: #1d4ed8; /* blue-700 */
-  --blueprint-cyan: #0ea5e9; /* sky-500 (cleaner than neon cyan) */
+  --blueprint-cyan: #0ea5e9; /* sky-500 */
 
   --blueprint-text: #0f172a; /* slate-900 */
   --blueprint-text-muted: #475569; /* slate-600 */
@@ -70,10 +73,12 @@
   /* shadcn/tailwind tokens → light */
   --radius: 1rem;
 
-  --background: oklch(0.985 0.005 240); /* near white */
+  --background: oklch(0.985 0 0);
   --foreground: oklch(0.18 0.02 240); /* slate-ish */
+
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.18 0.02 240);
+
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.18 0.02 240);
 
@@ -83,7 +88,7 @@
   --secondary: oklch(0.97 0.01 240); /* slate-50 */
   --secondary-foreground: oklch(0.24 0.02 240);
 
-  --muted: oklch(0.97 0.01 240);
+  --muted: oklch(0.97 0 0);
   --muted-foreground: oklch(0.5 0.02 240);
 
   --accent: oklch(0.95 0.02 240);
@@ -110,24 +115,58 @@
   --sidebar-accent-foreground: oklch(0.28 0.02 240);
   --sidebar-border: oklch(0.88 0.01 240);
   --sidebar-ring: oklch(0.62 0.19 250);
+
+  /* ✅ Focuswin-like elevation + ring tokens (light) */
+  --fowin-card-bg: var(--card);
+  --fowin-card-fg: var(--card-foreground);
+
+  --fowin-border: color-mix(in oklch, var(--foreground) 8%, transparent);
+  --fowin-border-hover: color-mix(in oklch, var(--primary) 22%, transparent);
+
+  /* 얕은 기본 그림자 / 토스톤 */
+  --fowin-shadow-card: 0 6px 18px rgba(15, 23, 42, 0.04);
+  --fowin-shadow-card-hover: 0 12px 30px rgba(15, 23, 42, 0.07);
+
+  /* focus ring은 컴포넌트에서 ring-2 쓰지 말고 이걸로 통일 */
+  --fowin-ring-color: color-mix(in oklch, var(--primary) 18%, transparent);
+  --fowin-ring: 0 0 0 4px var(--fowin-ring-color);
+
+  /* pressed(눌림)에서 살짝만 */
+  --fowin-press-y: 0px;
+  --fowin-press-scale: 0.99;
 }
 
-/* Optional: keep .dark if you want later. For now, light is default.
-   If you plan to re-enable dark mode, we can reintroduce blueprint-dark tokens. */
 .dark {
-  /* keep as-is or redefine later; for now let it behave like light to avoid mismatch */
-  --background: oklch(0.985 0.005 240);
-  --foreground: oklch(0.18 0.02 240);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.02 240);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.02 240);
-  --border: oklch(0.88 0.01 240);
-  --input: oklch(0.97 0.01 240);
-  --ring: oklch(0.62 0.19 250);
-  --sidebar: oklch(0.99 0.005 240);
-  --sidebar-foreground: oklch(0.22 0.02 240);
-  --sidebar-border: oklch(0.88 0.01 240);
+  color-scheme: dark;
+
+  --background: oklch(0.16 0.02 240);
+  --foreground: oklch(0.95 0.01 240);
+
+  --card: oklch(0.2 0.02 240);
+  --card-foreground: oklch(0.95 0.01 240);
+
+  --popover: oklch(0.2 0.02 240);
+  --popover-foreground: oklch(0.95 0.01 240);
+
+  --secondary: oklch(0.24 0.02 240);
+  --secondary-foreground: oklch(0.94 0.01 240);
+
+  --muted: oklch(0.24 0.02 240);
+  --muted-foreground: oklch(0.72 0.02 240);
+
+  --accent: oklch(0.24 0.02 240);
+  --accent-foreground: oklch(0.94 0.01 240);
+
+  --border: oklch(0.32 0.02 240);
+  --input: oklch(0.28 0.02 240);
+
+  --ring: var(--primary);
+
+  --fowin-border: color-mix(in oklch, var(--foreground) 10%, transparent);
+  --fowin-border-hover: color-mix(in oklch, var(--primary) 30%, transparent);
+  --fowin-shadow-card: 0 6px 18px rgba(0, 0, 0, 0.35);
+  --fowin-shadow-card-hover: 0 12px 30px rgba(0, 0, 0, 0.45);
+  --fowin-ring-color: color-mix(in oklch, var(--primary) 22%, transparent);
 }
 
 @layer base {
@@ -136,16 +175,11 @@
   }
 
   html {
-    color-scheme: light; /* ✅ 중요: 다크에서 라이트로 */
+    color-scheme: light;
   }
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    background-color: var(--blueprint-bg);
-
-    /* ✅ Grid는 '토스'에서는 거의 안 보이게: 아주 약하게 */
-    background-image: linear-gradient(var(--blueprint-grid) 1px, transparent 1px), linear-gradient(90deg, var(--blueprint-grid) 1px, transparent 1px);
-    background-size: 40px 40px;
 
     min-height: 100vh;
     font-family:
@@ -193,6 +227,13 @@
   }
 }
 
+@layer utilities {
+  .bg-fowin-grid {
+    background-image: linear-gradient(var(--blueprint-grid) 1px, transparent 1px), linear-gradient(90deg, var(--blueprint-grid) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+}
+
 @layer components {
   .container {
     width: 100%;
@@ -201,10 +242,7 @@
     padding-left: 1rem;
     padding-right: 1rem;
   }
-  .flex {
-    min-height: 0;
-    min-width: 0;
-  }
+
   @media (min-width: 640px) {
     .container {
       padding-left: 1.5rem;
@@ -219,7 +257,7 @@
     }
   }
 
-  /* ✅ Toss-like Card (keep class name .bp-card) */
+  /* Fowin-like Card (keep class name .bp-card) */
   .bp-card {
     background: var(--blueprint-surface);
     border: 1px solid var(--blueprint-border);
@@ -227,7 +265,7 @@
     position: relative;
     overflow: hidden;
 
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    box-shadow: var(--fowin-shadow-card);
     transition:
       border-color 0.15s ease,
       box-shadow 0.15s ease,
@@ -236,16 +274,15 @@
 
   .bp-card:hover {
     border-color: rgba(37, 99, 235, 0.22);
-    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+    box-shadow: var(--fowin-shadow-card-hover);
     transform: translateY(-1px);
   }
 
-  /* 기존 “상단 네온 라인” 제거(토스 느낌 해침) */
   .bp-card::before {
     display: none;
   }
 
-  /* ✅ Section Header → 토스식(작고 차분) */
+  /* Section Header → 포커스윈식(작고 차분) */
   .bp-section-header {
     display: flex;
     align-items: center;
@@ -268,7 +305,7 @@
     content: "";
   } /* // 제거 */
 
-  /* ✅ Status Badges (light) */
+  /* Status Badges (light) */
   .badge-scheduled {
     background: rgba(37, 99, 235, 0.1);
     color: #1d4ed8;
@@ -335,7 +372,7 @@
     border: 1px solid rgba(14, 165, 233, 0.18);
   }
 
-  /* ✅ FAB (light: solid brand, no neon gradient) */
+  /* FAB (light: solid brand, no neon gradient) */
   .fab {
     position: fixed;
     bottom: 80px;
@@ -373,7 +410,7 @@
     text-shadow: none;
   }
 
-  /* ✅ Mobile Nav (light) */
+  /* Mobile Nav (light) */
   .mobile-nav {
     position: fixed;
     left: 0;
@@ -453,7 +490,7 @@
     animation-delay: 0.4s;
   }
 
-  /* ✅ Recharts (light) */
+  /* Recharts (light) */
   .recharts-cartesian-grid-horizontal line,
   .recharts-cartesian-grid-vertical line {
     stroke: rgba(15, 23, 42, 0.06) !important;
@@ -461,5 +498,13 @@
   .recharts-text {
     fill: #94a3b8 !important;
     font-size: 11px !important;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .bp-card:hover {
+    border-color: rgba(37, 99, 235, 0.22);
+    box-shadow: var(--fowin-shadow-card-hover);
+    transform: translateY(-1px);
   }
 }

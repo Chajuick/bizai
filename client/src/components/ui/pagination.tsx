@@ -6,7 +6,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/focuswin/common/ui/button";
 
 function Pagination({ className, ...props }: React.ComponentProps<"nav">) {
   return (
@@ -37,15 +37,15 @@ function PaginationItem({ ...props }: React.ComponentProps<"li">) {
   return <li data-slot="pagination-item" {...props} />;
 }
 
-type PaginationLinkProps = {
+type PaginationLinkProps = React.ComponentProps<"a"> & {
   isActive?: boolean;
-} & Pick<React.ComponentProps<typeof Button>, "size"> &
-  React.ComponentProps<"a">;
+  size?: React.ComponentProps<typeof Button>["size"]; // ✅ Button size 타입 재사용
+};
 
 function PaginationLink({
   className,
   isActive,
-  size = "icon",
+  size = "icon", // 기본값
   ...props
 }: PaginationLinkProps) {
   return (
@@ -72,7 +72,7 @@ function PaginationPrevious({
   return (
     <PaginationLink
       aria-label="Go to previous page"
-      size="default"
+      size="md" // ✅ default → md
       className={cn("gap-1 px-2.5 sm:pl-2.5", className)}
       {...props}
     >
@@ -89,7 +89,7 @@ function PaginationNext({
   return (
     <PaginationLink
       aria-label="Go to next page"
-      size="default"
+      size="md" // ✅ default → md
       className={cn("gap-1 px-2.5 sm:pr-2.5", className)}
       {...props}
     >

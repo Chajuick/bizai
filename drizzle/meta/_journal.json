@@ -5,29 +5,8 @@
     {
       "idx": 0,
       "version": "5",
-      "when": 1771900949051,
-      "tag": "0000_wealthy_starfox",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "5",
-      "when": 1771901062619,
-      "tag": "0001_tan_hellcat",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "5",
-      "when": 1771941367764,
-      "tag": "0002_bright_iron_lad",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "5",
-      "when": 1772007498462,
-      "tag": "0003_broken_texas_twister",
+      "when": 1772107269078,
+      "tag": "0000_slippery_silver_centurion",
       "breakpoints": true
     }
   ]

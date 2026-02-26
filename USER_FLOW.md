@@ -57,7 +57,7 @@ Manus OAuth 콜백 (/api/oauth/callback)
 
 ### 3.1 영업일지 목록 조회
 ```
-영업일지 페이지 (/sales-logs)
+영업일지 페이지 (/sale-list)
 ├─ 검색 바
 │  └─ 고객사명, 담당자명으로 검색 가능
 ├─ 필터 탭
@@ -73,7 +73,7 @@ Manus OAuth 콜백 (/api/oauth/callback)
 
 ### 3.2 영업일지 작성 (핵심 플로우)
 ```
-영업일지 작성 페이지 (/sales-logs/new)
+영업일지 작성 페이지 (/sale-list/regi)
 
 【1단계】 음성 녹음 또는 텍스트 입력
 ├─ VoiceRecorder 컴포넌트
@@ -153,7 +153,7 @@ Manus OAuth 콜백 (/api/oauth/callback)
 
 ### 3.3 영업일지 상세 조회
 ```
-영업일지 상세 페이지 (/sales-logs/:id)
+영업일지 상세 페이지 (/sale-list/:id)
 ├─ 기본 정보
 │  ├─ 고객사명
 │  ├─ 담당자명
@@ -183,7 +183,7 @@ Manus OAuth 콜백 (/api/oauth/callback)
 
 ### 4.1 일정 목록 조회
 ```
-일정 관리 페이지 (/promises)
+일정 관리 페이지 (/sche-list)
 ├─ 상태별 탭
 │  ├─ 전체
 │  ├─ 진행 중 (pending)
@@ -233,7 +233,7 @@ Manus OAuth 콜백 (/api/oauth/callback)
 
 ### 5.1 수주 목록 조회
 ```
-수주 관리 페이지 (/orders)
+수주 관리 페이지 (/orde-list)
 ├─ 상태별 탭
 │  ├─ 전체
 │  ├─ 제안 (proposal)

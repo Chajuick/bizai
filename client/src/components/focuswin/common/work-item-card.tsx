@@ -5,17 +5,23 @@ import { Clock } from "lucide-react";
 type WorkItemCardRootProps = {
   children: React.ReactNode;
   className?: string;
+
+  /**
+   * 스타일만 인터랙티브하게(hover/group 등) 만들고 싶을 때
+   * - onClick이 없어도 hover 느낌/그룹 hover를 쓰고 싶으면 true
+   */
   interactive?: boolean;
+
+  /**
+   * 카드 전체 클릭(버튼처럼 동작)
+   * - 내부에 버튼/링크가 있으면 그쪽에서 e.stopPropagation() 권장
+   */
   onClick?: () => void;
 };
 
-function Root({
-  children,
-  className,
-  interactive,
-  onClick,
-}: WorkItemCardRootProps) {
-  const clickable = !!onClick || !!interactive;
+function Root({ children, className, interactive, onClick }: WorkItemCardRootProps) {
+  const clickable = !!onClick; // ✅ 실제 버튼 역할은 onClick 있을 때만
+  const isInteractive = clickable || !!interactive;
 
   return (
     <div
@@ -24,24 +30,29 @@ function Root({
       onClick={onClick}
       onKeyDown={(e) => {
         if (!clickable) return;
-        // Space는 페이지 스크롤도 유발할 수 있어서 preventDefault
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           onClick?.();
         }
       }}
       className={cn(
-        // ✅ clickable일 때만 group 부여 (hover 스타일 오해 방지)
-        clickable && "group",
-        // ✅ 토스톤: 더 얕은 그림자 + 은은한 border
-        "rounded-3xl border bg-white p-4 transition",
-        "border-slate-100 shadow-[0_6px_18px_rgba(15,23,42,0.04)]",
-        // ✅ hover가 “느껴지도록” (과하지 않게)
+        isInteractive && "group",
+        // ✅ 토큰 기반: 배경/보더/텍스트
+        "rounded-3xl border bg-card text-card-foreground p-4 transition",
+        // border 색을 토큰으로 (없으면 border-border로 fallback)
+        "border-[color:var(--fowin-border,theme(colors.border))]",
+
+        // ✅ 기본 카드 shadow (토큰)
+        "[box-shadow:var(--fowin-shadow-card)]",
+
+        // ✅ hover (토큰) - 인터랙티브한 카드만
+        isInteractive &&
+          "cursor-pointer hover:border-[color:var(--fowin-border-hover)] hover:[box-shadow:var(--fowin-shadow-card-hover)] hover:-translate-y-[1px]",
+
+        // ✅ focus (토큰): 카드 기본 그림자 + 링을 동시에
         clickable &&
-          "cursor-pointer hover:border-blue-200/70 hover:shadow-[0_12px_30px_rgba(15,23,42,0.07)]",
-        // ✅ focus는 은은하게 + offset
-        clickable &&
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300/40 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+          "focus-visible:outline-none focus-visible:[box-shadow:var(--fowin-shadow-card),var(--fowin-ring)]",
+
         className
       )}
     >
@@ -59,15 +70,10 @@ type IconProps = {
   children: React.ReactNode;
   className?: string;
   variant?: "primary" | "warning" | "danger" | "slate";
-  iconClassName?: string; // ✅ 아이콘에 붙일 클래스(선택)
+  iconClassName?: string;
 };
 
-function Icon({
-  children,
-  className,
-  variant = "primary",
-  iconClassName,
-}: IconProps) {
+function Icon({ children, className, variant = "primary", iconClassName }: IconProps) {
   const v =
     variant === "danger"
       ? {
@@ -81,8 +87,8 @@ function Icon({
         }
       : variant === "slate"
       ? {
-          base: "bg-slate-50 border-slate-200 text-slate-600",
-          hover: "group-hover:border-slate-300",
+          base: "bg-muted border-border text-muted-foreground",
+          hover: "group-hover:border-slate-300 dark:group-hover:border-slate-600",
         }
       : {
           base: "bg-blue-50 border-blue-200 text-blue-600",
@@ -98,7 +104,6 @@ function Icon({
         className
       )}
     >
-      {/* ✅ children은 그대로 렌더 (TS 안전) */}
       <span className={cn("text-current", iconClassName)}>{children}</span>
     </div>
   );
@@ -117,21 +122,14 @@ function Header({ title, tags, actions, className }: HeaderProps) {
       <div className="min-w-0">
         <div className="flex items-center gap-2 flex-wrap min-w-0">
           <div className="min-w-0">
-            <div className="font-black text-slate-900 text-sm truncate">
-              {title}
-            </div>
+            <div className="font-black text-foreground text-sm truncate">{title}</div>
           </div>
-          {tags ? (
-            <div className="flex items-center gap-1 flex-wrap">{tags}</div>
-          ) : null}
+          {tags ? <div className="flex items-center gap-1 flex-wrap">{tags}</div> : null}
         </div>
       </div>
 
-      {/* ✅ 오른쪽 액션 영역 폭 고정 + 우측 정렬 */}
       {actions ? (
-        <div className="shrink-0 sm:min-w-[88px] flex justify-end text-right">
-          {actions}
-        </div>
+        <div className="shrink-0 sm:min-w-[88px] flex justify-end text-right">{actions}</div>
       ) : (
         <div className="shrink-0 sm:min-w-[88px]" />
       )}
@@ -140,12 +138,12 @@ function Header({ title, tags, actions, className }: HeaderProps) {
 }
 
 function Body({ children, className }: SlotProps) {
-  return <div className={cn("mt-2", className)}>{children}</div>;
+  return <div className={cn("my-2", className)}>{children}</div>;
 }
 
 type FooterProps = {
-  left?: React.ReactNode; // 날짜/단계/메타
-  right?: React.ReactNode; // 다음 단계 버튼 등
+  left?: React.ReactNode;
+  right?: React.ReactNode;
   className?: string;
 };
 
@@ -173,15 +171,12 @@ function Meta({ icon, label, value, tone = "muted", className }: MetaProps) {
     <div
       className={cn(
         "flex items-center gap-2 text-xs",
-        tone === "muted" ? "text-slate-500" : "text-slate-700",
+        tone === "muted" ? "text-muted-foreground" : "text-foreground/80",
         className
       )}
     >
-      {icon ? (
-        // 아이콘은 기본 muted 톤 (ScheduleMeta는 text-current)
-        <span className="text-slate-400">{icon}</span>
-      ) : null}
-      {label ? <span className="text-slate-400">{label}</span> : null}
+      {icon ? <span className="text-muted-foreground/70">{icon}</span> : null}
+      {label ? <span className="text-muted-foreground/70">{label}</span> : null}
       <span className="truncate">{value}</span>
     </div>
   );
@@ -201,7 +196,7 @@ function StagePill({ children, variant = "slate", className }: StagePillProps) {
       ? "bg-emerald-50 border-emerald-100 text-emerald-700"
       : variant === "red"
       ? "bg-red-50 border-red-100 text-red-700"
-      : "bg-slate-50 border-slate-100 text-slate-700";
+      : "bg-muted border-border text-muted-foreground";
 
   return (
     <span
@@ -216,7 +211,6 @@ function StagePill({ children, variant = "slate", className }: StagePillProps) {
   );
 }
 
-/** ✅ 일정/날짜 표시용 (상태별 컬러 텍스트) */
 type ScheduleMetaProps = {
   value: React.ReactNode;
   status?: "default" | "imminent" | "overdue";
@@ -224,12 +218,7 @@ type ScheduleMetaProps = {
   className?: string;
 };
 
-function ScheduleMeta({
-  value,
-  status = "default",
-  icon,
-  className,
-}: ScheduleMetaProps) {
+function ScheduleMeta({ value, status = "default", icon, className }: ScheduleMetaProps) {
   const color =
     status === "overdue"
       ? "text-red-500"
@@ -238,14 +227,7 @@ function ScheduleMeta({
       : "text-blue-600";
 
   return (
-    <div
-      className={cn(
-        "text-xs font-semibold flex items-center gap-1",
-        color,
-        className
-      )}
-    >
-      {/* ✅ 아이콘도 텍스트 컬러 따라가게 */}
+    <div className={cn("text-xs font-semibold flex items-center gap-1", color, className)}>
       {icon ?? <Clock size={12} className="text-current" />}
       {value}
     </div>

@@ -25,11 +25,11 @@ description: React 컴포넌트 구조, shadcn/ui 패턴, TailwindCSS v4 스타�
 <Route path="/dashboard" component={Dashboard} />
 <Route path="/clients" component={Clients} />
 <Route path="/clients/:id" component={ClientDetail} />
-<Route path="/sales-logs" component={SalesLogs} />
-<Route path="/sales-logs/new" component={SalesLogNew} />
-<Route path="/sales-logs/:id" component={SalesLogDetail} />
-<Route path="/promises" component={Promises} />
-<Route path="/orders" component={Orders} />
+<Route path="/sale-list" component={SalesLogs} />
+<Route path="/sale-list/regi" component={SalesLogNew} />
+<Route path="/sale-list/:id" component={SalesLogDetail} />
+<Route path="/sche-list" component={Promises} />
+<Route path="/orde-list" component={Orders} />
 <Route path="/deliveries" component={Deliveries} />
 ```
 

@@ -1,4 +1,4 @@
-import Chip, { type ChipTone } from "@/components/focuswin/common/chip";
+import Chip, { type ChipTone } from "@/components/focuswin/common/ui/chip";
 
 type StatusInfo = { label: string; tone: ChipTone };
 

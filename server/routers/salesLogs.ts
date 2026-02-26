@@ -13,7 +13,7 @@ import {
   createClient,
 } from "../db";
 import { invokeLLM } from "../_core/llm";
-import { transcribeAudio } from "../_core/voiceTranscription";
+import { transcribeAudio } from "../_core/service/ai/voiceTranscription";
 import { notifyOwner } from "../_core/notification";
 
 // AI 영업일지 구조화 분석
@@ -25,20 +25,20 @@ async function analyzeWithAI(text: string) {
         {
           role: "system",
           content: `당신은 한국어 영업일지를 분석하는 AI입니다. 영업 담당자가 작성한 텍스트에서 핵심 정보를 추출하세요.
-오늘 날짜: ${today}
-"6개월 후", "다음 주" 같은 상대적 표현은 오늘 날짜를 기준으로 계산하세요.
-날짜를 특정할 수 없는 경우 scheduledAt을 null로 설정하세요.
-반드시 다음 JSON 형식으로만 응답하세요:
-{
-  "clientName": "고객사명 (없으면 null)",
-  "contactPerson": "담당자명 (없으면 null)",
-  "amount": "금액 숫자 (없으면 null, 단위 제거)",
-  "nextActions": ["다음 액션 1", "다음 액션 2"],
-  "promises": [{"title": "일정 내용", "scheduledAt": "ISO 날짜 (없으면 null)", "amount": "금액 숫자 (없으면 null)", "description": "메모/맥락 (없으면 null)"}],
-  "summary": "2-3문장 요약",
-  "keywords": ["키워드1", "키워드2"],
-  "sentiment": "positive|neutral|negative"
-}`,
+          오늘 날짜: ${today}
+          "6개월 후", "다음 주" 같은 상대적 표현은 오늘 날짜를 기준으로 계산하세요.
+          날짜를 특정할 수 없는 경우 scheduledAt을 null로 설정하세요.
+          반드시 다음 JSON 형식으로만 응답하세요:
+          {
+            "clientName": "고객사명 (없으면 null)",
+            "contactPerson": "담당자명 (없으면 null)",
+            "amount": "금액 숫자 (없으면 null, 단위 제거)",
+            "nextActions": ["다음 액션 1", "다음 액션 2"],
+            "promises": [{"title": "일정 내용", "scheduledAt": "ISO 날짜 (없으면 null)", "amount": "금액 숫자 (없으면 null)", "description": "메모/맥락 (없으면 null)"}],
+            "summary": "2-3문장 요약",
+            "keywords": ["키워드1", "키워드2"],
+            "sentiment": "positive|neutral|negative"
+          }`,
         },
         { role: "user", content: text },
       ],

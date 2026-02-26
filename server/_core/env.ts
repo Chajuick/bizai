@@ -15,4 +15,5 @@ export const ENV = {
   sttApiUrl: process.env.STT_API_URL ?? "",
   sttApiKey: process.env.STT_API_KEY ?? "",
   sttModel: process.env.STT_MODEL ?? "whisper-1",
+  allowedAudioHosts: process.env.ALLOWED_AUDIO_HOSTS ?? "",
 };

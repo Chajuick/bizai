@@ -2,17 +2,17 @@ import React, { useMemo, useState } from "react";
 import { useLocation, Link } from "wouter";
 import { LayoutDashboard, BookOpen, Calendar, ShoppingCart, TrendingUp, Users, Menu, X } from "lucide-react";
 import { useAuth } from "@/_core/hooks/useAuth";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/focuswin/common/ui/button";
 
-import LogoSlot from "@/components/focuswin/logo-slot";
+import LogoAvatar from "@/components/focuswin/common/ui/avatar";
 
 const navItems = [
   { path: "/", label: "대시보드", icon: LayoutDashboard, shortLabel: "홈" },
-  { path: "/sales-logs", label: "영업일지", icon: BookOpen, shortLabel: "일지" },
-  { path: "/promises", label: "일정", icon: Calendar, shortLabel: "일정" },
-  { path: "/orders", label: "수주", icon: ShoppingCart, shortLabel: "수주" },
-  { path: "/deliveries", label: "납품/매출", icon: TrendingUp, shortLabel: "매출" },
-  { path: "/clients", label: "고객사", icon: Users, shortLabel: "고객" },
+  { path: "/sale-list", label: "영업일지", icon: BookOpen, shortLabel: "일지" },
+  { path: "/sche-list", label: "일정", icon: Calendar, shortLabel: "일정" },
+  { path: "/orde-list", label: "수주", icon: ShoppingCart, shortLabel: "수주" },
+  { path: "ship-list", label: "납품/매출", icon: TrendingUp, shortLabel: "매출" },
+  { path: "/clie-list", label: "고객사", icon: Users, shortLabel: "고객" },
 ];
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -47,7 +47,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {/* Logo */}
         <div className="p-6 border-b" style={{ borderColor: "var(--blueprint-border)" }}>
           <div className="flex items-center gap-3">
-            <LogoSlot src={LOGO_SRC} size={40} className="rounded-2xl" />
+            <LogoAvatar src={LOGO_SRC} size={40} className="rounded-2xl" />
 
             <div className="min-w-0">
               <p className="font-black text-[color:var(--blueprint-text)] text-sm tracking-tight">BizAI</p>
@@ -137,7 +137,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           >
             <div className="p-5 border-b flex items-center justify-between" style={{ borderColor: "var(--blueprint-border)" }}>
               <div className="flex items-center gap-3">
-                <LogoSlot src={LOGO_SRC} size={36} className="rounded-2xl" />
+                <LogoAvatar src={LOGO_SRC} size={36} className="rounded-2xl" />
                 <span className="font-black text-[color:var(--blueprint-text)]">BizAI</span>
               </div>
 
@@ -218,7 +218,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </button>
 
           <div className="flex items-center gap-2">
-            <LogoSlot src={LOGO_SRC} size={28} className="rounded-2xl" />
+            <LogoAvatar src={LOGO_SRC} size={28} className="rounded-2xl" />
             <span className="font-black text-slate-900 text-sm">BizAI</span>
           </div>
 

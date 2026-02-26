@@ -27,8 +27,8 @@ protectedProcedure // 로그인 필수 (ctx.user 보장)
 | `auth.logout` | routers.ts | 로그아웃 |
 | `clients` | routers/clients.ts | 고객사 CRUD |
 | `salesLogs` | routers/salesLogs.ts | 영업일지 + AI 처리 |
-| `promises` | routers/promises.ts | 일정 관리 |
-| `orders` | routers/orders.ts | 수주 관리 |
+| `promises` | routers/sche-list.ts | 일정 관리 |
+| `orders` | routers/orde-list.ts | 수주 관리 |
 | `deliveries` | routers/deliveries.ts | 납품/매출 |
 | `dashboard` | routers/dashboard.ts | 집계 데이터 |
 | `upload` | routers/upload.ts | S3 파일 업로드 |
