@@ -34,9 +34,8 @@ export function useSaleListViewModel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location]);
 
-  const { data: logs, isLoading } = trpc.salesLogs.list.useQuery({
+  const { data: logsData, isLoading } = trpc.salesLogs.list.useQuery({
     search: search || undefined,
-    limit: 50,
   });
 
   // ✅ 앱 켜둔 채 주(week) 넘어가도 기준이 갱신되도록 location 기준으로 재계산
@@ -44,20 +43,19 @@ export function useSaleListViewModel() {
 
   // ✅ Date 파싱/정규화: 한 번만
   const normalizedLogs = useMemo(() => {
-    const arr = logs ?? [];
+    const arr = logsData?.items ?? [];
     return arr.map((l) => ({
       ...l,
-      visitedAtDate: new Date(l.visitedAt),
+      visitedAtDate: new Date(l.vist_date),
     }));
-  }, [logs]);
+  }, [logsData]);
 
   // ✅ counts 계산도 normalizedLogs 기준으로
   const counts = useMemo(() => {
     return {
       all: normalizedLogs.length,
       thisWeek: normalizedLogs.filter((l) => l.visitedAtDate >= weekStart).length,
-      ai: normalizedLogs.filter((l) => !!l.isProcessed).length,
-      audio: normalizedLogs.filter((l) => !!l.audioUrl).length,
+      ai: normalizedLogs.filter((l) => !!l.aiex_done).length,
     };
   }, [normalizedLogs, weekStart]);
 
@@ -66,15 +64,13 @@ export function useSaleListViewModel() {
       { key: "all", label: "전체", count: counts.all },
       { key: "thisWeek", label: "이번주", count: counts.thisWeek },
       { key: "ai", label: "AI", count: counts.ai },
-      { key: "audio", label: "음성", count: counts.audio },
     ],
     [counts]
   );
 
   const filteredLogs = useMemo(() => {
     if (filter === "thisWeek") return normalizedLogs.filter((l) => l.visitedAtDate >= weekStart);
-    if (filter === "ai") return normalizedLogs.filter((l) => !!l.isProcessed);
-    if (filter === "audio") return normalizedLogs.filter((l) => !!l.audioUrl);
+    if (filter === "ai") return normalizedLogs.filter((l) => !!l.aiex_done);
     return normalizedLogs;
   }, [normalizedLogs, filter, weekStart]);
 

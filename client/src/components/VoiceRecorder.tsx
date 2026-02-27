@@ -1,6 +1,5 @@
 import { useState, useRef, useCallback } from "react";
 import { Mic, MicOff, Loader2, CheckCircle } from "lucide-react";
-import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
 interface VoiceRecorderProps {
@@ -16,8 +15,6 @@ export default function VoiceRecorder({ onTranscribed, onAudioUrl }: VoiceRecord
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const transcribeMutation = trpc.salesLogs.transcribe.useMutation();
 
   const startRecording = useCallback(async () => {
     try {
@@ -54,10 +51,6 @@ export default function VoiceRecorder({ onTranscribed, onAudioUrl }: VoiceRecord
           if (!uploadRes.ok) throw new Error("업로드 실패");
           const { url } = await uploadRes.json();
           onAudioUrl?.(url);
-
-          setState("transcribing");
-          const result = await transcribeMutation.mutateAsync({ audioUrl: url });
-          onTranscribed(result.text);
           setState("done");
           setTimeout(() => setState("idle"), 2000);
         } catch (err) {
@@ -74,7 +67,7 @@ export default function VoiceRecorder({ onTranscribed, onAudioUrl }: VoiceRecord
     } catch (err) {
       toast.error("마이크 접근 권한이 필요합니다.");
     }
-  }, [onTranscribed, onAudioUrl, transcribeMutation]);
+  }, [onTranscribed, onAudioUrl]);
 
   const stopRecording = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);

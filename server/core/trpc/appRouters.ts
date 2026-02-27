@@ -5,7 +5,7 @@ import { getSessionCookieOptions } from "../cookies";
 import { publicProcedure, router } from "./trpc";
 import { systemRouter } from "../systemRouter";
 
-// modules routers
+// module routers
 import { clientRouter } from "../../modules/crm/client/client.router";
 import { saleRouter } from "../../modules/crm/sale/sale.router";
 import { scheduleRouter } from "../../modules/crm/schedule/schedule.router";
@@ -15,15 +15,26 @@ import { dashboardRouter } from "../../modules/crm/dashboard/dashboard.router";
 import { fileRouter } from "../../modules/crm/file/file.router";
 // #endregion
 
-// #region appRouter (Root)
+// #region appRouter (Root — single source of truth)
+//
+// Canonical tree:
+//   system   → infrastructure procedures (health, notify, etc.)
+//   auth     → session management (me, logout)
+//   crm.*    → all CRM domain routers
+//
+// Deprecated flat aliases (top-level) are kept for frontend backward compatibility.
+// TODO: migrate frontend calls from `trpc.<alias>.*` to `trpc.crm.<domain>.*`
+//       then remove the DEPRECATED section below.
 export const appRouter = router({
   // #region System
   system: systemRouter,
   // #endregion
 
-  // #region Auth (core)
+  // #region Auth
   auth: router({
+    /** Returns the authenticated user from the session, or null when logged out. */
     me: publicProcedure.query((opts) => opts.ctx.user),
+    /** Clears the session cookie and invalidates the session. */
     logout: publicProcedure.mutation(({ ctx }) => {
       const cookieOptions = getSessionCookieOptions(ctx.req);
       ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
@@ -32,7 +43,7 @@ export const appRouter = router({
   }),
   // #endregion
 
-  // #region CRM domain
+  // #region CRM (canonical domain namespace)
   crm: router({
     clients: clientRouter,
     salesLogs: saleRouter,
@@ -42,6 +53,23 @@ export const appRouter = router({
     dashboard: dashboardRouter,
     files: fileRouter,
   }),
+  // #endregion
+
+  // #region DEPRECATED — flat aliases for frontend backward compatibility
+  // These forward to the same router instances under crm.*.
+  // Do NOT add new procedures here; add them to crm.* only.
+  /** @deprecated use trpc.crm.clients.* */
+  clients: clientRouter,
+  /** @deprecated use trpc.crm.salesLogs.* */
+  salesLogs: saleRouter,
+  /** @deprecated use trpc.crm.schedule.* */
+  promises: scheduleRouter,
+  /** @deprecated use trpc.crm.order.* */
+  orders: orderRouter,
+  /** @deprecated use trpc.crm.shipment.* */
+  deliveries: shipmentRouter,
+  /** @deprecated use trpc.crm.dashboard.* */
+  dashboard: dashboardRouter,
   // #endregion
 });
 

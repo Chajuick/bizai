@@ -8,7 +8,7 @@ export function useSalesLogDetailViewModel(logId: number) {
   const utils = trpc.useUtils();
 
   const { data: log, isLoading } = trpc.salesLogs.get.useQuery(
-    { id: logId },
+    { sale_idno: logId },
     { enabled: Number.isFinite(logId) }
   );
 
@@ -18,21 +18,21 @@ export function useSalesLogDetailViewModel(logId: number) {
 
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<SalesLogEditForm>({
-    clientName: "",
-    contactPerson: "",
-    location: "",
-    visitedAt: "",
-    rawContent: "",
+    clie_name: "",
+    cont_name: "",
+    sale_loca: "",
+    vist_date: "",
+    orig_memo: "",
   });
 
   const startEdit = () => {
     if (!log) return;
     setEditForm({
-      clientName: log.clientName ?? "",
-      contactPerson: log.contactPerson ?? "",
-      location: log.location ?? "",
-      visitedAt: toLocalDatetimeInputValue(new Date(log.visitedAt)),
-      rawContent: log.rawContent,
+      clie_name: log.sale.clie_name ?? "",
+      cont_name: log.sale.cont_name ?? "",
+      sale_loca: log.sale.sale_loca ?? "",
+      vist_date: toLocalDatetimeInputValue(new Date(log.sale.vist_date)),
+      orig_memo: log.sale.orig_memo,
     });
     setIsEditing(true);
   };
@@ -42,15 +42,15 @@ export function useSalesLogDetailViewModel(logId: number) {
   const save = async () => {
     try {
       await update.mutateAsync({
-        id: logId,
-        clientName: editForm.clientName || undefined,
-        contactPerson: editForm.contactPerson || undefined,
-        location: editForm.location || undefined,
-        visitedAt: editForm.visitedAt,
-        rawContent: editForm.rawContent,
+        sale_idno: logId,
+        clie_name: editForm.clie_name || undefined,
+        cont_name: editForm.cont_name || undefined,
+        sale_loca: editForm.sale_loca || undefined,
+        vist_date: editForm.vist_date,
+        orig_memo: editForm.orig_memo,
       });
 
-      await utils.salesLogs.get.invalidate({ id: logId });
+      await utils.salesLogs.get.invalidate({ sale_idno: logId });
       await utils.salesLogs.list.invalidate();
 
       setIsEditing(false);
@@ -70,17 +70,17 @@ export function useSalesLogDetailViewModel(logId: number) {
   const bannerMessage = useMemo(() => {
     const d = analyze.data;
     if (!d) return undefined;
-    return `일정 ${d.promisesCreated ?? 0}개가 자동 등록되었습니다.`;
+    return "AI 분석이 요청되었습니다.";
   }, [analyze.data]);
 
   const resetAnalyze = () => analyze.reset();
 
   const runAnalyze = async () => {
     try {
-      const result = await analyze.mutateAsync({ id: logId });
-      toast.success(`AI 분석 완료! 일정 ${result.promisesCreated}개가 자동 등록되었습니다.`);
+      await analyze.mutateAsync({ sale_idno: logId });
+      toast.success("AI 분석이 요청되었습니다.");
 
-      await utils.salesLogs.get.invalidate({ id: logId });
+      await utils.salesLogs.get.invalidate({ sale_idno: logId });
       await utils.promises.list.invalidate();
       await utils.dashboard.stats.invalidate();
     } catch {
@@ -90,7 +90,7 @@ export function useSalesLogDetailViewModel(logId: number) {
 
   const remove = async () => {
     try {
-      await del.mutateAsync({ id: logId });
+      await del.mutateAsync({ sale_idno: logId });
       await utils.salesLogs.list.invalidate();
       await utils.dashboard.stats.invalidate();
       toast.success("삭제되었습니다.");

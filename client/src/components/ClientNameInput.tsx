@@ -4,7 +4,7 @@ import { Check, ChevronDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 
-type Client = { id: number; name: string };
+type Client = { clie_idno: number; clie_name: string };
 type Suggestion = { client: Client; confidence: number };
 
 type Props = {
@@ -32,10 +32,11 @@ export default function ClientNameInput({
   const createMutation = trpc.clients.create.useMutation();
 
   // 서버 검색 (debounced)
-  const { data: searchResults = [], isFetching } = trpc.clients.list.useQuery(
+  const { data: searchResultsData, isFetching } = trpc.clients.list.useQuery(
     { search: debounced || undefined, limit: debounced ? 50 : 20 },
     { enabled: open, staleTime: 10_000 }
   );
+  const searchResults = searchResultsData?.items ?? [];
 
   // 외부 클릭 시 드롭다운 닫기
   useEffect(() => {
@@ -64,10 +65,10 @@ export default function ClientNameInput({
         const match = await utils.clients.findBestMatch.fetch({ name: value });
         if (!match) return;
         // 입력값과 DB 이름이 완전히 같을 때만 자동 적용, 나머지는 항상 제안
-        if (match.name.toLowerCase() === value.toLowerCase()) {
-          onChange(match.name, match.id);
+        if (match.clie_name.toLowerCase() === value.toLowerCase()) {
+          onChange(match.clie_name, match.clie_idno);
         } else {
-          setSuggestion({ client: { id: match.id, name: match.name }, confidence: match.confidence });
+          setSuggestion({ client: { clie_idno: match.clie_idno, clie_name: match.clie_name }, confidence: match.confidence });
         }
       } catch {
         // 매칭 실패 시 무시
@@ -76,22 +77,22 @@ export default function ClientNameInput({
   }, [clientId, value, utils, onChange]);
 
   const handleSelect = (client: Client) => {
-    onChange(client.name, client.id);
+    onChange(client.clie_name, client.clie_idno);
     setSuggestion(null);
     setOpen(false);
   };
 
   const handleConfirm = () => {
     if (!suggestion) return;
-    onChange(suggestion.client.name, suggestion.client.id);
+    onChange(suggestion.client.clie_name, suggestion.client.clie_idno);
     setSuggestion(null);
   };
 
   const handleDeny = async () => {
     try {
-      const result = await createMutation.mutateAsync({ name: value });
+      const result = await createMutation.mutateAsync({ clie_name: value });
       await utils.clients.list.invalidate();
-      onChange(value, (result as any).insertId);
+      onChange(value, (result as any).clie_idno);
       toast.success(`'${value}' 고객사가 추가되었습니다.`);
     } catch {
       toast.error("고객사 추가에 실패했습니다.");
@@ -136,7 +137,7 @@ export default function ClientNameInput({
           ) : (
             searchResults.map((c) => (
               <button
-                key={c.id}
+                key={c.clie_idno}
                 type="button"
                 onMouseDown={(e) => {
                   e.preventDefault();
@@ -144,12 +145,12 @@ export default function ClientNameInput({
                 }}
                 className="w-full px-3 py-2.5 text-left text-sm text-slate-900 hover:bg-slate-50 flex items-center gap-2 transition"
               >
-                {clientId === c.id ? (
+                {clientId === c.clie_idno ? (
                   <Check size={12} className="text-blue-600 shrink-0" />
                 ) : (
                   <span className="w-3 shrink-0" />
                 )}
-                <span className="truncate">{c.name}</span>
+                <span className="truncate">{c.clie_name}</span>
               </button>
             ))
           )}
@@ -161,7 +162,7 @@ export default function ClientNameInput({
         <div className="mt-2 px-3 py-2.5 rounded-2xl border border-amber-200 bg-amber-50">
           <p className="text-xs text-amber-800 font-semibold leading-snug">
             혹시{" "}
-            <span className="font-black">'{suggestion.client.name}'</span>
+            <span className="font-black">'{suggestion.client.clie_name}'</span>
             을(를) 말씀하시는 건가요?
           </p>
           <div className="mt-2 flex gap-2">

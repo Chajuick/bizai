@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "dca962a2-d58f-4ba6-ab7f-adae8d40e130",
+  "id": "1d9fffba-354f-430b-a29f-698251ffdae1",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "COAPP_CORE_COMPANY": {

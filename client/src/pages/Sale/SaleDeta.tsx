@@ -25,17 +25,17 @@ export default function SaleDeta() {
 
   const [confirm, setConfirm] = useState<ConfirmState>(null);
 
-  const title = useMemo(() => vm.log?.clientName || "영업일지", [vm.log?.clientName]);
+  const title = useMemo(() => vm.log?.sale.clie_name || "영업일지", [vm.log?.sale.clie_name]);
 
   const visitedLabel = useMemo(() => {
-    if (!vm.log?.visitedAt) return "";
-    return new Date(vm.log.visitedAt).toLocaleString("ko-KR", {
+    if (!vm.log?.sale.vist_date) return "";
+    return new Date(vm.log.sale.vist_date).toLocaleString("ko-KR", {
       month: "short",
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
     });
-  }, [vm.log?.visitedAt]);
+  }, [vm.log?.sale.vist_date]);
 
   const goKeywordSearch = (kw: string) => {
     const q = encodeURIComponent(kw);
@@ -66,13 +66,13 @@ export default function SaleDeta() {
       <SalesLogDetailHeader
         title={title}
         visitedLabel={visitedLabel}
-        isProcessed={!!vm.log.isProcessed}
+        isProcessed={!!vm.log.sale.aiex_done}
         isEditing={vm.isEditing}
         onBack={() => navigate("/sale-list")}
         onAnalyze={vm.runAnalyze}
         onEdit={vm.startEdit}
         onDeleteRequest={() =>
-          setConfirm({ type: "delete", id: vm.log!.id, title: title })
+          setConfirm({ type: "delete", id: vm.log!.sale.sale_idno, title: title })
         }
         onSave={vm.save}
         onCancelEdit={vm.cancelEdit}
@@ -101,30 +101,30 @@ export default function SaleDeta() {
         <>
           <div className="mt-4">
             <SalesLogMetaCard
-              clientName={vm.log.clientName}
-              contactPerson={vm.log.contactPerson}
-              location={vm.log.location}
+              clientName={vm.log.sale.clie_name}
+              contactPerson={vm.log.sale.cont_name}
+              location={vm.log.sale.sale_loca}
               visitedLabel={visitedLabel}
             />
           </div>
 
-          {vm.log.aiSummary && (
+          {vm.log.sale.aiex_summ && (
             <div className="mt-4">
               <SalesLogAISummaryCard
-                aiSummary={vm.log.aiSummary}
-                aiExtracted={vm.log.aiExtracted}
+                aiSummary={vm.log.sale.aiex_summ}
+                aiExtracted={undefined}
                 onKeywordClick={goKeywordSearch}
               />
             </div>
           )}
 
           <div className="mt-4">
-            <SalesLogRawCard rawContent={vm.log.rawContent} />
+            <SalesLogRawCard rawContent={vm.log.sale.orig_memo} />
           </div>
 
-          {vm.log.transcribedText && vm.log.transcribedText !== vm.log.rawContent && (
+          {vm.log.sale.sttx_text && vm.log.sale.sttx_text !== vm.log.sale.orig_memo && (
             <div className="mt-4">
-              <SalesLogTranscriptCard transcribedText={vm.log.transcribedText} />
+              <SalesLogTranscriptCard transcribedText={vm.log.sale.sttx_text} />
             </div>
           )}
         </>

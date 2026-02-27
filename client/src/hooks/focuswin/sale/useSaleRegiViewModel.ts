@@ -4,36 +4,29 @@ import { trpc } from "@/lib/trpc";
 import { toLocalDatetimeInputValue } from "@/lib/utils";
 import { toast } from "sonner";
 import type {
-  MatchSuggestion,
   PreSaveState,
   SalesLogFormState,
-  AnalyzeOutput,
 } from "@/types/salesLog";
-
-export type { MatchSuggestion };
 
 export function useSaleRegiViewModel() {
   const [, navigate] = useLocation();
 
   const [form, setForm] = useState<SalesLogFormState>({
-    clientName: "",
-    clientId: undefined,
-    contactPerson: "",
-    location: "",
-    visitedAt: toLocalDatetimeInputValue(new Date()),
-    rawContent: "",
-    audioUrl: "",
-    transcribedText: "",
+    clie_name: "",
+    clie_idno: undefined,
+    cont_name: "",
+    sale_loca: "",
+    vist_date: toLocalDatetimeInputValue(new Date()),
+    orig_memo: "",
+    audi_addr: "",
+    sttx_text: "",
   });
 
   const [preSaveState, setPreSaveState] = useState<PreSaveState | null>(null);
   const [isCheckingClient, setIsCheckingClient] = useState(false);
-  const [matchSuggestion, setMatchSuggestion] = useState<MatchSuggestion | null>(null);
 
   const createMutation = trpc.salesLogs.create.useMutation();
   const analyzeMutation = trpc.salesLogs.analyze.useMutation();
-  const updateMutation = trpc.salesLogs.update.useMutation();
-  const findOrCreateClientMutation = trpc.clients.findOrCreate.useMutation();
   const utils = trpc.useUtils();
 
   const goList = () => navigate("/sale-list");
@@ -42,47 +35,38 @@ export function useSaleRegiViewModel() {
   const handleTranscribed = (text: string) => {
     setForm((f) => ({
       ...f,
-      rawContent: f.rawContent ? `${f.rawContent}\n${text}` : text,
-      transcribedText: text,
+      orig_memo: f.orig_memo ? `${f.orig_memo}\n${text}` : text,
+      sttx_text: text,
     }));
     toast.success("음성이 텍스트로 변환되었습니다.");
   };
 
-  const setAudioUrl = (url: string) => setForm((f) => ({ ...f, audioUrl: url }));
+  const setAudioUrl = (url: string) => setForm((f) => ({ ...f, audi_addr: url }));
 
   const doSave = async ({
-    clientId,
-    clientName,
+    clie_idno,
+    clie_name,
     analyze,
   }: {
-    clientId?: number;
-    clientName?: string;
+    clie_idno?: number;
+    clie_name?: string;
     analyze: boolean;
   }) => {
     const result = await createMutation.mutateAsync({
-      clientId,
-      clientName: clientName || undefined,
-      contactPerson: form.contactPerson || undefined,
-      location: form.location || undefined,
-      visitedAt: form.visitedAt || new Date().toISOString(),
-      rawContent: form.rawContent,
-      audioUrl: form.audioUrl || undefined,
-      transcribedText: form.transcribedText || undefined,
+      clie_idno,
+      clie_name: clie_name || undefined,
+      cont_name: form.cont_name || undefined,
+      sale_loca: form.sale_loca || undefined,
+      vist_date: form.vist_date || new Date().toISOString(),
+      orig_memo: form.orig_memo,
+      audi_addr: form.audi_addr || undefined,
+      sttx_text: form.sttx_text || undefined,
     });
 
-    if (analyze && result.id) {
+    if (analyze && result.sale_idno) {
       try {
-        const analysisResult: AnalyzeOutput = await analyzeMutation.mutateAsync({ id: result.id });
-
-        // ✅ matchSuggestion이 있으면 이동 보류하고 모달 띄우기
-        if (analysisResult.matchSuggestion) {
-          setMatchSuggestion({ logId: result.id, ...analysisResult.matchSuggestion });
-          await utils.salesLogs.list.invalidate();
-          await utils.dashboard.stats.invalidate();
-          return;
-        }
-
-        toast.success(`AI 분석 완료! 일정 ${analysisResult.promisesCreated}개가 자동 등록되었습니다.`);
+        await analyzeMutation.mutateAsync({ sale_idno: result.sale_idno });
+        toast.success("AI 분석이 요청되었습니다.");
       } catch {
         toast.error("AI 분석에 실패했습니다. 나중에 다시 시도해주세요.");
       }
@@ -91,25 +75,25 @@ export function useSaleRegiViewModel() {
     await utils.salesLogs.list.invalidate();
     await utils.dashboard.stats.invalidate();
     toast.success("영업일지가 저장되었습니다.");
-    goDetail(result.id);
+    goDetail(result.sale_idno);
   };
 
   const submit = async (analyze: boolean) => {
-    if (!form.rawContent.trim()) {
+    if (!form.orig_memo.trim()) {
       toast.error("내용을 입력해주세요.");
       return;
     }
 
-    // ✅ 고객사명만 입력하고 clientId가 없으면: 저장 전 best match 확인
-    if (form.clientName.trim() && !form.clientId) {
+    // ✅ 고객사명만 입력하고 clie_idno가 없으면: 저장 전 best match 확인
+    if (form.clie_name.trim() && !form.clie_idno) {
       setIsCheckingClient(true);
       try {
-        const match = await utils.clients.findBestMatch.fetch({ name: form.clientName });
+        const match = await utils.clients.findBestMatch.fetch({ name: form.clie_name });
         if (match) {
           setPreSaveState({
-            typedName: form.clientName,
-            matchedId: match.id,
-            matchedName: match.name,
+            typedName: form.clie_name,
+            matchedId: match.clie_idno,
+            matchedName: match.clie_name,
             analyze,
           });
           return;
@@ -121,73 +105,27 @@ export function useSaleRegiViewModel() {
       }
     }
 
-    await doSave({ clientId: form.clientId, clientName: form.clientName, analyze });
+    await doSave({ clie_idno: form.clie_idno, clie_name: form.clie_name, analyze });
   };
 
   const handlePreSaveConfirm = async () => {
     if (!preSaveState) return;
     const s = preSaveState;
     setPreSaveState(null);
-    await doSave({ clientId: s.matchedId, clientName: s.matchedName, analyze: s.analyze });
+    await doSave({ clie_idno: s.matchedId, clie_name: s.matchedName, analyze: s.analyze });
   };
 
   const handlePreSaveDeny = async () => {
     if (!preSaveState) return;
     const s = preSaveState;
     setPreSaveState(null);
-    await doSave({ clientId: undefined, clientName: s.typedName, analyze: s.analyze });
-  };
-
-  const handleMatchConfirm = async () => {
-    if (!matchSuggestion) return;
-    await utils.salesLogs.list.invalidate();
-    await utils.dashboard.stats.invalidate();
-    toast.success(`'${matchSuggestion.matchedName}'으로 연결되었습니다.`);
-    goDetail(matchSuggestion.logId);
-    setMatchSuggestion(null);
-  };
-
-  const handleMatchDeny = async () => {
-    if (!matchSuggestion) return;
-
-    try {
-      const client = await findOrCreateClientMutation.mutateAsync({ name: matchSuggestion.originalName });
-      await updateMutation.mutateAsync({
-        id: matchSuggestion.logId,
-        clientId: client.id,
-        clientName: client.name,
-      });
-      await utils.clients.list.invalidate();
-    } catch {
-      try {
-        await updateMutation.mutateAsync({
-          id: matchSuggestion.logId,
-          clientId: null,
-          clientName: matchSuggestion.originalName,
-        });
-      } catch {
-        // ignore
-      }
-    }
-
-    await utils.salesLogs.list.invalidate();
-    await utils.dashboard.stats.invalidate();
-    toast.success("영업일지가 저장되었습니다.");
-    goDetail(matchSuggestion.logId);
-    setMatchSuggestion(null);
+    await doSave({ clie_idno: undefined, clie_name: s.typedName, analyze: s.analyze });
   };
 
   const isSaving = createMutation.isPending;
   const isAnalyzing = analyzeMutation.isPending;
 
-  const isDenyingMatch = updateMutation.isPending || findOrCreateClientMutation.isPending;
-
-  const isBusy =
-    isSaving ||
-    isAnalyzing ||
-    isCheckingClient ||
-    updateMutation.isPending ||
-    findOrCreateClientMutation.isPending;
+  const isBusy = isSaving || isAnalyzing || isCheckingClient;
 
   const bannerState: "idle" | "pending" | "success" | "error" = useMemo(() => {
     if (analyzeMutation.isPending) return "pending";
@@ -199,7 +137,7 @@ export function useSaleRegiViewModel() {
   const bannerMessage = useMemo(() => {
     const d = analyzeMutation.data;
     if (!d) return undefined;
-    return `일정 ${d.promisesCreated ?? 0}개가 자동 등록되었습니다.`;
+    return "AI 분석이 요청되었습니다.";
   }, [analyzeMutation.data]);
 
   const canDismissBanner = bannerState === "success" || bannerState === "error";
@@ -211,9 +149,6 @@ export function useSaleRegiViewModel() {
 
     preSaveState,
     isCheckingClient,
-
-    matchSuggestion,
-    isDenyingMatch,
 
     isSaving,
     isAnalyzing,
@@ -232,8 +167,5 @@ export function useSaleRegiViewModel() {
 
     handlePreSaveConfirm,
     handlePreSaveDeny,
-
-    handleMatchConfirm,
-    handleMatchDeny,
   };
 }

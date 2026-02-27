@@ -4,18 +4,20 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import AppLayout from "./components/AppLayout";
-import DashHome from "./pages/Dash/DashHome";
-import SaleList from "./pages/Sale/SaleList";
-import SaleDeta from "./pages/Sale/SaleDeta";
-import SaleRegi from "./pages/Sale/SaleRegi";
-import ScheList from "./pages/Sche/ScheList";
-import OrdeList from "./pages/Orde/OrdeList";
-import ShipList from "./pages/Ship/SaleList";
-import ClieList from "./pages/Clie/ClieList";
-import ClieDeta from "./pages/Clie/ClieDeta";
-import LandPage from "./pages/Publ/LandPage";
-import ErroPage from "@/pages/Publ/ErroPage";
-import DevsShow from "./pages/Devs/DevsShow";
+import DashHome from "./pages/dash/DashHome";
+import SaleList from "./pages/sale/SaleList";
+import SaleDeta from "./pages/sale/SaleDeta";
+import SaleRegi from "./pages/sale/SaleRegi";
+import ScheList from "./pages/schedule/ScheList";
+import OrderList from "./pages/order/OrderList";
+import ShipList from "./pages/shipment/ShipList";
+import ClientList from "./pages/client/ClientList";
+import ClientDeta from "./pages/client/ClientDeta";
+import LandPage from "./pages/public/LandPage";
+import ErroPage from "@/pages/public/ErroPage";
+import DevsShow from "./pages/devs/DevsShow";
+import LoginPage from "./pages/auth/LoginPage";
+import RegisterPage from "./pages/auth/RegisterPage";
 import { useAuth } from "./_core/hooks/useAuth";
 
 const DEV = import.meta.env.DEV;
@@ -29,10 +31,10 @@ function AuthenticatedApp() {
         <Route path="/sale-list/regi" component={SaleRegi} />
         <Route path="/sale-list/:id" component={SaleDeta} />
         <Route path="/sche-list" component={ScheList} />
-        <Route path="/orde-list" component={OrdeList} />
+        <Route path="/orde-list" component={OrderList} />
         <Route path="/ship-list" component={ShipList} />
-        <Route path="/clie-list" component={ClieList} />
-        <Route path="/clie-list/:id" component={ClieDeta} />
+        <Route path="/clie-list" component={ClientList} />
+        <Route path="/clie-list/:id" component={ClientDeta} />
         <Route path="/404" component={ErroPage} />
         {DEV ? <Route path="/__dev/components" component={DevsShow} /> : null}
         <Route component={ErroPage} />
@@ -56,7 +58,15 @@ function Router() {
       </div>
     );
   }
-  if (!isAuthenticated) return <LandPage />;
+  if (!isAuthenticated) {
+    return (
+      <Switch>
+        <Route path="/auth/login" component={LoginPage} />
+        <Route path="/auth/register" component={RegisterPage} />
+        <Route component={LandPage} />
+      </Switch>
+    );
+  }
   return <AuthenticatedApp />;
 }
 

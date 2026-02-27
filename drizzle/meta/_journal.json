@@ -2,12 +2,5 @@
   "version": "7",
   "dialect": "mysql",
   "entries": [
-    {
-      "idx": 0,
-      "version": "5",
-      "when": 1772107269078,
-      "tag": "0000_slippery_silver_centurion",
-      "breakpoints": true
-    }
   ]
 }

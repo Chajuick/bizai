@@ -1,18 +1,18 @@
 import type { RouterOutputs } from "./router";
 
 /** tRPC 응답에서 추론한 납품 행 타입 */
-export type DeliveryRow = RouterOutputs["deliveries"]["list"][number];
+export type DeliveryRow = RouterOutputs["deliveries"]["list"]["items"][number];
 
 export type DeliveryStatus = "pending" | "delivered" | "invoiced" | "paid";
 
 /** 납품 생성/수정 폼 상태 */
 export type DeliveryFormState = {
-  orderId: string;
-  clientName: string;
-  revenueAmount: string;
-  deliveryStatus: DeliveryStatus;
-  deliveredAt: string;
-  notes: string;
+  orde_idno: string;
+  clie_name: string;
+  ship_pric: string;
+  stat_code: DeliveryStatus;
+  ship_date: string;
+  ship_memo: string;
 };
 
 export type DeleteConfirmState = null | { id: number; title: string };

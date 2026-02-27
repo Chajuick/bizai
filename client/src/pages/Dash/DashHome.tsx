@@ -150,8 +150,8 @@ export default function DashHome() {
   const chartInsight = useMemo(() => {
     if (!trend || trend.length < 2) return null;
 
-    const last = trend[trend.length - 1]?.delivery ?? 0;
-    const prev = trend[trend.length - 2]?.delivery ?? 0;
+    const last = trend[trend.length - 1]?.revenue ?? 0;
+    const prev = trend[trend.length - 2]?.revenue ?? 0;
 
     if (prev <= 0 && last > 0) return `최근 한 달 납품 매출이 새로 잡혔어요.`;
     if (prev <= 0 && last <= 0) return null;
@@ -207,7 +207,7 @@ export default function DashHome() {
             <KPICard
               icon={Calendar}
               label="예정 일정"
-              value={stats?.upcomingPromisesCount ?? 0}
+              value={stats?.upcomingSchedulesCount ?? 0}
               sub={
                 stats?.overdueCount
                   ? `지연 ${stats.overdueCount}건${stats.imminentCount ? ` · 임박 ${stats.imminentCount}건` : ""}`
@@ -355,7 +355,7 @@ export default function DashHome() {
                 />
                 <Area
                   type="monotone"
-                  dataKey="delivery"
+                  dataKey="revenue"
                   stroke="#10b981"
                   strokeWidth={2}
                   fill="url(#deliveryGrad)"
@@ -380,7 +380,7 @@ export default function DashHome() {
                 </Link>
               </div>
 
-              {(stats?.recentLogs?.length ?? 0) === 0 ? (
+              {(stats?.recentSales?.length ?? 0) === 0 ? (
                 <EmptyState
                   title="아직 영업일지가 없어요"
                   desc="첫 기록을 남기면 AI가 자동으로 정리해줘요."
@@ -389,8 +389,8 @@ export default function DashHome() {
                 />
               ) : (
                 <div className="space-y-2">
-                  {stats?.recentLogs?.map((log) => (
-                    <Link key={log.id} href={`/sale-list/${log.id}`}>
+                  {stats?.recentSales?.map((log) => (
+                    <Link key={log.sale_idno} href={`/sale-list/${log.sale_idno}`}>
                       <div className="flex items-start gap-3 p-3 rounded-2xl hover:bg-slate-50 transition-colors cursor-pointer">
                         <div
                           className="w-2 h-2 rounded-full mt-1.5 shrink-0"
@@ -398,14 +398,14 @@ export default function DashHome() {
                         />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-[color:var(--blueprint-text)] truncate">
-                            {log.clientName || "고객사 미지정"}
+                            {log.clie_name || "고객사 미지정"}
                           </p>
                           <p className="text-xs truncate text-[color:var(--blueprint-text-dim)]">
-                            {log.rawContent.slice(0, 60)}...
+                            {log.orig_memo.slice(0, 60)}...
                           </p>
                         </div>
                         <p className="text-xs shrink-0 text-[color:var(--blueprint-text-dim)]">
-                          {new Date(log.visitedAt).toLocaleDateString("ko-KR", {
+                          {new Date(log.vist_date).toLocaleDateString("ko-KR", {
                             month: "short",
                             day: "numeric",
                           })}
@@ -429,7 +429,7 @@ export default function DashHome() {
                 </Link>
               </div>
 
-              {(stats?.upcomingPromises?.length ?? 0) === 0 ? (
+              {(stats?.upcomingSchedules?.length ?? 0) === 0 ? (
                 <EmptyState
                   title="예정된 일정이 없어요"
                   desc="다음 미팅을 등록해두면 놓치지 않아요."
@@ -438,13 +438,13 @@ export default function DashHome() {
                 />
               ) : (
                 <div className="space-y-2">
-                  {stats?.upcomingPromises?.map((p) => {
-                    const ms = new Date(p.scheduledAt).getTime();
+                  {stats?.upcomingSchedules?.map((p) => {
+                    const ms = new Date(p.sche_date).getTime();
                     const nowMs = Date.now();
                     const isImminent = ms > nowMs && ms - nowMs <= 12 * 60 * 60 * 1000;
                     return (
                       <div
-                        key={p.id}
+                        key={p.sche_idno}
                         className="flex items-start gap-3 p-3 rounded-2xl border transition"
                         style={
                           isImminent
@@ -460,7 +460,7 @@ export default function DashHome() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-1.5 flex-wrap">
                             <p className="text-sm font-semibold text-[color:var(--blueprint-text)] truncate">
-                              {p.title}
+                              {p.sche_name}
                             </p>
                             {isImminent && (
                               <span
@@ -475,9 +475,9 @@ export default function DashHome() {
                               </span>
                             )}
                           </div>
-                          {p.clientName && (
+                          {p.clie_name && (
                             <p className="text-xs text-[color:var(--blueprint-text-dim)]">
-                              {p.clientName}
+                              {p.clie_name}
                             </p>
                           )}
                         </div>
@@ -485,7 +485,7 @@ export default function DashHome() {
                           className="text-xs shrink-0 font-semibold"
                           style={{ color: isImminent ? "rgb(234,88,12)" : "rgb(100,116,139)" }}
                         >
-                          {new Date(p.scheduledAt).toLocaleString("ko-KR", {
+                          {new Date(p.sche_date).toLocaleString("ko-KR", {
                             month: "short",
                             day: "numeric",
                             hour: "2-digit",

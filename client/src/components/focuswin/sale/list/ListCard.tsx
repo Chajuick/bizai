@@ -1,5 +1,5 @@
 import * as React from "react";
-import { BookOpen, Brain, ChevronRight, Mic, MapPin } from "lucide-react";
+import { BookOpen, Brain, ChevronRight, MapPin } from "lucide-react";
 import { WorkItemCard } from "@/components/focuswin/common/work-item-card"; // 경로 맞게
 import Chip from "../../common/ui/chip";
 import type { SalesLogRow } from "@/types/salesLog";
@@ -17,7 +17,7 @@ export default function SaleListCard({
   description?: React.ReactNode;
   className?: string;
 }) {
-  const dateLabel = new Date(log.visitedAt).toLocaleDateString("ko-KR", {
+  const dateLabel = new Date(log.vist_date).toLocaleDateString("ko-KR", {
     month: "short",
     day: "numeric",
   });
@@ -38,8 +38,7 @@ export default function SaleListCard({
           }
           tags={
             <div className="flex items-center gap-1">
-              {log.audioUrl ? <Chip icon={Mic} label="음성" tone="sky" /> : null}
-              {log.isProcessed ? <Chip icon={Brain} label="AI" tone="violet" /> : null}
+              {log.aiex_done ? <Chip icon={Brain} label="AI" tone="violet" /> : null}
             </div>
           }
           actions={
@@ -56,7 +55,7 @@ export default function SaleListCard({
             {/* 왼쪽: 설명 */}
             <div>
               <div className="min-w-0 flex-1">{description ? <p className="text-sm text-slate-600 line-clamp-1 sm:line-clamp-2">{description}</p> : null}</div>
-              <div className="max-w-[220px] mt-2">{log.location && <WorkItemCard.Meta icon={<MapPin size={14} />} value={log.location} />}</div>
+              <div className="max-w-[220px] mt-2">{log.sale_loca && <WorkItemCard.Meta icon={<MapPin size={14} />} value={log.sale_loca} />}</div>
             </div>
           </div>
         </WorkItemCard.Body>

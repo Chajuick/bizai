@@ -11,7 +11,7 @@ const navItems = [
   { path: "/sale-list", label: "영업일지", icon: BookOpen, shortLabel: "일지" },
   { path: "/sche-list", label: "일정", icon: Calendar, shortLabel: "일정" },
   { path: "/orde-list", label: "수주", icon: ShoppingCart, shortLabel: "수주" },
-  { path: "ship-list", label: "납품/매출", icon: TrendingUp, shortLabel: "매출" },
+  { path: "/ship-list", label: "납품/매출", icon: TrendingUp, shortLabel: "매출" },
   { path: "/clie-list", label: "고객사", icon: Users, shortLabel: "고객" },
 ];
 
@@ -29,10 +29,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   };
 
   const userInitial = useMemo(() => {
-    const n = user?.name?.trim();
+    const n = user?.user_name?.trim();
     if (!n) return "U";
     return n[0].toUpperCase();
-  }, [user?.name]);
+  }, [user?.user_name]);
 
   return (
     <div className="h-[100dvh] overflow-hidden flex bg-[color:var(--blueprint-bg)]">
@@ -102,8 +102,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-bold text-[color:var(--blueprint-text)] truncate">{user?.name || "사용자"}</p>
-              <p className="text-xs text-slate-500 truncate">{user?.email || ""}</p>
+              <p className="text-sm font-bold text-[color:var(--blueprint-text)] truncate">{user?.user_name || "사용자"}</p>
+              <p className="text-xs text-slate-500 truncate">{user?.mail_idno || ""}</p>
             </div>
           </div>
 
@@ -179,8 +179,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   {userInitial}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-sm font-bold text-[color:var(--blueprint-text)] truncate">{user?.name || "사용자"}</p>
-                  <p className="text-xs text-slate-500 truncate">{user?.email || ""}</p>
+                  <p className="text-sm font-bold text-[color:var(--blueprint-text)] truncate">{user?.user_name || "사용자"}</p>
+                  <p className="text-xs text-slate-500 truncate">{user?.mail_idno || ""}</p>
                 </div>
               </div>
 

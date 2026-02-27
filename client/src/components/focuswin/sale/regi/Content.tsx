@@ -21,7 +21,7 @@ export default function SaleRegiContent({ vm }: Props) {
 
       <SalesLogNewBasicCard form={vm.form} setForm={vm.setForm} />
 
-      <SaleRegiContentCard rawContent={vm.form.rawContent} onChangeRaw={v => vm.setForm(f => ({ ...f, rawContent: v }))} />
+      <SaleRegiContentCard rawContent={vm.form.orig_memo} onChangeRaw={v => vm.setForm(f => ({ ...f, orig_memo: v }))} />
 
       <SalesLogNewBottomActions
         isBusy={vm.isBusy}

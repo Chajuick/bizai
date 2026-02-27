@@ -36,7 +36,7 @@ export default function CreateOrderDialog({
       subtitle={
         selectedPromise ? (
           <p className="text-sm text-slate-600">
-            일정: <span className="text-slate-900 font-bold">{selectedPromise.title}</span>
+            일정: <span className="text-slate-900 font-bold">{selectedPromise.sche_name}</span>
           </p>
         ) : null
       }
@@ -45,13 +45,13 @@ export default function CreateOrderDialog({
       isSubmitting={isSubmitting}
       onSubmit={onSubmit}
     >
-      {selectedPromise?.clientName && (
+      {selectedPromise?.clie_name && (
         <div>
           <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">
             고객사
           </Label>
           <div className="px-3 py-2 rounded-2xl border border-slate-200 bg-slate-50 text-slate-900">
-            {selectedPromise.clientName}
+            {selectedPromise.clie_name}
           </div>
         </div>
       )}
@@ -61,8 +61,8 @@ export default function CreateOrderDialog({
           상품/서비스 *
         </Label>
         <Input
-          value={orderForm.productService}
-          onChange={(e) => setOrderForm((f) => ({ ...f, productService: e.target.value }))}
+          value={orderForm.prod_serv}
+          onChange={(e) => setOrderForm((f) => ({ ...f, prod_serv: e.target.value }))}
           required
           placeholder="예: 소프트웨어 개발"
           className="rounded-2xl border-slate-200"
@@ -75,8 +75,8 @@ export default function CreateOrderDialog({
         </Label>
         <Input
           type="number"
-          value={orderForm.amount}
-          onChange={(e) => setOrderForm((f) => ({ ...f, amount: e.target.value }))}
+          value={orderForm.orde_pric}
+          onChange={(e) => setOrderForm((f) => ({ ...f, orde_pric: e.target.value }))}
           required
           placeholder="5000000"
           className="rounded-2xl border-slate-200"
@@ -89,11 +89,11 @@ export default function CreateOrderDialog({
             초기 상태
           </Label>
           <select
-            value={orderForm.status}
+            value={orderForm.stat_code}
             onChange={(e) =>
               setOrderForm((f) => ({
                 ...f,
-                status: e.target.value as OrderQuickFormState["status"],
+                stat_code: e.target.value as OrderQuickFormState["stat_code"],
               }))
             }
             className="w-full px-3 py-2 rounded-2xl border border-slate-200 bg-white text-slate-900"
@@ -110,8 +110,8 @@ export default function CreateOrderDialog({
           </Label>
           <Input
             type="date"
-            value={orderForm.contractDate}
-            onChange={(e) => setOrderForm((f) => ({ ...f, contractDate: e.target.value }))}
+            value={orderForm.ctrt_date}
+            onChange={(e) => setOrderForm((f) => ({ ...f, ctrt_date: e.target.value }))}
             className="rounded-2xl border-slate-200"
           />
         </div>
@@ -120,8 +120,8 @@ export default function CreateOrderDialog({
       <div>
         <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">메모</Label>
         <Textarea
-          value={orderForm.notes}
-          onChange={(e) => setOrderForm((f) => ({ ...f, notes: e.target.value }))}
+          value={orderForm.orde_memo}
+          onChange={(e) => setOrderForm((f) => ({ ...f, orde_memo: e.target.value }))}
           rows={2}
           className="rounded-2xl border-slate-200 resize-none"
           placeholder="일정 메모에서 자동 입력"

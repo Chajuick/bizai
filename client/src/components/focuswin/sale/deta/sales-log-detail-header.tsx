@@ -1,4 +1,4 @@
-import { ArrowLeft, Check, Loader2, Pencil, Sparkles, Trash2, XCircle } from "lucide-react";
+import { Check, Loader2, Pencil, Sparkles, Trash2, XCircle } from "lucide-react";
 import PageHeader from "@/components/focuswin/common/page-header";
 import Chip from "@/components/focuswin/common/ui/chip";
 
@@ -90,15 +90,7 @@ export default function SalesLogDetailHeader({
         </div>
       }
       description={visitedLabel}
-      left={
-        <button
-          onClick={onBack}
-          className="p-2 rounded-xl hover:bg-slate-50 transition text-slate-700"
-          aria-label="뒤로"
-        >
-          <ArrowLeft size={18} />
-        </button>
-      }
+      onBack={onBack}
       primaryAction={primaryAction}
       actions={actions}
     />

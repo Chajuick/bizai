@@ -167,6 +167,14 @@
   --fowin-shadow-card: 0 6px 18px rgba(0, 0, 0, 0.35);
   --fowin-shadow-card-hover: 0 12px 30px rgba(0, 0, 0, 0.45);
   --fowin-ring-color: color-mix(in oklch, var(--primary) 22%, transparent);
+  --sidebar: hsl(240 5.9% 10%);
+  --sidebar-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-primary: hsl(224.3 76.3% 48%);
+  --sidebar-primary-foreground: hsl(0 0% 100%);
+  --sidebar-accent: hsl(240 3.7% 15.9%);
+  --sidebar-accent-foreground: hsl(240 4.8% 95.9%);
+  --sidebar-border: hsl(240 3.7% 15.9%);
+  --sidebar-ring: hsl(217.2 91.2% 59.8%);
 }
 
 @layer base {
@@ -176,6 +184,9 @@
 
   html {
     color-scheme: light;
+  }
+  .dark {
+    color-scheme: dark;
   }
 
   body {
@@ -273,7 +284,7 @@
   }
 
   .bp-card:hover {
-    border-color: rgba(37, 99, 235, 0.22);
+    border-color: var(--fowin-border-hover);
     box-shadow: var(--fowin-shadow-card-hover);
     transform: translateY(-1px);
   }
@@ -503,7 +514,7 @@
 
 @media (hover: hover) and (pointer: fine) {
   .bp-card:hover {
-    border-color: rgba(37, 99, 235, 0.22);
+    border-color: var(--fowin-border-hover);
     box-shadow: var(--fowin-shadow-card-hover);
     transform: translateY(-1px);
   }
