@@ -2,15 +2,57 @@
 // Auth routes: Google OAuth 2.0 + 이메일/비밀번호 자체 인증
 
 // #region Imports
+import { randomBytes } from "crypto";
 import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import type { Express, Request, Response } from "express";
 import bcrypt from "bcryptjs";
+import { parse as parseCookies } from "cookie";
+import rateLimit from "express-rate-limit";
 import { z } from "zod/v4";
 
 import { getSessionCookieOptions } from "./cookies";
 import { signSession } from "./sdk";
 import { userRepo } from "./auth/user.repo";
 import { ENV } from "./env/env";
+// #endregion
+
+// #region Rate Limiters
+/**
+ * 로그인: IP당 15분에 10회
+ * - 브루트포스 공격 방어
+ * - 실패 시 429 + Retry-After 헤더
+ */
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: { error: "Too many login attempts. Please try again in 15 minutes." },
+});
+
+/**
+ * 회원가입: IP당 1시간에 5회
+ * - 계정 스팸 방지
+ */
+const registerLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 5,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: { error: "Too many registration attempts. Please try again later." },
+});
+
+/**
+ * Google OAuth 시작: IP당 15분에 20회
+ * - 리다이렉트 남용 방지
+ */
+const googleOAuthLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: { error: "Too many OAuth requests. Please try again later." },
+});
 // #endregion
 
 // #region Helpers
@@ -25,12 +67,50 @@ function setSessionCookie(res: Response, req: Request, token: string): void {
 }
 // #endregion
 
+// #region OAuth State (CSRF protection)
+const OAUTH_STATE_COOKIE = "oauth_state";
+const OAUTH_STATE_MAX_AGE_MS = 10 * 60 * 1000; // 10분
+
+function generateState(): string {
+  return randomBytes(32).toString("hex");
+}
+
+/**
+ * state 쿠키 설정
+ * - sameSite: "lax" — Google 리다이렉트(top-level GET)에서 전송됨
+ * - path를 callback으로 제한 → 다른 경로에서 노출 최소화
+ */
+function setStateCookie(res: Response, req: Request, state: string): void {
+  const base = getSessionCookieOptions(req);
+  res.cookie(OAUTH_STATE_COOKIE, state, {
+    ...base,
+    sameSite: "lax",
+    path: "/api/auth/google/callback",
+    maxAge: OAUTH_STATE_MAX_AGE_MS,
+  });
+}
+
+function clearStateCookie(res: Response, req: Request): void {
+  const base = getSessionCookieOptions(req);
+  res.clearCookie(OAUTH_STATE_COOKIE, {
+    ...base,
+    sameSite: "lax",
+    path: "/api/auth/google/callback",
+  });
+}
+
+function getStateCookieValue(req: Request): string | undefined {
+  const cookies = parseCookies(req.headers.cookie ?? "");
+  return cookies[OAUTH_STATE_COOKIE];
+}
+// #endregion
+
 // #region Google OAuth helpers
 const GOOGLE_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN_URL = "https://oauth2.googleapis.com/token";
 const GOOGLE_USERINFO_URL = "https://www.googleapis.com/oauth2/v2/userinfo";
 
-function buildGoogleAuthUrl(redirectUri: string): string {
+function buildGoogleAuthUrl(redirectUri: string, state: string): string {
   const params = new URLSearchParams({
     client_id: ENV.googleClientId,
     redirect_uri: redirectUri,
@@ -38,6 +118,7 @@ function buildGoogleAuthUrl(redirectUri: string): string {
     scope: "openid email profile",
     access_type: "offline",
     prompt: "select_account",
+    state, // CSRF 방어
   });
   return `${GOOGLE_AUTH_URL}?${params.toString()}`;
 }
@@ -113,19 +194,34 @@ const LoginSchema = z.object({
 // #region Routes
 export function registerOAuthRoutes(app: Express) {
   // #region Google OAuth — initiate
-  app.get("/api/auth/google", (req: Request, res: Response) => {
+  app.get("/api/auth/google", googleOAuthLimiter, (req: Request, res: Response) => {
     if (!ENV.googleClientId || !ENV.googleClientSecret) {
       res.status(503).json({ error: "Google OAuth is not configured" });
       return;
     }
+    const state = generateState();
     const redirectUri = buildRedirectUri(req);
-    res.redirect(302, buildGoogleAuthUrl(redirectUri));
+    setStateCookie(res, req, state);
+    res.redirect(302, buildGoogleAuthUrl(redirectUri, state));
   });
   // #endregion
 
   // #region Google OAuth — callback
   app.get("/api/auth/google/callback", async (req: Request, res: Response) => {
     const code = getQueryParam(req, "code");
+    const stateFromQuery = getQueryParam(req, "state");
+    const stateFromCookie = getStateCookieValue(req);
+
+    // CSRF 검증: state가 없거나 일치하지 않으면 즉시 거부
+    if (!stateFromQuery || !stateFromCookie || stateFromQuery !== stateFromCookie) {
+      clearStateCookie(res, req);
+      res.status(400).json({ error: "Invalid OAuth state. Possible CSRF attack." });
+      return;
+    }
+
+    // state 검증 완료 → 쿠키 즉시 삭제 (재사용 방지)
+    clearStateCookie(res, req);
+
     if (!code) {
       res.status(400).json({ error: "code is required" });
       return;
@@ -169,7 +265,7 @@ export function registerOAuthRoutes(app: Express) {
   // #endregion
 
   // #region Email/Password — register
-  app.post("/api/auth/register", async (req: Request, res: Response) => {
+  app.post("/api/auth/register", registerLimiter, async (req: Request, res: Response) => {
     const parsed = RegisterSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: "Invalid input", details: parsed.error.issues });
@@ -217,7 +313,7 @@ export function registerOAuthRoutes(app: Express) {
   // #endregion
 
   // #region Email/Password — login
-  app.post("/api/auth/login", async (req: Request, res: Response) => {
+  app.post("/api/auth/login", loginLimiter, async (req: Request, res: Response) => {
     const parsed = LoginSchema.safeParse(req.body);
     if (!parsed.success) {
       res.status(400).json({ error: "Invalid input" });

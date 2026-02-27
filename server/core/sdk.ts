@@ -91,8 +91,8 @@ export async function authenticateRequest(req: Request): Promise<User> {
     throw ForbiddenError("User not found");
   }
 
-  // 마지막 로그인 시간 갱신
-  await userRepo.upsertById(user.user_idno, { last_sign: new Date() });
+  // 마지막 로그인 시간 갱신 — fire-and-forget (응답 지연 없음)
+  void userRepo.upsertById(user.user_idno, { last_sign: new Date() });
 
   return user;
 }

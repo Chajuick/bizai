@@ -119,7 +119,7 @@ export async function createContext(opts: CreateExpressContextOptions): Promise<
      * - 멤버십 여러개일 수 있으므로, user의 selected company를 저장하고 여기서 사용
      */
     if (user) {
-      const db = await getDb();
+      const db = getDb();
 
       const [membership] = await db
         .select({

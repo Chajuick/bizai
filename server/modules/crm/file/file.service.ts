@@ -18,6 +18,7 @@ import { fileLinkService } from "./fileLink.service";
 
 import { buildFilePath, getExt } from "../shared/fileKey";
 import { normalizePage } from "../shared/pagination";
+import { storageGetPutUrl } from "../../../storage";
 // #endregion
 
 // #region Service
@@ -30,7 +31,9 @@ export const fileService = {
       file_name: input.file_name,
     });
 
-    return { file_path };
+    const { upload_url } = await storageGetPutUrl(file_path, input.mime_type);
+
+    return { file_path, upload_url };
   },
   // #endregion
 

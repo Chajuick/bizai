@@ -60,86 +60,90 @@ export const dashboardRepo = {
     const kstMidnight = kstTodayMidnight(now);
     const twelveHoursLater = new Date(now.getTime() + 12 * 60 * 60 * 1000);
 
-    const [logsCount] = await db
-      .select({ count: sql<number>`COUNT(*)` })
-      .from(CRM_SALE)
-      .where(
-        and(
-          eq(CRM_SALE.comp_idno, params.comp_idno),
-          eq(CRM_SALE.enab_yesn, true),
-          gte(CRM_SALE.vist_date, monthStart),
-          lt(CRM_SALE.vist_date, monthEnd)
-        )
-      );
-
-    const [upcomingSchedules] = await db
-      .select({ count: sql<number>`COUNT(*)` })
-      .from(CRM_SCHEDULE)
-      .where(
-        and(
-          eq(CRM_SCHEDULE.comp_idno, params.comp_idno),
-          eq(CRM_SCHEDULE.enab_yesn, true),
-          eq(CRM_SCHEDULE.stat_code, "scheduled"),
-          gte(CRM_SCHEDULE.sche_date, now)
-        )
-      );
-
-    const [activeOrders] = await db
-      .select({
-        count: sql<number>`COUNT(*)`,
-        total: sql<string>`COALESCE(SUM(${CRM_ORDER.orde_pric}), 0)`,
-      })
-      .from(CRM_ORDER)
-      .where(
-        and(
-          eq(CRM_ORDER.comp_idno, params.comp_idno),
-          eq(CRM_ORDER.enab_yesn, true),
-          sql`${CRM_ORDER.stat_code} IN ('proposal','negotiation','confirmed')`
-        )
-      );
-
-    // ✅ 월 매출 = 수금(paid) + paid_date 기준
-    const [monthlyRevenue] = await db
-      .select({
-        total: sql<string>`COALESCE(SUM(${CRM_SHIPMENT.ship_pric}), 0)`,
-      })
-      .from(CRM_SHIPMENT)
-      .where(
-        and(
-          eq(CRM_SHIPMENT.comp_idno, params.comp_idno),
-          eq(CRM_SHIPMENT.enab_yesn, true),
-          eq(CRM_SHIPMENT.stat_code, "paid"),
-          gte(CRM_SHIPMENT.paid_date, monthStart),
-          lt(CRM_SHIPMENT.paid_date, monthEnd)
-        )
-      );
-
-    // overdue: KST 오늘 자정 이전의 scheduled
-    const [overdueSchedules] = await db
-      .select({ count: sql<number>`COUNT(*)` })
-      .from(CRM_SCHEDULE)
-      .where(
-        and(
-          eq(CRM_SCHEDULE.comp_idno, params.comp_idno),
-          eq(CRM_SCHEDULE.enab_yesn, true),
-          eq(CRM_SCHEDULE.stat_code, "scheduled"),
-          lt(CRM_SCHEDULE.sche_date, kstMidnight)
-        )
-      );
-
-    // imminent: 12시간 이내
-    const [imminentSchedules] = await db
-      .select({ count: sql<number>`COUNT(*)` })
-      .from(CRM_SCHEDULE)
-      .where(
-        and(
-          eq(CRM_SCHEDULE.comp_idno, params.comp_idno),
-          eq(CRM_SCHEDULE.enab_yesn, true),
-          eq(CRM_SCHEDULE.stat_code, "scheduled"),
-          gte(CRM_SCHEDULE.sche_date, now),
-          lte(CRM_SCHEDULE.sche_date, twelveHoursLater)
-        )
-      );
+    const [
+      [logsCount],
+      [upcomingSchedules],
+      [activeOrders],
+      [monthlyRevenue],
+      [overdueSchedules],
+      [imminentSchedules],
+    ] = await Promise.all([
+      db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(CRM_SALE)
+        .where(
+          and(
+            eq(CRM_SALE.comp_idno, params.comp_idno),
+            eq(CRM_SALE.enab_yesn, true),
+            gte(CRM_SALE.vist_date, monthStart),
+            lt(CRM_SALE.vist_date, monthEnd)
+          )
+        ),
+      db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(CRM_SCHEDULE)
+        .where(
+          and(
+            eq(CRM_SCHEDULE.comp_idno, params.comp_idno),
+            eq(CRM_SCHEDULE.enab_yesn, true),
+            eq(CRM_SCHEDULE.stat_code, "scheduled"),
+            gte(CRM_SCHEDULE.sche_date, now)
+          )
+        ),
+      db
+        .select({
+          count: sql<number>`COUNT(*)`,
+          total: sql<string>`COALESCE(SUM(${CRM_ORDER.orde_pric}), 0)`,
+        })
+        .from(CRM_ORDER)
+        .where(
+          and(
+            eq(CRM_ORDER.comp_idno, params.comp_idno),
+            eq(CRM_ORDER.enab_yesn, true),
+            sql`${CRM_ORDER.stat_code} IN ('proposal','negotiation','confirmed')`
+          )
+        ),
+      // ✅ 월 매출 = 수금(paid) + paid_date 기준
+      db
+        .select({
+          total: sql<string>`COALESCE(SUM(${CRM_SHIPMENT.ship_pric}), 0)`,
+        })
+        .from(CRM_SHIPMENT)
+        .where(
+          and(
+            eq(CRM_SHIPMENT.comp_idno, params.comp_idno),
+            eq(CRM_SHIPMENT.enab_yesn, true),
+            eq(CRM_SHIPMENT.stat_code, "paid"),
+            gte(CRM_SHIPMENT.paid_date, monthStart),
+            lt(CRM_SHIPMENT.paid_date, monthEnd)
+          )
+        ),
+      // overdue: KST 오늘 자정 이전의 scheduled
+      db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(CRM_SCHEDULE)
+        .where(
+          and(
+            eq(CRM_SCHEDULE.comp_idno, params.comp_idno),
+            eq(CRM_SCHEDULE.enab_yesn, true),
+            eq(CRM_SCHEDULE.stat_code, "scheduled"),
+            lt(CRM_SCHEDULE.sche_date, kstMidnight)
+          )
+        ),
+      // imminent: 12시간 이내
+      db
+        .select({ count: sql<number>`COUNT(*)` })
+        .from(CRM_SCHEDULE)
+        .where(
+          and(
+            eq(CRM_SCHEDULE.comp_idno, params.comp_idno),
+            eq(CRM_SCHEDULE.enab_yesn, true),
+            eq(CRM_SCHEDULE.stat_code, "scheduled"),
+            gte(CRM_SCHEDULE.sche_date, now),
+            lte(CRM_SCHEDULE.sche_date, twelveHoursLater)
+          )
+        ),
+    ]);
 
     return {
       logsThisMonth: Number(logsCount?.count ?? 0),

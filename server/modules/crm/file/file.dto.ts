@@ -22,6 +22,7 @@ const FileSortInput = makeSortInput(["sort_orde", "file_idno", "crea_date"] as c
 // #region Inputs
 export const PrepareUploadInput = z.object({
   file_name: z.string().min(1),
+  mime_type: z.string().optional(), // presigned PUT URL의 ContentType 지정 시 사용
 });
 
 export const ConfirmUploadInput = z.object({
@@ -62,6 +63,7 @@ export const ListByRefInput = z.object({
 // #region Outputs
 export const PrepareUploadOutput = z.object({
   file_path: z.string(),
+  upload_url: z.string(), // 클라이언트가 R2에 직접 PUT 업로드하는 presigned URL (15분 유효)
 });
 
 export const ConfirmUploadOutput = z.object({

@@ -3,7 +3,16 @@ import { TRPCClientError } from "@trpc/client";
 import { UNAUTHED_ERR_MSG } from "@shared/const";
 import { getLoginUrl } from "@/const";
 
-export const queryClient = new QueryClient();
+export const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 30_000,          // 30초 내 재요청 억제
+      gcTime: 5 * 60_000,         // 5분간 캐시 유지
+      refetchOnWindowFocus: false, // 탭 전환 시 자동 재요청 off
+      retry: 1,                   // 실패 시 1회만 재시도
+    },
+  },
+});
 
 let redirecting = false;
 

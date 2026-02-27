@@ -1,4 +1,4 @@
-import { int, varchar, timestamp, uniqueIndex, index } from "drizzle-orm/mysql-core";
+import { int, varchar, timestamp, uniqueIndex } from "drizzle-orm/mysql-core";
 import { table } from "../common/table";
 import { auditColsNoUser } from "../common/default";
 
@@ -20,7 +20,7 @@ export const CORE_USER = table(
   },
   (t) => [
     uniqueIndex("ux_core_user_open").on(t.open_idno),
-    index("ix_core_user_mail").on(t.mail_idno),
+    uniqueIndex("ux_core_user_mail").on(t.mail_idno), // 이메일 중복 계정 방지
   ]
 );
 

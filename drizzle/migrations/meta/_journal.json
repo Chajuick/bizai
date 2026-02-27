@@ -8,6 +8,13 @@
       "when": 1772178750289,
       "tag": "0000_daffy_centennial",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1772197962134,
+      "tag": "0001_exotic_starjammers",
+      "breakpoints": true
     }
   ]
 }

@@ -90,4 +90,30 @@ export async function storageGet(
 
   return { key, url };
 }
+
+/**
+ * 클라이언트가 R2에 직접 업로드하기 위한 presigned PUT URL을 반환한다.
+ *
+ * - 클라이언트는 반환된 url에 PUT 요청으로 파일 본문을 전송한다.
+ * - ContentType을 지정하면 클라이언트 요청에도 동일한 헤더가 필요하다.
+ * - 기본 유효시간: 15분 (업로드 완료에 충분, 과도한 노출 방지)
+ */
+export async function storageGetPutUrl(
+  relKey: string,
+  contentType?: string,
+  expiresIn = 900
+): Promise<{ key: string; upload_url: string }> {
+  const key = normalizeKey(relKey);
+  const client = getS3Client();
+
+  const command = new PutObjectCommand({
+    Bucket: ENV.r2Bucket,
+    Key: key,
+    ...(contentType ? { ContentType: contentType } : {}),
+  });
+
+  const upload_url = await getSignedUrl(client, command, { expiresIn });
+
+  return { key, upload_url };
+}
 // #endregion
