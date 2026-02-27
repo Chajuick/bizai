@@ -1,7 +1,7 @@
 import { int, varchar, text, decimal, timestamp, boolean, index } from "drizzle-orm/mysql-core";
-import { scheduleStatusEnum } from "../_common/enums";
-import { companyCols, auditCols } from "../_common/default";
-import { table } from "../_common/table";
+import { scheduleStatusEnum } from "../common/enums";
+import { companyCols, auditCols } from "../common/default";
+import { table } from "../common/table";
 
 export const CRM_SCHEDULE = table(
   "CRM_SCHEDULE",
@@ -22,6 +22,8 @@ export const CRM_SCHEDULE = table(
     stat_code: scheduleStatusEnum.default("scheduled").notNull(),   // 상태
     remd_sent: boolean("remd_sent").default(false).notNull(),       // 리마인드 발송 여부
     auto_gene: boolean("auto_gene").default(false).notNull(),       // AI 자동 생성 여부
+
+    enab_yesn: boolean("enab_yesn").default(true).notNull(),        // 활성 여부
 
     ...auditCols(),                                                 // crea_*/modi_* 감사
   },

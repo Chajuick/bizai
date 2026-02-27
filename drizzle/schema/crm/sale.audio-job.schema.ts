@@ -1,7 +1,7 @@
 import { int, varchar, text, json, timestamp, index, uniqueIndex } from "drizzle-orm/mysql-core";
-import { table } from "../_common/table";
-import { companyCols, auditCols } from "../_common/default";
-import { jobsStatusEnum } from "../_common/enums";
+import { table } from "../common/table";
+import { companyCols, auditCols } from "../common/default";
+import { jobsStatusEnum } from "../common/enums";
 
 export const CRM_SALE_AUDIO_JOB = table(
   "CRM_SALE_AUDIO_JOB",

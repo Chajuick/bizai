@@ -1,7 +1,7 @@
-import { int, varchar, text, decimal, timestamp, index } from "drizzle-orm/mysql-core";
-import { shipStatusEnum } from "../_common/enums";
-import { companyCols, auditCols } from "../_common/default";
-import { table } from "../_common/table";
+import { int, varchar, text, decimal, timestamp, index, boolean } from "drizzle-orm/mysql-core";
+import { shipStatusEnum } from "../common/enums";
+import { companyCols, auditCols } from "../common/default";
+import { table } from "../common/table";
 
 export const CRM_SHIPMENT = table(
   "CRM_SHIPMENT",
@@ -15,8 +15,12 @@ export const CRM_SHIPMENT = table(
 
     stat_code: shipStatusEnum.default("pending").notNull(),          // 상태(pending/delivered/invoiced/paid)
     ship_date: timestamp("ship_date"),                               // 납품일(옵션)
+    invc_date: timestamp("invc_date"),                               // 청구일(청구 상태로 변경 시 기록)
+    paid_date: timestamp("paid_date"),                               // 수금일(수금 상태로 변경 시 기록)
     ship_pric: decimal("ship_pric", { precision: 15, scale: 2 }).notNull(), // 매출 금액
     ship_memo: text("ship_memo"),                                    // 메모
+
+    enab_yesn: boolean("enab_yesn").default(true).notNull(),         // 활성 여부
 
     ...auditCols(),                                                  // crea_*/modi_* 감사
   },

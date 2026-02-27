@@ -1,6 +1,6 @@
 import { int, varchar, text, json, boolean, timestamp, index } from "drizzle-orm/mysql-core";
-import { companyCols, auditCols } from "../_common/default";
-import { table } from "../_common/table";
+import { companyCols, auditCols } from "../common/default";
+import { table } from "../common/table";
 
 export const CRM_SALE = table(
   "CRM_SALE",
@@ -21,6 +21,8 @@ export const CRM_SALE = table(
     audi_addr: text("audi_addr"),                                  // 음성 파일 URL(옵션) *가능하면 file_link로 이동 추천
     sttx_text: text("sttx_text"),                                  // STT 결과 텍스트(옵션)
     aiex_done: boolean("aiex_done").default(false).notNull(),      // AI 처리 완료 여부
+
+    enab_yesn: boolean("enab_yesn").default(true).notNull(),       // 활성 여부
 
     ...auditCols(),                                                // crea_*/modi_* 감사
   },

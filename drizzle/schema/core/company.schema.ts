@@ -1,6 +1,6 @@
 import { int, varchar, index, uniqueIndex, tinyint } from "drizzle-orm/mysql-core";
-import { auditColsNoUser } from "../_common/default";
-import { table } from "../_common/table";
+import { auditColsNoUser } from "../common/default";
+import { table } from "../common/table";
 
 export const CORE_COMPANY = table(
   "CORE_COMPANY",

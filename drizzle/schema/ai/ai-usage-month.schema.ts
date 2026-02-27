@@ -1,7 +1,7 @@
 import { int, primaryKey, index, timestamp } from "drizzle-orm/mysql-core";
-import { aiFeatureEnum } from "../_common/enums";
-import { companyCols } from "../_common/default";
-import { table } from "../_common/table";
+import { aiFeatureEnum } from "../common/enums";
+import { companyCols } from "../common/default";
+import { table } from "../common/table";
 
 export const AI_USAGE_MONTH = table(
   "AI_USAGE_MONTH",

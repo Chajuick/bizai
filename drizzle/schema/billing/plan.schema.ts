@@ -1,7 +1,7 @@
 import { int, varchar, uniqueIndex } from "drizzle-orm/mysql-core";
-import { planCodeEnum } from "../_common/enums";
-import { auditColsNoUser } from "../_common/default";
-import { table } from "../_common/table";
+import { planCodeEnum } from "../common/enums";
+import { auditColsNoUser } from "../common/default";
+import { table } from "../common/table";
 
 export const BILLING_PLAN = table(
   "BILLING_PLAN",

@@ -1,12 +1,12 @@
-import { int, varchar, text, decimal, timestamp, index } from "drizzle-orm/mysql-core";
-import { orderStatusEnum } from "../_common/enums";
-import { companyCols, auditCols } from "../_common/default";
-import { table } from "../_common/table";
+import { int, varchar, text, decimal, timestamp, index, boolean } from "drizzle-orm/mysql-core";
+import { orderStatusEnum } from "../common/enums";
+import { companyCols, auditCols } from "../common/default";
+import { table } from "../common/table";
 
 export const CRM_ORDER = table(
   "CRM_ORDER",
   {
-    orde_idno: int("orde_idno").autoincrement().primaryKey(),         // 수주 PK
+    orde_idno: int("orde_idno").autoincrement().primaryKey(),        // 수주 PK
     ...companyCols(),                                                // comp_idno (회사 키)
 
     owne_idno: int("owne_idno").notNull(),                           // 담당자 user_idno
@@ -22,6 +22,8 @@ export const CRM_ORDER = table(
     ctrt_date: timestamp("ctrt_date"),                               // 계약일(옵션)
     expd_date: timestamp("expd_date"),                               // 예상 납기(옵션)
     orde_memo: text("orde_memo"),                                    // 메모
+
+    enab_yesn: boolean("enab_yesn").default(true).notNull(),         // 활성 여부
 
     ...auditCols(),                                                  // crea_*/modi_* 감사
   },

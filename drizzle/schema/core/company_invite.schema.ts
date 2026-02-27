@@ -6,9 +6,9 @@ import {
   index,
 } from "drizzle-orm/mysql-core";
 
-import { companyCols, auditCols } from "../_common/default";
-import { companyRoleEnum, inviteKindEnum, inviteStatusEnum } from "../_common/enums";
-import { table } from "../_common/table";
+import { companyCols, auditCols } from "../common/default";
+import { companyRoleEnum, inviteKindEnum, inviteStatusEnum } from "../common/enums";
+import { table } from "../common/table";
 
 export const CORE_COMPANY_INVITE = table(
   "CORE_COMPANY_INVITE",

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { appRouter } from "./routers";
+import { appRouter } from "./core/trpc/appRouters";
 import { COOKIE_NAME } from "../shared/const";
-import type { TrpcContext } from "./_core/context";
+import type { TrpcContext } from "./core/trpc/context";
 
 type CookieCall = {
   name: string;
@@ -14,19 +14,23 @@ function createAuthContext(): { ctx: TrpcContext; clearedCookies: CookieCall[] }
   const clearedCookies: CookieCall[] = [];
 
   const user: AuthenticatedUser = {
-    id: 1,
-    openId: "sample-user",
-    email: "sample@example.com",
-    name: "Sample User",
-    loginMethod: "manus",
+    user_idno: 1,
+    open_idno: "sample-user",
+    user_name: "Sample User",
+    mail_idno: "sample@example.com",
+    passwd_hash: null,
+    logi_mthd: "email",
+    user_auth: "user",
+    last_sign: new Date(),
+    crea_date: new Date(),
+    modi_date: null,
     role: "user",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-    lastSignedIn: new Date(),
   };
 
   const ctx: TrpcContext = {
     user,
+    comp_idno: null,
+    company_role: null,
     req: {
       protocol: "https",
       headers: {},

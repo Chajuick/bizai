@@ -1,6 +1,6 @@
 import { int, timestamp, primaryKey } from "drizzle-orm/mysql-core";
-import { companyCols } from "../_common/default";
-import { table } from "../_common/table";
+import { companyCols } from "../common/default";
+import { table } from "../common/table";
 
 export const AI_TOKEN_BALANCE = table(
   "AI_TOKEN_BALANCE",

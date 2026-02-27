@@ -1,7 +1,7 @@
 import { int, varchar, timestamp, index, uniqueIndex } from "drizzle-orm/mysql-core";
-import { subStatusEnum } from "../_common/enums";
-import { companyCols, auditCols } from "../_common/default";
-import { table } from "../_common/table";
+import { subStatusEnum } from "../common/enums";
+import { companyCols, auditCols } from "../common/default";
+import { table } from "../common/table";
 
 export const BILLING_SUBSCRIPTION = table(
   "BILLING_SUBSCRIPTION",

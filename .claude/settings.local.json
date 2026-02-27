@@ -17,7 +17,8 @@
       "Bash(which node && node --version 2>&1)",
       "Bash(cd /c/Users/Windows/Desktop/Coding/Project/Personal/bizai && node -e \"\nconst mysql = require\\('mysql2/promise'\\);\nasync function main\\(\\) {\n  const conn = await mysql.createConnection\\('mysql://winc_ai:1234@localhost:3306/winc_ai'\\);\n  const [rows] = await conn.execute\\('SELECT id, name, email FROM users'\\);\n  console.log\\(JSON.stringify\\(rows, null, 2\\)\\);\n  await conn.end\\(\\);\n}\nmain\\(\\).catch\\(console.error\\);\n\" 2>&1)",
       "Bash(cd:*)",
-      "Bash(find \"C:/Users/Windows/Desktop/Coding/Project/Personal/bizai/client/src\" -name \"ComponentShowcase.tsx\" 2>/dev/null || find \"C:/Users/Windows/Desktop/Coding/Project/Personal/bizai/client/src\" -name \"*.tsx\" | xargs grep -l \"console.log\" 2>/dev/null)"
+      "Bash(find \"C:/Users/Windows/Desktop/Coding/Project/Personal/bizai/client/src\" -name \"ComponentShowcase.tsx\" 2>/dev/null || find \"C:/Users/Windows/Desktop/Coding/Project/Personal/bizai/client/src\" -name \"*.tsx\" | xargs grep -l \"console.log\" 2>/dev/null)",
+      "Bash(pnpm db:push:*)"
     ],
     "deny": [],
     "ask": []

@@ -1,7 +1,7 @@
 import { int, primaryKey, index } from "drizzle-orm/mysql-core";
-import { companyRoleEnum, memberStatusEnum } from "../_common/enums";
-import { companyCols, auditCols } from "../_common/default";
-import { table } from "../_common/table";
+import { companyRoleEnum, memberStatusEnum } from "../common/enums";
+import { companyCols, auditCols } from "../common/default";
+import { table } from "../common/table";
 
 export const CORE_COMPANY_USER = table(
   "CORE_COMPANY_USER",

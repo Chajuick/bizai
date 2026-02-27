@@ -1,6 +1,6 @@
 import { int, varchar, text, boolean, index } from "drizzle-orm/mysql-core";
-import { table } from "../_common/table";
-import { companyCols, auditCols } from "../_common/default";
+import { table } from "../common/table";
+import { companyCols, auditCols } from "../common/default";
 
 export const CRM_CLIENT = table(
   "CRM_CLIENT",

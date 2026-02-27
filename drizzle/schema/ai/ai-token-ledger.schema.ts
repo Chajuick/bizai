@@ -1,7 +1,7 @@
 import { int, varchar, json, timestamp, index } from "drizzle-orm/mysql-core";
-import { aiFeatureEnum, ledgerReasonEnum } from "../_common/enums";
-import { companyCols } from "../_common/default";
-import { table } from "../_common/table";
+import { aiFeatureEnum, ledgerReasonEnum } from "../common/enums";
+import { companyCols } from "../common/default";
+import { table } from "../common/table";
 
 export const AI_TOKEN_LEDGER = table(
   "AI_TOKEN_LEDGER",
