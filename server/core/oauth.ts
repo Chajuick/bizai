@@ -3,7 +3,7 @@
 
 // #region Imports
 import { randomBytes } from "crypto";
-import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
+import { COOKIE_NAME, SEVEN_DAYS_MS } from "@shared/const";
 import type { Express, Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import { parse as parseCookies } from "cookie";
@@ -14,6 +14,7 @@ import { getSessionCookieOptions } from "./cookies";
 import { signSession } from "./sdk";
 import { userRepo } from "./auth/user.repo";
 import { ENV } from "./env/env";
+import { logger } from "./logger";
 // #endregion
 
 // #region Rate Limiters
@@ -63,7 +64,7 @@ function getQueryParam(req: Request, key: string): string | undefined {
 
 function setSessionCookie(res: Response, req: Request, token: string): void {
   const cookieOptions = getSessionCookieOptions(req);
-  res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: ONE_YEAR_MS });
+  res.cookie(COOKIE_NAME, token, { ...cookieOptions, maxAge: SEVEN_DAYS_MS });
 }
 // #endregion
 
@@ -252,13 +253,13 @@ export function registerOAuthRoutes(app: Express) {
 
       const sessionToken = await signSession(
         { userId: user.user_idno, name: user.user_name ?? "" },
-        { expiresInMs: ONE_YEAR_MS }
+        { expiresInMs: SEVEN_DAYS_MS }
       );
 
       setSessionCookie(res, req, sessionToken);
       res.redirect(302, "/");
     } catch (error) {
-      console.error("[Auth] Google callback failed", error);
+      logger.error({ err: error, requestId: req.__requestId }, "auth: google callback failed");
       res.status(500).json({ error: "Google OAuth callback failed" });
     }
   });
@@ -300,13 +301,13 @@ export function registerOAuthRoutes(app: Express) {
 
       const sessionToken = await signSession(
         { userId: user.user_idno, name: user.user_name ?? "" },
-        { expiresInMs: ONE_YEAR_MS }
+        { expiresInMs: SEVEN_DAYS_MS }
       );
 
       setSessionCookie(res, req, sessionToken);
       res.json({ success: true });
     } catch (error) {
-      console.error("[Auth] Register failed", error);
+      logger.error({ err: error, requestId: req.__requestId }, "auth: register failed");
       res.status(500).json({ error: "Registration failed" });
     }
   });
@@ -339,13 +340,13 @@ export function registerOAuthRoutes(app: Express) {
 
       const sessionToken = await signSession(
         { userId: user.user_idno, name: user.user_name ?? "" },
-        { expiresInMs: ONE_YEAR_MS }
+        { expiresInMs: SEVEN_DAYS_MS }
       );
 
       setSessionCookie(res, req, sessionToken);
       res.json({ success: true });
     } catch (error) {
-      console.error("[Auth] Login failed", error);
+      logger.error({ err: error, requestId: req.__requestId }, "auth: login failed");
       res.status(500).json({ error: "Login failed" });
     }
   });

@@ -1,10 +1,10 @@
 import type { RouterOutputs } from "./router";
 
 /** tRPC 응답에서 추론한 영업일지 행 타입 */
-export type SalesLogRow = RouterOutputs["salesLogs"]["list"]["items"][number];
+export type SalesLogRow = RouterOutputs["crm"]["sale"]["list"]["items"][number];
 
 /** tRPC 응답에서 추론한 AI 분석 결과 타입 */
-export type AnalyzeOutput = RouterOutputs["salesLogs"]["analyze"];
+export type AnalyzeOutput = RouterOutputs["crm"]["sale"]["analyze"];
 
 export type SalesFilter = "all" | "thisWeek" | "ai";
 

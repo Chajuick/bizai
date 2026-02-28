@@ -1,6 +1,8 @@
 // server/modules/crm/client/client.service.ts
 
 // #region Imports
+import { TRPCError } from "@trpc/server";
+
 import type { ServiceCtx } from "../../../core/serviceCtx";
 import { getDb } from "../../../core/db";
 
@@ -9,6 +11,17 @@ import { withCreateAudit, withUpdateAudit } from "../shared/audit";
 
 import type { ClientCreatePayload, ClientListInputType, ClientSort, ClientUpdatePayload } from "./client.dto";
 import { clientRepo } from "./client.repo";
+// #endregion
+
+// #region Helpers
+
+/** mysql2 ER_DUP_ENTRY 여부 판별 (err 직접 또는 err.cause 래핑 모두 커버) */
+function isDupKeyErr(err: unknown): boolean {
+  const check = (e: unknown) =>
+    (e as { errno?: number }).errno === 1062 ||
+    (e as { code?: string }).code === "ER_DUP_ENTRY";
+  return check(err) || check((err as { cause?: unknown }).cause);
+}
 // #endregion
 
 // #region Matching Policy (legacy db.ts compatible)
@@ -100,7 +113,17 @@ export const clientService = {
       ...input,
     });
 
-    return clientRepo.create({ db }, data);
+    try {
+      return await clientRepo.create({ db }, data);
+    } catch (err) {
+      if (isDupKeyErr(err)) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "이미 동일한 이름의 거래처가 존재합니다.",
+        });
+      }
+      throw err;
+    }
   },
   // #endregion
 
@@ -172,15 +195,15 @@ export const clientService = {
   },
   // #endregion
 
-  // #region findOrCreateClient (normalize exact)
+  // #region findOrCreateClient (normalize exact, idempotent)
   /**
-   * 레거시 정책:
-   * - 정규화 후 exact(동일)면 기존 반환
-   * - 없으면 신규 생성
+   * 정규화 후 동일 이름이 있으면 기존 레코드 반환, 없으면 신규 생성.
    *
-   * 주의:
-   * - DB에서는 normalized name을 저장하지 않으므로, 여기서 listNames를 가져와 비교한다.
-   * - 규모가 커지면 별도 normalized 컬럼/인덱스 전략이 필요할 수 있음 (초기 단계에서는 OK)
+   * create(strict)와의 차이:
+   * - createClient : 사용자 명시 생성 → 중복 시 CONFLICT(409) 전파
+   * - findOrCreateClient : AI 전사·자동 해소용 → 중복 시 기존 레코드 반환 (idempotent)
+   *
+   * 레이스 컨디션(동시 insert) → ux_client_comp_name 위반 → dup key 내부 흡수 후 재조회
    */
   async findOrCreateClient(ctx: ServiceCtx, input: { clie_name: string }) {
     const db = getDb();
@@ -188,15 +211,30 @@ export const clientService = {
     const normTarget = normalizeCompanyName(input.clie_name);
     if (!normTarget) return null;
 
+    // 1. 정규화 기준 기존 항목 검색
     const list = await clientRepo.listNames({ db }, { comp_idno: ctx.comp_idno });
-
     const existing = list.find((c) => normalizeCompanyName(c.clie_name) === normTarget);
     if (existing) {
       return clientRepo.getById({ db }, { comp_idno: ctx.comp_idno, clie_idno: existing.clie_idno });
     }
 
-    const created = await this.createClient(ctx, { clie_name: input.clie_name });
-    return this.getClient(ctx, created.clie_idno);
+    // 2. 없으면 신규 insert (createClient 경유 X — dup key를 CONFLICT로 올리지 않음)
+    const data = withCreateAudit(ctx, {
+      comp_idno: ctx.comp_idno,
+      enab_yesn: true,
+      clie_name: input.clie_name,
+    });
+
+    try {
+      const result = await clientRepo.create({ db }, data);
+      return clientRepo.getById({ db }, { comp_idno: ctx.comp_idno, clie_idno: result.clie_idno });
+    } catch (err) {
+      // 레이스 컨디션: ux_client_comp_name 위반 → exact name으로 재조회해 idempotent 보장
+      if (isDupKeyErr(err)) {
+        return clientRepo.findByExactName({ db }, { comp_idno: ctx.comp_idno, name: input.clie_name });
+      }
+      throw err;
+    }
   },
   // #endregion
 } as const;

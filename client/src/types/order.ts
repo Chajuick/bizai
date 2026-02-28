@@ -2,7 +2,7 @@ import type { RouterOutputs } from "./router";
 import type { DeliveryStatus } from "./delivery";
 
 /** tRPC 응답에서 추론한 수주 행 타입 */
-export type OrderRow = RouterOutputs["orders"]["list"]["items"][number];
+export type OrderRow = RouterOutputs["crm"]["order"]["list"]["items"][number];
 
 export type OrderStatus = "proposal" | "negotiation" | "confirmed" | "canceled";
 

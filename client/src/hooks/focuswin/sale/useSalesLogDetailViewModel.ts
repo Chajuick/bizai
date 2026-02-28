@@ -7,14 +7,14 @@ import type { SalesLogEditForm } from "@/types/salesLog";
 export function useSalesLogDetailViewModel(logId: number) {
   const utils = trpc.useUtils();
 
-  const { data: log, isLoading } = trpc.salesLogs.get.useQuery(
+  const { data: log, isLoading } = trpc.crm.sale.get.useQuery(
     { sale_idno: logId },
     { enabled: Number.isFinite(logId) }
   );
 
-  const analyze = trpc.salesLogs.analyze.useMutation();
-  const del = trpc.salesLogs.delete.useMutation();
-  const update = trpc.salesLogs.update.useMutation();
+  const analyze = trpc.crm.sale.analyze.useMutation();
+  const del = trpc.crm.sale.delete.useMutation();
+  const update = trpc.crm.sale.update.useMutation();
 
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<SalesLogEditForm>({
@@ -50,8 +50,8 @@ export function useSalesLogDetailViewModel(logId: number) {
         orig_memo: editForm.orig_memo,
       });
 
-      await utils.salesLogs.get.invalidate({ sale_idno: logId });
-      await utils.salesLogs.list.invalidate();
+      await utils.crm.sale.get.invalidate({ sale_idno: logId });
+      await utils.crm.sale.list.invalidate();
 
       setIsEditing(false);
       toast.success("수정되었습니다.");
@@ -80,9 +80,9 @@ export function useSalesLogDetailViewModel(logId: number) {
       await analyze.mutateAsync({ sale_idno: logId });
       toast.success("AI 분석이 요청되었습니다.");
 
-      await utils.salesLogs.get.invalidate({ sale_idno: logId });
-      await utils.promises.list.invalidate();
-      await utils.dashboard.stats.invalidate();
+      await utils.crm.sale.get.invalidate({ sale_idno: logId });
+      await utils.crm.schedule.list.invalidate();
+      await utils.crm.dashboard.stats.invalidate();
     } catch {
       toast.error("AI 분석에 실패했습니다.");
     }
@@ -91,8 +91,8 @@ export function useSalesLogDetailViewModel(logId: number) {
   const remove = async () => {
     try {
       await del.mutateAsync({ sale_idno: logId });
-      await utils.salesLogs.list.invalidate();
-      await utils.dashboard.stats.invalidate();
+      await utils.crm.sale.list.invalidate();
+      await utils.crm.dashboard.stats.invalidate();
       toast.success("삭제되었습니다.");
     } catch {
       toast.error("삭제에 실패했습니다.");

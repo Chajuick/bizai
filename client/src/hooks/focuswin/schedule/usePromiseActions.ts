@@ -4,17 +4,17 @@ import { trpc } from "@/lib/trpc";
 export function usePromiseActions() {
   const utils = trpc.useUtils();
 
-  const create = trpc.promises.create.useMutation();
-  const update = trpc.promises.update.useMutation();
-  const remove = trpc.promises.delete.useMutation();
-  const complete = trpc.promises.complete.useMutation();
-  const cancel = trpc.promises.cancel.useMutation();
-  const createOrder = trpc.orders.create.useMutation();
+  const create = trpc.crm.schedule.create.useMutation();
+  const update = trpc.crm.schedule.update.useMutation();
+  const remove = trpc.crm.schedule.delete.useMutation();
+  const complete = trpc.crm.schedule.complete.useMutation();
+  const cancel = trpc.crm.schedule.cancel.useMutation();
+  const createOrder = trpc.crm.order.create.useMutation();
 
   const refresh = async () => {
     await Promise.all([
-      utils.promises.list.invalidate(),
-      utils.dashboard.stats.invalidate(),
+      utils.crm.schedule.list.invalidate(),
+      utils.crm.dashboard.stats.invalidate(),
     ]);
   };
 

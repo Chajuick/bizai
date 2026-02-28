@@ -8,7 +8,8 @@ import { normalizePage } from "../shared/pagination";
 import { withCreateAudit, withUpdateAudit } from "../shared/audit";
 
 import { shipmentRepo } from "./shipment.repo";
-import type { ShipmentCreatePayload, ShipmentUpdatePayload } from "./shipment.dto";
+import type { ShipmentCreatePayload, ShipmentListPayload, ShipmentUpdatePayload } from "./shipment.dto";
+import type { InsertShipment } from "../../../../drizzle/schema";
 // #endregion
 
 // #region Date Utils
@@ -40,7 +41,7 @@ function applyStatusDates(params: {
   };
 }) {
   const now = params.now;
-  const prevStat = (params.prev?.stat_code ?? null) as any;
+  const prevStat: string | null = params.prev?.stat_code ?? null;
   const nextStat = params.next.stat_code;
 
   if (!nextStat) return;
@@ -68,7 +69,7 @@ function applyStatusDates(params: {
 
 export const shipmentService = {
   // #region list
-  async listShipments(ctx: ServiceCtx, input?: any) {
+  async listShipments(ctx: ServiceCtx, input?: ShipmentListPayload) {
     const db = getDb();
     const page = normalizePage(input?.page ?? { limit: 20, offset: 0 });
 
@@ -136,7 +137,7 @@ export const shipmentService = {
 
     const finalData = { ...data, ...patchDates };
 
-    return shipmentRepo.create({ db }, finalData);
+    return shipmentRepo.create({ db }, finalData as InsertShipment);
   },
   // #endregion
 
@@ -148,13 +149,14 @@ export const shipmentService = {
     const prev = await shipmentRepo.getById({ db }, { comp_idno: ctx.comp_idno, ship_idno });
     if (!prev) return { success: false as const, reason: "not_found" as const };
 
-    // 1) 입력 patch를 DB 타입으로 변환
-    const data: any = {
-      ...patch,
-      ...(patch.ship_pric !== undefined ? { ship_pric: String(patch.ship_pric) } : {}),
-      ...(patch.ship_date !== undefined ? { ship_date: toDateOrUndefined(patch.ship_date) } : {}),
-      ...(patch.invc_date !== undefined ? { invc_date: toDateOrUndefined(patch.invc_date) } : {}),
-      ...(patch.paid_date !== undefined ? { paid_date: toDateOrUndefined(patch.paid_date) } : {}),
+    // 1) 입력 patch를 DB 타입으로 변환 (string 날짜/number 금액 → DB 타입)
+    const { ship_pric: rawPric, ship_date: rawShipDate, invc_date: rawInvcDate, paid_date: rawPaidDate, ...restPatch } = patch;
+    const data: Partial<InsertShipment> = {
+      ...restPatch,
+      ...(rawPric !== undefined ? { ship_pric: String(rawPric) } : {}),
+      ...(rawShipDate !== undefined ? { ship_date: toDateOrUndefined(rawShipDate) } : {}),
+      ...(rawInvcDate !== undefined ? { invc_date: toDateOrUndefined(rawInvcDate) } : {}),
+      ...(rawPaidDate !== undefined ? { paid_date: toDateOrUndefined(rawPaidDate) } : {}),
     };
 
     // 2) 감사 컬럼(수정자/수정일)
@@ -165,9 +167,9 @@ export const shipmentService = {
     applyStatusDates({
       now,
       prev: {
-        stat_code: (prev as any).stat_code,
-        invc_date: (prev as any).invc_date ?? null,
-        paid_date: (prev as any).paid_date ?? null,
+        stat_code: prev.stat_code,
+        invc_date: prev.invc_date,
+        paid_date: prev.paid_date,
       },
       next: { stat_code: patch.stat_code },
       patch: autoDates,

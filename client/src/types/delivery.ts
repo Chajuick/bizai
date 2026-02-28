@@ -1,7 +1,7 @@
 import type { RouterOutputs } from "./router";
 
 /** tRPC 응답에서 추론한 납품 행 타입 */
-export type DeliveryRow = RouterOutputs["deliveries"]["list"]["items"][number];
+export type DeliveryRow = RouterOutputs["crm"]["shipment"]["list"]["items"][number];
 
 export type DeliveryStatus = "pending" | "delivered" | "invoiced" | "paid";
 

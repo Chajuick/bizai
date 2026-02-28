@@ -8,6 +8,13 @@ import { FILE_PURP_TYPES } from "../../../../drizzle/schema";
 // Sort
 const SaleSortInput = makeSortInput(["vist_date", "modi_date", "crea_date"] as const);
 
+// vist_date: ISO 8601 string 또는 timestamp(ms) 정수만 허용
+// "x:38" 같은 애매한 문자열 → Zod 레벨에서 400 BAD_REQUEST
+const VistDateInput = z.union([
+  z.number().int(),                        // timestamp ms
+  z.string().datetime({ offset: true }),   // ISO 8601 (UTC or +offset)
+]);
+
 // Attachment input
 const FilePurpTypeZ = z.enum(FILE_PURP_TYPES);
 
@@ -37,7 +44,7 @@ export const SaleCreateInput = z.object({
   cont_name: z.string().optional(),
   sale_loca: z.string().optional(),
 
-  vist_date: z.string(), // ISO string
+  vist_date: VistDateInput,
   orig_memo: z.string().min(1),
 
   attachments: z.array(SaleAttachmentInput).optional(),
@@ -55,7 +62,7 @@ export const SaleUpdateInput = z.object({
   cont_name: z.string().nullable().optional(),
   sale_loca: z.string().nullable().optional(),
 
-  vist_date: z.string().nullable().optional(),
+  vist_date: VistDateInput.nullable().optional(),
   orig_memo: z.string().nullable().optional(),
 
   audi_addr: z.string().url().nullable().optional(),

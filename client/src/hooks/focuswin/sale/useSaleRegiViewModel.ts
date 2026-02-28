@@ -25,8 +25,8 @@ export function useSaleRegiViewModel() {
   const [preSaveState, setPreSaveState] = useState<PreSaveState | null>(null);
   const [isCheckingClient, setIsCheckingClient] = useState(false);
 
-  const createMutation = trpc.salesLogs.create.useMutation();
-  const analyzeMutation = trpc.salesLogs.analyze.useMutation();
+  const createMutation = trpc.crm.sale.create.useMutation();
+  const analyzeMutation = trpc.crm.sale.analyze.useMutation();
   const utils = trpc.useUtils();
 
   const goList = () => navigate("/sale-list");
@@ -72,8 +72,8 @@ export function useSaleRegiViewModel() {
       }
     }
 
-    await utils.salesLogs.list.invalidate();
-    await utils.dashboard.stats.invalidate();
+    await utils.crm.sale.list.invalidate();
+    await utils.crm.dashboard.stats.invalidate();
     toast.success("영업일지가 저장되었습니다.");
     goDetail(result.sale_idno);
   };
@@ -88,7 +88,7 @@ export function useSaleRegiViewModel() {
     if (form.clie_name.trim() && !form.clie_idno) {
       setIsCheckingClient(true);
       try {
-        const match = await utils.clients.findBestMatch.fetch({ name: form.clie_name });
+        const match = await utils.crm.client.findBestMatch.fetch({ name: form.clie_name });
         if (match) {
           setPreSaveState({
             typedName: form.clie_name,

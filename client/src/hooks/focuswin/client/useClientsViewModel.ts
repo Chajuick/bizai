@@ -19,11 +19,11 @@ export function useClientsViewModel() {
     clie_memo: "",
   });
 
-  const { data: clientsData, isLoading } = trpc.clients.list.useQuery({
+  const { data: clientsData, isLoading } = trpc.crm.client.list.useQuery({
     search: search || undefined,
   });
 
-  const createMutation = trpc.clients.create.useMutation();
+  const createMutation = trpc.crm.client.create.useMutation();
   const utils = trpc.useUtils();
 
   const clients = clientsData?.items ?? [];
@@ -52,7 +52,7 @@ export function useClientsViewModel() {
     resetForm();
   };
 
-  const invalidate = () => utils.clients.list.invalidate();
+  const invalidate = () => utils.crm.client.list.invalidate();
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();

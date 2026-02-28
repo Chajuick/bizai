@@ -29,10 +29,10 @@ export default function ClientNameInput({
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const utils = trpc.useUtils();
-  const createMutation = trpc.clients.create.useMutation();
+  const createMutation = trpc.crm.client.create.useMutation();
 
   // 서버 검색 (debounced)
-  const { data: searchResultsData, isFetching } = trpc.clients.list.useQuery(
+  const { data: searchResultsData, isFetching } = trpc.crm.client.list.useQuery(
     { search: debounced || undefined, limit: debounced ? 50 : 20 },
     { enabled: open, staleTime: 10_000 }
   );
@@ -62,7 +62,7 @@ export default function ClientNameInput({
       setOpen(false);
       if (clientId || !value.trim()) return;
       try {
-        const match = await utils.clients.findBestMatch.fetch({ name: value });
+        const match = await utils.crm.client.findBestMatch.fetch({ name: value });
         if (!match) return;
         // 입력값과 DB 이름이 완전히 같을 때만 자동 적용, 나머지는 항상 제안
         if (match.clie_name.toLowerCase() === value.toLowerCase()) {
@@ -91,7 +91,7 @@ export default function ClientNameInput({
   const handleDeny = async () => {
     try {
       const result = await createMutation.mutateAsync({ clie_name: value });
-      await utils.clients.list.invalidate();
+      await utils.crm.client.list.invalidate();
       onChange(value, (result as any).clie_idno);
       toast.success(`'${value}' 고객사가 추가되었습니다.`);
     } catch {

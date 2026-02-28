@@ -1,8 +1,6 @@
 // server/core/db/tx.ts
 
 // #region Imports
-import type { MySql2Database } from "drizzle-orm/mysql2";
-
 import type { DbClient } from "./client";
 import { getDb } from "./client";
 // #endregion
@@ -10,10 +8,10 @@ import { getDb } from "./client";
 // #region Types
 /**
  * TxClient
- * - 트랜잭션 내부에서 사용하는 DB 타입
- * - DbClient와 동일하게 취급 가능
+ * - 트랜잭션 내부 DB 타입 (schema 주입 동일, 의미 명확화 별칭)
+ * - Drizzle 트랜잭션 callback 인자는 실제로 MySql2Database<schema>와 동일
  */
-export type TxClient = MySql2Database<any>;
+export type TxClient = DbClient;
 
 /**
  * DbOrTx
@@ -22,16 +20,25 @@ export type TxClient = MySql2Database<any>;
 export type DbOrTx = DbClient | TxClient;
 // #endregion
 
+// #region Helpers
+/**
+ * 이미 트랜잭션 클라이언트인지 덕타이핑으로 판별
+ * Drizzle 트랜잭션 callback 인자는 rollback() 메서드를 가짐
+ */
+function isTxClient(db: DbOrTx): boolean {
+  return typeof (db as unknown as Record<string, unknown>).rollback === "function";
+}
+// #endregion
+
 // #region Transaction Helper
 /**
  * tx()
  *
- * 정석 트랜잭션 래퍼
+ * 트랜잭션 래퍼
  *
  * 사용 예:
- *
- * await tx(async (db) => { ... })
- * await tx(db, async (trx) => { ... })
+ *   await tx(async (db) => { ... })
+ *   await tx(db, async (trx) => { ... })
  *
  * 특징:
  * - 자동 commit / rollback
@@ -45,27 +52,20 @@ export async function tx<T>(
   // #region Case 1: tx(async (trx) => ...)
   if (typeof dbOrFn === "function") {
     const fn = dbOrFn;
-    const db = getDb();
-
-    return db.transaction(async (trx) => {
-      return fn(trx);
-    });
+    return getDb().transaction((trx) => fn(trx as TxClient));
   }
   // #endregion
 
   // #region Case 2: tx(db, async (trx) => ...)
-  const db = dbOrFn;
   const fn = maybeFn;
   if (!fn) throw new Error("tx(): callback is required");
 
-  // 이미 transaction client라면 그대로 실행 (nested-safe)
-  if (typeof (db as any).rollback === "function") {
-    return fn(db as TxClient);
+  // 이미 트랜잭션 클라이언트라면 그대로 실행 (nested-safe)
+  if (isTxClient(dbOrFn)) {
+    return fn(dbOrFn);
   }
 
-  return (db as DbClient).transaction(async (trx) => {
-    return fn(trx);
-  });
+  return dbOrFn.transaction((trx) => fn(trx as TxClient));
   // #endregion
 }
 // #endregion

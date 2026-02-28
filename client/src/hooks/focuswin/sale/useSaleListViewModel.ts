@@ -34,7 +34,7 @@ export function useSaleListViewModel() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location]);
 
-  const { data: logsData, isLoading } = trpc.salesLogs.list.useQuery({
+  const { data: logsData, isLoading } = trpc.crm.sale.list.useQuery({
     search: search || undefined,
   });
 

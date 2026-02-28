@@ -1,6 +1,7 @@
 // server/modules/crm/sale/sale.repo.ts
 
 import { and, asc, desc, eq, like } from "drizzle-orm";
+import { escapeLike } from "../shared/like";
 import {
   CRM_SALE,
   CRM_SCHEDULE,
@@ -46,7 +47,7 @@ export const saleRepo = {
     ];
 
     if (args.clie_idno) conditions.push(eq(CRM_SALE.clie_idno, args.clie_idno));
-    if (args.search) conditions.push(like(CRM_SALE.orig_memo, `%${args.search}%`));
+    if (args.search) conditions.push(like(CRM_SALE.orig_memo, `%${escapeLike(args.search)}%`));
 
     const dirFn = args.sort_dir === "asc" ? asc : desc;
     const sortExpr =

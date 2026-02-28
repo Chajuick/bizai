@@ -22,7 +22,11 @@
       "Bash(powershell.exe:*)",
       "Bash(pnpm dlx:*)",
       "Bash(printf y\\\\ny\\\\ny\\\\ny\\\\ny\\\\ny\\\\ny\\\\n:*)",
-      "Bash(yes:*)"
+      "Bash(yes:*)",
+      "Bash(python3:*)",
+      "Bash(node:*)",
+      "Bash(pnpm remove:*)",
+      "Bash(xargs grep:*)"
     ],
     "deny": [],
     "ask": []

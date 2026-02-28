@@ -10,18 +10,19 @@ import { normalizePage } from "../shared/pagination";
 
 import { saleRepo } from "./sale.repo";
 import type { SaleCreatePayload, SaleUpdatePayload } from "./sale.dto";
+import type { InsertSale } from "./sale.repo";
 
 import { CRM_SALE_AUDIO_JOB } from "../../../../drizzle/schema";
 import { fileLinkService } from "../file/fileLink.service";
 
 // Helpers
-function parseDateOrThrow(iso: string, errMsg: string) {
-  const d = new Date(iso);
+function parseDateOrThrow(v: string | number, errMsg: string) {
+  const d = new Date(v);
   if (Number.isNaN(d.getTime())) throw new TRPCError({ code: "BAD_REQUEST", message: errMsg });
   return d;
 }
-function toIso(v: unknown): string {
-  const d = v instanceof Date ? v : new Date(v as any);
+function toIso(v: Date | string | number): string {
+  const d = v instanceof Date ? v : new Date(v);
   return d.toISOString();
 }
 
@@ -136,7 +137,7 @@ export const saleService = {
     };
 
     const data = withCreateAudit(ctx, base);
-    const { sale_idno } = await saleRepo.create({ db }, data as any);
+    const { sale_idno } = await saleRepo.create({ db }, data as InsertSale);
 
     // ✅ attachments 연결
     if (input.attachments?.length) {
@@ -157,15 +158,17 @@ export const saleService = {
   async updateSale(ctx: ServiceCtx, sale_idno: number, patch: SaleUpdatePayload) {
     const db = getDb();
 
-    // ✅ Insert 타입에 맞춰 Date로 변환
-    const data: Record<string, any> = { ...patch };
-    if (patch.vist_date != null) {
-      if (patch.vist_date === "") data.vist_date = null; // 혹시 프론트가 "" 보낼 경우 방어
-      else data.vist_date = parseDateOrThrow(patch.vist_date, "vist_date가 올바른 날짜 형식이 아닙니다.");
+    const { vist_date: rawDate, ...restPatch } = patch;
+    const data: Partial<InsertSale> = restPatch as Partial<InsertSale>;
+    if (rawDate !== undefined) {
+      // null이면 컬럼 미변경(undefined), 유효한 날짜(이미 Zod 검증 통과)면 Date로 변환
+      data.vist_date = rawDate === null
+        ? undefined
+        : parseDateOrThrow(rawDate, "vist_date가 올바른 날짜 형식이 아닙니다.");
     }
 
     const audited = withUpdateAudit(ctx, data);
-    await saleRepo.update({ db }, { comp_idno: ctx.comp_idno, owne_idno: ctx.user_idno, sale_idno, data: audited as any });
+    await saleRepo.update({ db }, { comp_idno: ctx.comp_idno, owne_idno: ctx.user_idno, sale_idno, data: audited });
 
     return { success: true as const };
   },
@@ -175,7 +178,7 @@ export const saleService = {
     const db = getDb();
 
     const patch = withUpdateAudit(ctx, { enab_yesn: false });
-    await saleRepo.remove({ db }, { comp_idno: ctx.comp_idno, owne_idno: ctx.user_idno, sale_idno, data: patch as any });
+    await saleRepo.remove({ db }, { comp_idno: ctx.comp_idno, owne_idno: ctx.user_idno, sale_idno, data: patch });
 
     return { success: true as const };
   },

@@ -191,41 +191,44 @@ export const dashboardRepo = {
 
   // #region revenueTrend
   async revenueTrend({ db }: RepoDeps, params: { comp_idno: number; from: Date }) {
-    // 수주: 취소 제외, crea_date 기준 월 집계
-    const orderRows = await db
-      .select({
-        ym: sql<string>`DATE_FORMAT(${CRM_ORDER.crea_date}, '%Y-%m')`,
-        total: sql<string>`COALESCE(SUM(${CRM_ORDER.orde_pric}), 0)`,
-      })
-      .from(CRM_ORDER)
-      .where(
-        and(
-          eq(CRM_ORDER.comp_idno, params.comp_idno),
-          eq(CRM_ORDER.enab_yesn, true),
-          gte(CRM_ORDER.crea_date, params.from),
-          sql`${CRM_ORDER.stat_code} != 'canceled'`
+    // 수주(ix_ord_comp_crea 사용)와 매출(ix_ship_comp_stat_paid 사용)은 독립 쿼리 → 병렬 실행
+    const [orderRows, revenueRows] = await Promise.all([
+      // 수주: 취소 제외, crea_date 기준 월 집계
+      db
+        .select({
+          ym: sql<string>`DATE_FORMAT(${CRM_ORDER.crea_date}, '%Y-%m')`,
+          total: sql<string>`COALESCE(SUM(${CRM_ORDER.orde_pric}), 0)`,
+        })
+        .from(CRM_ORDER)
+        .where(
+          and(
+            eq(CRM_ORDER.comp_idno, params.comp_idno),
+            eq(CRM_ORDER.enab_yesn, true),
+            gte(CRM_ORDER.crea_date, params.from),
+            sql`${CRM_ORDER.stat_code} != 'canceled'`
+          )
         )
-      )
-      .groupBy(sql`DATE_FORMAT(${CRM_ORDER.crea_date}, '%Y-%m')`)
-      .orderBy(sql`DATE_FORMAT(${CRM_ORDER.crea_date}, '%Y-%m')`);
+        .groupBy(sql`DATE_FORMAT(${CRM_ORDER.crea_date}, '%Y-%m')`)
+        .orderBy(sql`DATE_FORMAT(${CRM_ORDER.crea_date}, '%Y-%m')`),
 
-    // 매출: paid_date 기준 월 집계
-    const revenueRows = await db
-      .select({
-        ym: sql<string>`DATE_FORMAT(${CRM_SHIPMENT.paid_date}, '%Y-%m')`,
-        total: sql<string>`COALESCE(SUM(${CRM_SHIPMENT.ship_pric}), 0)`,
-      })
-      .from(CRM_SHIPMENT)
-      .where(
-        and(
-          eq(CRM_SHIPMENT.comp_idno, params.comp_idno),
-          eq(CRM_SHIPMENT.enab_yesn, true),
-          eq(CRM_SHIPMENT.stat_code, "paid"),
-          gte(CRM_SHIPMENT.paid_date, params.from)
+      // 매출: paid_date 기준 월 집계
+      db
+        .select({
+          ym: sql<string>`DATE_FORMAT(${CRM_SHIPMENT.paid_date}, '%Y-%m')`,
+          total: sql<string>`COALESCE(SUM(${CRM_SHIPMENT.ship_pric}), 0)`,
+        })
+        .from(CRM_SHIPMENT)
+        .where(
+          and(
+            eq(CRM_SHIPMENT.comp_idno, params.comp_idno),
+            eq(CRM_SHIPMENT.enab_yesn, true),
+            eq(CRM_SHIPMENT.stat_code, "paid"),
+            gte(CRM_SHIPMENT.paid_date, params.from)
+          )
         )
-      )
-      .groupBy(sql`DATE_FORMAT(${CRM_SHIPMENT.paid_date}, '%Y-%m')`)
-      .orderBy(sql`DATE_FORMAT(${CRM_SHIPMENT.paid_date}, '%Y-%m')`);
+        .groupBy(sql`DATE_FORMAT(${CRM_SHIPMENT.paid_date}, '%Y-%m')`)
+        .orderBy(sql`DATE_FORMAT(${CRM_SHIPMENT.paid_date}, '%Y-%m')`),
+    ]);
 
     return { orderRows, revenueRows };
   },

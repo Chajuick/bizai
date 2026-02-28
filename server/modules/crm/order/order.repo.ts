@@ -4,6 +4,7 @@
 import { and, asc, desc, eq, like } from "drizzle-orm";
 
 import { CRM_ORDER } from "../../../../drizzle/schema";
+import { escapeLike } from "../shared/like";
 import { getInsertId } from "../../../core/db";
 import type { DbOrTx } from "../../../core/db/tx";
 // #endregion
@@ -66,7 +67,7 @@ function buildWhere(params: {
   if (params.search) {
     // 검색어는 화면 요구대로: 고객명/제품명 중심
     conditions.push(
-      like(CRM_ORDER.clie_name, `%${params.search}%`)
+      like(CRM_ORDER.clie_name, `%${escapeLike(params.search)}%`)
     );
     // NOTE: prod_serv까지 OR로 묶고 싶으면 sql/or 사용 필요
     // 지금은 확실히 "한 개 조건"만 걸어도 되고, 추후 확장 가능
@@ -147,7 +148,8 @@ export const orderRepo = {
       .where(
         and(
           eq(CRM_ORDER.comp_idno, params.comp_idno),
-          eq(CRM_ORDER.orde_idno, params.orde_idno)
+          eq(CRM_ORDER.orde_idno, params.orde_idno),
+          eq(CRM_ORDER.enab_yesn, true),
         )
       );
   },

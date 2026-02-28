@@ -21,15 +21,15 @@ export function useDeliveriesViewModel() {
     ship_memo: "",
   });
 
-  const { data: deliveriesData, isLoading } = trpc.deliveries.list.useQuery(
+  const { data: deliveriesData, isLoading } = trpc.crm.shipment.list.useQuery(
     activeTab !== "all" ? { stat_code: activeTab } : undefined
   );
 
-  const { data: ordersData } = trpc.orders.list.useQuery({ status: "confirmed" });
+  const { data: ordersData } = trpc.crm.order.list.useQuery({ status: "confirmed" });
 
-  const createMutation = trpc.deliveries.create.useMutation();
-  const updateMutation = trpc.deliveries.update.useMutation();
-  const deleteMutation = trpc.deliveries.delete?.useMutation?.();
+  const createMutation = trpc.crm.shipment.create.useMutation();
+  const updateMutation = trpc.crm.shipment.update.useMutation();
+  const deleteMutation = trpc.crm.shipment.delete?.useMutation?.();
   const utils = trpc.useUtils();
 
   const deliveries = deliveriesData?.items ?? [];
@@ -63,8 +63,8 @@ export function useDeliveriesViewModel() {
   }, [deliveries]);
 
   const invalidateAll = () => {
-    utils.deliveries.list.invalidate();
-    utils.dashboard.stats.invalidate();
+    utils.crm.shipment.list.invalidate();
+    utils.crm.dashboard.stats.invalidate();
   };
 
   const hasData = deliveries.length > 0;

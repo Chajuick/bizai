@@ -137,8 +137,8 @@ function EmptyState({
 }
 
 export default function DashHome() {
-  const { data: stats, isLoading } = trpc.dashboard.stats.useQuery();
-  const { data: trend } = trpc.dashboard.revenueTrend.useQuery();
+  const { data: stats, isLoading } = trpc.crm.dashboard.stats.useQuery();
+  const { data: trend } = trpc.crm.dashboard.revenueTrend.useQuery();
 
   const now = new Date();
   const monthLabel = `${now.getMonth() + 1}월`;

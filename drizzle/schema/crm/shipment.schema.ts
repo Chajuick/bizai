@@ -25,11 +25,12 @@ export const CRM_SHIPMENT = table(
     ...auditCols(),                                                  // crea_*/modi_* 감사
   },
   (t) => [
-    index("ix_ship_comp").on(t.comp_idno),                           // 회사 기준 조회(기본)
-    index("ix_ship_comp_orde").on(t.comp_idno, t.orde_idno),         // 회사+수주 기준 조회
-    index("ix_ship_comp_stat").on(t.comp_idno, t.stat_code),         // 회사+상태 필터
-    index("ix_ship_comp_owne").on(t.comp_idno, t.owne_idno),         // 회사+담당자 필터
-    index("ix_ship_comp_date").on(t.comp_idno, t.ship_date),         // 회사+납품일 정렬/조회
+    index("ix_ship_comp").on(t.comp_idno),                                      // 회사 기준 조회(기본)
+    index("ix_ship_comp_orde").on(t.comp_idno, t.orde_idno),                   // 회사+수주 기준 조회
+    index("ix_ship_comp_stat").on(t.comp_idno, t.stat_code),                   // 회사+상태 필터
+    index("ix_ship_comp_owne").on(t.comp_idno, t.owne_idno),                   // 회사+담당자 필터
+    index("ix_ship_comp_date").on(t.comp_idno, t.ship_date),                   // 회사+납품일 정렬/조회
+    index("ix_ship_comp_stat_paid").on(t.comp_idno, t.stat_code, t.paid_date), // 대시보드 월매출 + 추세(stat='paid' + paid_date 범위)
   ]
 );
 

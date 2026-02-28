@@ -31,6 +31,7 @@ export const CRM_ORDER = table(
     index("ix_ord_comp").on(t.comp_idno),                            // 회사 기준 조회(기본)
     index("ix_ord_comp_stat").on(t.comp_idno, t.stat_code),          // 회사+상태 필터
     index("ix_ord_comp_owne").on(t.comp_idno, t.owne_idno),          // 회사+담당자 필터
+    index("ix_ord_comp_crea").on(t.comp_idno, t.crea_date),          // 회사+생성일 (revenueTrend GROUP BY crea_date)
 
     // 화면/조회가 있으면 유용(없으면 빼도 됨)
     index("ix_ord_comp_ctrt").on(t.comp_idno, t.ctrt_date),          // 회사+계약일

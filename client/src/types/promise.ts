@@ -1,7 +1,7 @@
 import type { RouterOutputs } from "./router";
 
 /** tRPC 응답에서 추론한 일정 행 타입 */
-export type PromiseRow = RouterOutputs["promises"]["list"]["items"][number];
+export type PromiseRow = RouterOutputs["crm"]["schedule"]["list"]["items"][number];
 
 /** 임박/지연 플래그가 추가된 클라이언트 전용 뷰 타입 */
 export type EnhancedPromise = PromiseRow & { overdue: boolean; imminent: boolean };

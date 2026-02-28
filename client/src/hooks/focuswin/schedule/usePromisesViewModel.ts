@@ -12,7 +12,7 @@ function computeKstTodayMidnightMs(nowMs: number) {
 
 export function usePromisesViewModel() {
   const [activeTab, setActiveTab] = useState<PromiseTabKey>("all");
-  const { data: schedulesData, isLoading } = trpc.promises.list.useQuery(undefined);
+  const { data: schedulesData, isLoading } = trpc.crm.schedule.list.useQuery(undefined);
 
   const list = useMemo((): EnhancedPromise[] => {
     const nowMs = Date.now();

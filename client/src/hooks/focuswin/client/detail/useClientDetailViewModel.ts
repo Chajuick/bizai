@@ -7,9 +7,9 @@ export function useClientDetailViewModel() {
 
   const clientId = Number(id);
 
-  const clientQuery = trpc.clients.get.useQuery({ clie_idno: clientId });
-  const logsQuery = trpc.salesLogs.list.useQuery({ clie_idno: clientId });
-  const ordersQuery = trpc.orders.list.useQuery(undefined);
+  const clientQuery = trpc.crm.client.get.useQuery({ clie_idno: clientId });
+  const logsQuery = trpc.crm.sale.list.useQuery({ clie_idno: clientId });
+  const ordersQuery = trpc.crm.order.list.useQuery(undefined);
 
   const orders = ordersQuery.data?.items ?? [];
 

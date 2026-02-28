@@ -31,6 +31,20 @@ export type ProtectedContext = AuthedContext & {
 // #region tRPC Init
 const t = initTRPC.context<TrpcContext>().create({
   transformer: superjson,
+  errorFormatter({ shape, error, ctx }) {
+    return {
+      ...shape,
+      data: {
+        ...shape.data,
+        // 운영 로깅용 — requestId로 서버 로그와 연결
+        requestId: ctx?.requestId ?? null,
+        // Zod validation 상세 — BAD_REQUEST에서만 노출
+        ...(error.code === "BAD_REQUEST" && error.cause instanceof Error
+          ? { validationErrors: (error.cause as { issues?: unknown }).issues ?? null }
+          : {}),
+      },
+    };
+  },
 });
 
 export const router = t.router;

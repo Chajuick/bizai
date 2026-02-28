@@ -4,6 +4,7 @@
 import { and, asc, desc, eq, like } from "drizzle-orm";
 
 import { CRM_CLIENT } from "../../../../drizzle/schema";
+import { escapeLike } from "../shared/like";
 import { getInsertId } from "../../../core/db";
 import type { DbOrTx } from "../../../core/db/tx";
 // #endregion
@@ -45,7 +46,7 @@ function buildWhere(params: { comp_idno: number; search?: string; onlyEnabled?: 
   }
 
   if (params.search) {
-    conditions.push(like(CRM_CLIENT.clie_name, `%${params.search}%`));
+    conditions.push(like(CRM_CLIENT.clie_name, `%${escapeLike(params.search)}%`));
   }
 
   return and(...conditions);
@@ -86,7 +87,7 @@ export const clientRepo = {
   // #region listNames (for matching)
   async listNames(
     { db }: RepoDeps,
-    params: { comp_idno: number }
+    params: { comp_idno: number; limit?: number }
   ): Promise<Array<Pick<ClientRow, "clie_idno" | "clie_name">>> {
     return db
       .select({
@@ -94,7 +95,8 @@ export const clientRepo = {
         clie_name: CRM_CLIENT.clie_name,
       })
       .from(CRM_CLIENT)
-      .where(and(eq(CRM_CLIENT.comp_idno, params.comp_idno), eq(CRM_CLIENT.enab_yesn, true)));
+      .where(and(eq(CRM_CLIENT.comp_idno, params.comp_idno), eq(CRM_CLIENT.enab_yesn, true)))
+      .limit(params.limit ?? 2000); // 방어적 cap: fuzzy matching 대상이 2000+ 이면 별도 색인 전략 필요
   },
   // #endregion
 
@@ -140,7 +142,8 @@ export const clientRepo = {
       .where(
         and(
           eq(CRM_CLIENT.comp_idno, params.comp_idno),
-          eq(CRM_CLIENT.clie_idno, params.clie_idno)
+          eq(CRM_CLIENT.clie_idno, params.clie_idno),
+          eq(CRM_CLIENT.enab_yesn, true),
         )
       );
   },

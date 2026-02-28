@@ -22,9 +22,6 @@ import { fileRouter } from "../../modules/crm/file/file.router";
 //   auth     → session management (me, logout)
 //   crm.*    → all CRM domain routers
 //
-// Deprecated flat aliases (top-level) are kept for frontend backward compatibility.
-// TODO: migrate frontend calls from `trpc.<alias>.*` to `trpc.crm.<domain>.*`
-//       then remove the DEPRECATED section below.
 export const appRouter = router({
   // #region System
   system: systemRouter,
@@ -43,33 +40,16 @@ export const appRouter = router({
   }),
   // #endregion
 
-  // #region CRM (canonical domain namespace)
+  // #region CRM
   crm: router({
-    clients: clientRouter,
-    salesLogs: saleRouter,
+    client: clientRouter,
+    sale: saleRouter,
     schedule: scheduleRouter,
     order: orderRouter,
     shipment: shipmentRouter,
     dashboard: dashboardRouter,
     files: fileRouter,
   }),
-  // #endregion
-
-  // #region DEPRECATED — flat aliases for frontend backward compatibility
-  // These forward to the same router instances under crm.*.
-  // Do NOT add new procedures here; add them to crm.* only.
-  /** @deprecated use trpc.crm.clients.* */
-  clients: clientRouter,
-  /** @deprecated use trpc.crm.salesLogs.* */
-  salesLogs: saleRouter,
-  /** @deprecated use trpc.crm.schedule.* */
-  promises: scheduleRouter,
-  /** @deprecated use trpc.crm.order.* */
-  orders: orderRouter,
-  /** @deprecated use trpc.crm.shipment.* */
-  deliveries: shipmentRouter,
-  /** @deprecated use trpc.crm.dashboard.* */
-  dashboard: dashboardRouter,
   // #endregion
 });
 

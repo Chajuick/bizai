@@ -43,14 +43,14 @@ export function useOrdersViewModel() {
     ship_memo: "",
   });
 
-  const { data: ordersData, isLoading } = trpc.orders.list.useQuery(
+  const { data: ordersData, isLoading } = trpc.crm.order.list.useQuery(
     activeTab !== "all" ? { status: activeTab } : undefined
   );
 
-  const createMutation = trpc.orders.create.useMutation();
-  const updateMutation = trpc.orders.update.useMutation();
-  const deleteMutation = trpc.orders.delete.useMutation();
-  const createDeliveryMutation = trpc.deliveries.create.useMutation();
+  const createMutation = trpc.crm.order.create.useMutation();
+  const updateMutation = trpc.crm.order.update.useMutation();
+  const deleteMutation = trpc.crm.order.delete.useMutation();
+  const createDeliveryMutation = trpc.crm.shipment.create.useMutation();
   const utils = trpc.useUtils();
 
   const orders = ordersData?.items ?? [];
@@ -91,8 +91,8 @@ export function useOrdersViewModel() {
         expd_date: form.expd_date || undefined,
         orde_memo: form.orde_memo || undefined,
       });
-      await utils.orders.list.invalidate();
-      await utils.dashboard.stats.invalidate();
+      await utils.crm.order.list.invalidate();
+      await utils.crm.dashboard.stats.invalidate();
       toast.success("수주가 등록되었습니다.");
       setShowForm(false);
       resetForm();
@@ -136,8 +136,8 @@ export function useOrdersViewModel() {
         expd_date: form.expd_date || undefined,
         orde_memo: form.orde_memo || undefined,
       });
-      await utils.orders.list.invalidate();
-      await utils.dashboard.stats.invalidate();
+      await utils.crm.order.list.invalidate();
+      await utils.crm.dashboard.stats.invalidate();
       toast.success("수주가 수정되었습니다.");
       setShowForm(false);
       resetForm();
@@ -152,8 +152,8 @@ export function useOrdersViewModel() {
   const handleDelete = async (id: number) => {
     try {
       await deleteMutation.mutateAsync({ orde_idno: id });
-      await utils.orders.list.invalidate();
-      await utils.dashboard.stats.invalidate();
+      await utils.crm.order.list.invalidate();
+      await utils.crm.dashboard.stats.invalidate();
       toast.success("수주가 삭제되었습니다.");
     } catch {
       toast.error("삭제에 실패했습니다.");
@@ -163,8 +163,8 @@ export function useOrdersViewModel() {
   const handleStatusChange = async (id: number, status: OrderStatus) => {
     try {
       await updateMutation.mutateAsync({ orde_idno: id, stat_code: status });
-      await utils.orders.list.invalidate();
-      await utils.dashboard.stats.invalidate();
+      await utils.crm.order.list.invalidate();
+      await utils.crm.dashboard.stats.invalidate();
       toast.success("상태가 변경되었습니다.");
     } catch {
       toast.error("상태 변경에 실패했습니다.");
@@ -209,9 +209,9 @@ export function useOrdersViewModel() {
         ship_memo: deliveryForm.ship_memo || undefined,
       });
 
-      await utils.deliveries.list.invalidate();
-      await utils.orders.list.invalidate();
-      await utils.dashboard.stats.invalidate();
+      await utils.crm.shipment.list.invalidate();
+      await utils.crm.order.list.invalidate();
+      await utils.crm.dashboard.stats.invalidate();
       toast.success("납품이 생성되었습니다.");
       resetDeliveryForm();
     } catch {

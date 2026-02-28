@@ -10,6 +10,7 @@ import { SignJWT, jwtVerify } from "jose";
 import type { User } from "../../drizzle/schema";
 import { userRepo } from "./auth/user.repo";
 import { ENV } from "./env/env";
+import { logger } from "./logger";
 // #endregion
 
 // #region Types
@@ -52,7 +53,7 @@ export async function verifySession(
   cookieValue: string | undefined | null
 ): Promise<{ userId: number; name: string } | null> {
   if (!cookieValue) {
-    console.warn("[Auth] Missing session cookie");
+    logger.debug("auth: missing session cookie");
     return null;
   }
 
@@ -63,13 +64,13 @@ export async function verifySession(
     const { userId, name } = payload as Record<string, unknown>;
 
     if (typeof userId !== "number" || !isNonEmptyString(name)) {
-      console.warn("[Auth] Session payload missing required fields");
+      logger.warn("auth: session payload missing required fields");
       return null;
     }
 
     return { userId, name };
   } catch (error) {
-    console.warn("[Auth] Session verification failed", String(error));
+    logger.debug({ err: String(error) }, "auth: session verification failed");
     return null;
   }
 }

@@ -2,6 +2,7 @@
 
 // #region Imports
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
+import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 
 import type { User } from "../../../drizzle/schema";
@@ -9,6 +10,7 @@ import { CORE_COMPANY_USER } from "../../../drizzle/schema";
 
 import { sdk } from "../sdk";
 import { getDb } from "../db/index";
+import { logger } from "../logger";
 // #endregion
 
 // #region Types
@@ -41,6 +43,9 @@ export type ContextUser = User & {
 export type TrpcContext = {
   req: CreateExpressContextOptions["req"];
   res: CreateExpressContextOptions["res"];
+
+  /** 요청 상관 ID — Express requestIdMiddleware에서 주입 */
+  requestId: string;
 
   user: ContextUser | null;
 
@@ -89,6 +94,8 @@ function normalizeCompanyRole(raw: string | null | undefined): CompanyRole | nul
 
 // #region Factory
 export async function createContext(opts: CreateExpressContextOptions): Promise<TrpcContext> {
+  const requestId = opts.req.__requestId;
+
   // #region Vars
   let user: ContextUser | null = null;
   let comp_idno: number | null = null;
@@ -100,8 +107,6 @@ export async function createContext(opts: CreateExpressContextOptions): Promise<
     const authed = await sdk.authenticateRequest(opts.req);
 
     if (authed) {
-      // sdk가 반환하는 user가 drizzle User shape를 만족한다고 가정
-      // (누락 필드가 있다면 sdk 쪽 타입을 맞추는 것이 정석)
       user = {
         ...authed,
         role: mapUserAuthToRole((authed as { user_auth?: string | null }).user_auth),
@@ -110,14 +115,6 @@ export async function createContext(opts: CreateExpressContextOptions): Promise<
     // #endregion
 
     // #region 2) Resolve company by membership (policy: 1 user -> 1 company)
-    /**
-     * 현재 합의:
-     * - "유저는 회사 1개만 속한다" (회사 선택 UX 없음)
-     * - 따라서 active 멤버십 1개를 찾아 comp_idno를 확정한다.
-     *
-     * 확장 시:
-     * - 멤버십 여러개일 수 있으므로, user의 selected company를 저장하고 여기서 사용
-     */
     if (user) {
       const db = getDb();
 
@@ -135,18 +132,39 @@ export async function createContext(opts: CreateExpressContextOptions): Promise<
       company_role = normalizeCompanyRole(membership?.role_code);
     }
     // #endregion
-  } catch {
-    // #region Fail-safe
-    // 인증/DB 문제 시 public context로 폴백(서버 다운 방지)
-    user = null;
-    comp_idno = null;
-    company_role = null;
+  } catch (err) {
+    // #region 에러 분기
+    // JWT 검증 실패/세션 없음 → 정상 폴백 (public context)
+    // DB 장애/예상치 못한 에러 → 500 전파 (은닉 금지)
+    const isAuthError =
+      err instanceof Error &&
+      (err.message.includes("ForbiddenError") ||
+        err.message.includes("Invalid session") ||
+        err.message.includes("User not found") ||
+        err.name === "JWTExpired" ||
+        err.name === "JWSInvalid" ||
+        err.name === "JWTInvalid");
+
+    if (isAuthError) {
+      logger.debug({ requestId, err: (err as Error).message }, "auth token rejected — public context");
+      user = null;
+      comp_idno = null;
+      company_role = null;
+    } else {
+      logger.error({ requestId, err }, "createContext unexpected error — propagating 500");
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+        cause: err,
+      });
+    }
     // #endregion
   }
 
   return {
     req: opts.req,
     res: opts.res,
+    requestId,
     user,
     comp_idno,
     company_role,

@@ -15,6 +15,20 @@
       "when": 1772197962134,
       "tag": "0001_exotic_starjammers",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1772240089928,
+      "tag": "0002_quick_lord_hawal",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1772253596130,
+      "tag": "0003_remarkable_power_man",
+      "breakpoints": true
     }
   ]
 }

@@ -1,4 +1,4 @@
-import { int, varchar, text, boolean, index } from "drizzle-orm/mysql-core";
+import { int, varchar, text, boolean, index, uniqueIndex } from "drizzle-orm/mysql-core";
 import { table } from "../common/table";
 import { companyCols, auditCols } from "../common/default";
 
@@ -23,8 +23,8 @@ export const CRM_CLIENT = table(
     ...auditCols(),                                             // crea_*/modi_* 감사
   },
   (t) => [
-    index("ix_client_comp").on(t.comp_idno),                    // 회사 기준 조회
-    index("ix_client_comp_name").on(t.comp_idno, t.clie_name),  // 회사+이름 검색
+    index("ix_client_comp").on(t.comp_idno),                               // 회사 기준 조회
+    uniqueIndex("ux_client_comp_name").on(t.comp_idno, t.clie_name),      // 회사 내 고객명 중복 방지
   ]
 );
 

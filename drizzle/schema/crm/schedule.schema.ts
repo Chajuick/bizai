@@ -36,6 +36,9 @@ export const CRM_SCHEDULE = table(
 
     // 고객 기준 일정 조회(회사 내) - clie_idno를 실제로 쓸 거면 강추
     index("ix_sche_comp_clie_date").on(t.comp_idno, t.clie_idno, t.sche_date),
+
+    // 대시보드 upcoming/overdue/imminent (stat_code='scheduled' + sche_date 범위)
+    index("ix_sche_comp_stat_date").on(t.comp_idno, t.stat_code, t.sche_date),
   ]
 );
 

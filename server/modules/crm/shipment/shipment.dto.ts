@@ -109,5 +109,6 @@ export type ShipmentListOutput = z.infer<typeof ShipmentListOutput>;
 // #region Service Contracts
 export type ShipmentCreatePayload = z.infer<typeof ShipmentCreateInput>;
 export type ShipmentUpdatePayload = Omit<z.infer<typeof ShipmentUpdateInput>, "ship_idno">;
+export type ShipmentListPayload = NonNullable<z.infer<typeof ShipmentListInput>>;
 export type ShipmentSort = { field: ShipmentSortField; dir: "asc" | "desc" };
 // #endregion
