@@ -4,7 +4,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 /**
- * ✅ 통합 컨셉
+ *  통합 컨셉
  * - shadcn(Button) API: asChild, size, fullWidth, data-[state=open]/aria-expanded 대응 유지
  * - 기존 Toss-ish 버튼 API: tone(primary/neutral/success/danger) + variant(solid/soft/outline/ghost/link)
  * - 그라데이션/쉐도우(원하면): solid에만 inline style로 지원
@@ -46,7 +46,7 @@ const buttonVariants = cva(
     // disabled
     "disabled:pointer-events-none disabled:opacity-50",
 
-    // ✅ focus + open(찌그러짐 방지 핵심)
+    //  focus + open(찌그러짐 방지 핵심)
     [
       "outline-none",
       "focus-visible:border-primary/30",
@@ -87,7 +87,7 @@ const buttonVariants = cva(
         link: "",
       },
       size: {
-        // ✅ 44px default
+        //  44px default
         md: "h-11 px-4 has-[>svg]:px-3",
         sm: "h-9 rounded-lg px-3 text-sm has-[>svg]:px-2.5",
         lg: "h-12 rounded-2xl px-6 text-base has-[>svg]:px-4",
@@ -234,7 +234,7 @@ function Button({
 }
 
 /**
- * ✅ IconButton: 기존 IconButton 사용성 그대로 가져가되,
+ *  IconButton: 기존 IconButton 사용성 그대로 가져가되,
  * 내부적으로 통합 Button을 사용
  */
 type IconButtonProps = Omit<ButtonProps, "children"> & {

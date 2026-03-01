@@ -102,7 +102,7 @@ pnpm db:push    # DB 스키마 마이그레이션
 ## 프로젝트 구조
 
 ```
-sales-manager/
+biz-ai/
 ├── client/                  # React SPA (프론트엔드)
 │   └── src/
 │       ├── pages/           # 라우트별 페이지 컴포넌트
@@ -217,11 +217,11 @@ pnpm vitest run server/auth.logout.test.ts
 
 | 변수명 | 필수 | 설명 |
 |--------|------|------|
-| `DATABASE_URL` | ✅ | MySQL 연결 문자열 |
-| `JWT_SECRET` | ✅ | 세션 토큰 서명 키 |
-| `OAUTH_SERVER_URL` | ✅ | OAuth 인증 서버 URL |
-| `OWNER_OPEN_ID` | ✅ | 관리자 계정의 OpenID |
-| `BUILT_IN_FORGE_API_URL` | ✅ | Forge API 기본 URL |
-| `BUILT_IN_FORGE_API_KEY` | ✅ | Forge API 인증 키 |
-| `VITE_APP_ID` | ✅ | 앱 식별자 |
+| `DATABASE_URL` |  | MySQL 연결 문자열 |
+| `JWT_SECRET` |  | 세션 토큰 서명 키 |
+| `OAUTH_SERVER_URL` |  | OAuth 인증 서버 URL |
+| `OWNER_OPEN_ID` |  | 관리자 계정의 OpenID |
+| `BUILT_IN_FORGE_API_URL` |  | Forge API 기본 URL |
+| `BUILT_IN_FORGE_API_KEY` |  | Forge API 인증 키 |
+| `VITE_APP_ID` |  | 앱 식별자 |
 | `PORT` | ❌ | 서버 포트 (기본값: 3000) |

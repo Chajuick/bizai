@@ -20,7 +20,7 @@ type WorkItemCardRootProps = {
 };
 
 function Root({ children, className, interactive, onClick }: WorkItemCardRootProps) {
-  const clickable = !!onClick; // ✅ 실제 버튼 역할은 onClick 있을 때만
+  const clickable = !!onClick; //  실제 버튼 역할은 onClick 있을 때만
   const isInteractive = clickable || !!interactive;
 
   return (
@@ -37,19 +37,19 @@ function Root({ children, className, interactive, onClick }: WorkItemCardRootPro
       }}
       className={cn(
         isInteractive && "group",
-        // ✅ 토큰 기반: 배경/보더/텍스트
+        //  토큰 기반: 배경/보더/텍스트
         "rounded-3xl border bg-card text-card-foreground p-4 transition",
         // border 색을 토큰으로 (없으면 border-border로 fallback)
         "border-[color:var(--fowin-border,theme(colors.border))]",
 
-        // ✅ 기본 카드 shadow (토큰)
+        //  기본 카드 shadow (토큰)
         "[box-shadow:var(--fowin-shadow-card)]",
 
-        // ✅ hover (토큰) - 인터랙티브한 카드만
+        //  hover (토큰) - 인터랙티브한 카드만
         isInteractive &&
           "cursor-pointer hover:border-[color:var(--fowin-border-hover)] hover:[box-shadow:var(--fowin-shadow-card-hover)] hover:-translate-y-[1px]",
 
-        // ✅ focus (토큰): 카드 기본 그림자 + 링을 동시에
+        //  focus (토큰): 카드 기본 그림자 + 링을 동시에
         clickable &&
           "focus-visible:outline-none focus-visible:[box-shadow:var(--fowin-shadow-card),var(--fowin-ring)]",
 

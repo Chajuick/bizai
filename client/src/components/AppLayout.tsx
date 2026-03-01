@@ -29,6 +29,8 @@ import {
   PopoverTrigger,
 } from "@/components/focuswin/common/ui/popover";
 import { useWorkspaceSwitcher } from "@/hooks/focuswin/company/useWorkspaceSwitcher";
+import { COMPANY } from "@/config/company";
+import { companyAdminProcedure } from "server/core/trpc";
 
 // ─── Nav items (업무 중심) ───────────────────────────────────────────────────
 const navItems = [
@@ -95,11 +97,10 @@ function WorkspaceSwitcher() {
               companies.map((c) => (
                 <button
                   key={c.comp_idno}
-                  className={`w-full flex items-center gap-2.5 px-4 py-3 text-sm hover:bg-slate-50 transition text-left ${
-                    c.comp_idno === currentCompIdno
+                  className={`w-full flex items-center gap-2.5 px-4 py-3 text-sm hover:bg-slate-50 transition text-left ${c.comp_idno === currentCompIdno
                       ? "text-blue-700 font-semibold"
                       : "text-slate-700"
-                  }`}
+                    }`}
                   onClick={() => {
                     void switchCompany(c.comp_idno);
                     setOpen(false);
@@ -226,8 +227,6 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const LOGO_SRC = "/brand/bizai-icon-512.png";
-
   const isActive = (path: string) => {
     if (path === "/") return location === "/";
     return location.startsWith(path);
@@ -255,7 +254,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {/* Logo */}
         <div className="p-6 border-b" style={{ borderColor: "var(--blueprint-border)" }}>
           <div className="flex items-center gap-3">
-            <LogoAvatar src={LOGO_SRC} size={40} className="rounded-2xl" />
+            <LogoAvatar src={COMPANY.appLogo} size={40} className="rounded-2xl" radius={0} />
             <div className="min-w-0">
               <p className="font-black text-[color:var(--blueprint-text)] text-sm tracking-tight">BizAI</p>
               <p className="text-xs text-slate-500 truncate">영업 관리 시스템</p>
@@ -337,7 +336,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               style={{ borderColor: "var(--blueprint-border)" }}
             >
               <div className="flex items-center gap-3">
-                <LogoAvatar src={LOGO_SRC} size={36} className="rounded-2xl" />
+                <LogoAvatar src={COMPANY.appLogo} size={36} className="rounded-2xl" />
                 <span className="font-black text-[color:var(--blueprint-text)]">BizAI</span>
               </div>
               <button
@@ -437,7 +436,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </button>
 
           <div className="flex items-center gap-2">
-            <LogoAvatar src={LOGO_SRC} size={28} className="rounded-2xl" />
+            <LogoAvatar src={COMPANY.appLogo} size={28} className="rounded-2xl" />
             <span className="font-black text-slate-900 text-sm">BizAI</span>
           </div>
 
@@ -453,7 +452,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
         {/* Page Content */}
         <main
-          className="flex-1 min-h-0 overflow-y-auto lg:pb-6"
+          className="flex-1 min-h-0 overflow-y-auto pb-24 lg:pb-6"
           style={{ scrollbarGutter: "stable both-edges" }}
         >
           <div className="page-enter">{children}</div>
@@ -461,7 +460,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* ─── Mobile Bottom Nav ────────────────────────────────────────────── */}
-      <nav className="mobile-nav lg:hidden">
+      <nav className="mobile-nav lg:hidden pt-2">
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.path);

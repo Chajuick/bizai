@@ -1,6 +1,6 @@
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
 
-export default function SaleRegiAnalysisBanner({
+export default function SaleRegistAnalysisBanner({
   state,
   message,
   onDismiss,

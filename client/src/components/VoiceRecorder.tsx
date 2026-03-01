@@ -1,20 +1,14 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { Mic, MicOff, Loader2, CheckCircle, Upload } from "lucide-react";
+import { Mic, MicOff, Loader2, CheckCircle, UploadCloud } from "lucide-react";
 import { toast } from "sonner";
-import { trpc } from "@/lib/trpc";
+import { useVoiceUploadTranscribe } from "@/hooks/focuswin/files/useVoiceUploadTranscribe";
 
-type RecordingState =
-  | "idle"
-  | "recording"
-  | "uploading"
-  | "confirming"
-  | "transcribing"
-  | "done";
+type RecordingState = "idle" | "recording" | "uploading" | "confirming" | "transcribing" | "done";
 
 interface VoiceRecorderProps {
   onTranscribed: (text: string) => void;
 
-  // ✅ 저장 시점에 attachments로 묶기 위해 file_idno를 부모가 들고 있게 하자
+  // 저장 시점에 attachments로 묶기 위해 file_idno를 부모가 들고 있게 하자
   onUploadedFileId?: (fileId: number) => void;
 
   // 옵션: 파일 크기 제한
@@ -41,14 +35,8 @@ export default function VoiceRecorder({
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const uploadingAbortRef = useRef<AbortController | null>(null);
 
-  // tRPC mutations
-  const prepareUpload = trpc.crm.files.prepareUpload.useMutation();
-  const confirmUpload = trpc.crm.files.confirmUpload.useMutation();
-  const transcribeFile = trpc.crm.files.transcribeFile.useMutation();
-
-  const busy = state !== "idle" && state !== "done";
+  const { uploadAndTranscribe, abort, errors } = useVoiceUploadTranscribe();
 
   const cleanupRecording = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -61,96 +49,6 @@ export default function VoiceRecorder({
     chunksRef.current = [];
     setDuration(0);
   }, []);
-
-  const uploadAndTranscribe = useCallback(
-    async (blob: Blob, mimeType: string) => {
-      if (blob.size > maxBytes) {
-        toast.error(`파일 크기가 ${(maxBytes / (1024 * 1024)).toFixed(0)}MB를 초과합니다.`);
-        setState("idle");
-        return;
-      }
-
-      // 1) prepareUpload (서버가 file_path + presigned upload_url 발급)
-      setState("uploading");
-      const fileName = `sale-audio-${Date.now()}.webm`; // mime에 맞춰 확장자 바꿀 수도 있음
-      let prep;
-      try {
-        prep = await prepareUpload.mutateAsync({
-          file_name: fileName,
-          mime_type: mimeType,
-        });
-      } catch (e) {
-        console.error(e);
-        toast.error("업로드 준비에 실패했습니다.");
-        setState("idle");
-        return;
-      }
-
-      // 2) PUT to R2 presigned URL
-      try {
-        uploadingAbortRef.current = new AbortController();
-
-        const putRes = await fetch(prep.upload_url, {
-          method: "PUT",
-          body: blob,
-          headers: {
-            "Content-Type": mimeType,
-          },
-          signal: uploadingAbortRef.current.signal,
-        });
-
-        if (!putRes.ok) {
-          const t = await putRes.text().catch(() => "");
-          console.error("PUT failed:", putRes.status, t);
-          toast.error("스토리지 업로드에 실패했습니다. (CORS/권한 확인)");
-          setState("idle");
-          return;
-        }
-      } catch (e) {
-        console.error(e);
-        toast.error("스토리지 업로드 요청이 실패했습니다. (CORS/네트워크)");
-        setState("idle");
-        return;
-      } finally {
-        uploadingAbortRef.current = null;
-      }
-
-      // 3) confirmUpload (DB에 CORE_FILE row 생성)
-      setState("confirming");
-      let confirmed;
-      try {
-        confirmed = await confirmUpload.mutateAsync({
-          file_path: prep.file_path,
-          file_name: fileName,
-          mime_type: mimeType,
-          file_size: blob.size,
-          // ✅ 저장 전 sale_idno 없으니 ref는 절대 보내지 않는다
-        });
-      } catch (e) {
-        console.error(e);
-        toast.error("업로드 확정(메타 저장)에 실패했습니다.");
-        setState("idle");
-        return;
-      }
-
-      const fileId = confirmed.file_idno;
-      onUploadedFileId?.(fileId);
-
-      // 4) transcribeFile (자동 전사)
-      setState("transcribing");
-      try {
-        const tx = await transcribeFile.mutateAsync({ file_idno: fileId });
-        onTranscribed(tx.text);
-        setState("done");
-        setTimeout(() => setState("idle"), 1200);
-      } catch (e) {
-        console.error(e);
-        toast.error("음성 전사에 실패했습니다. (STT 설정/키 확인)");
-        setState("idle");
-      }
-    },
-    [maxBytes, prepareUpload, confirmUpload, transcribeFile, onTranscribed, onUploadedFileId]
-  );
 
   // 녹음 시작
   const startRecording = useCallback(async () => {
@@ -174,7 +72,20 @@ export default function VoiceRecorder({
       mr.onstop = async () => {
         const blob = new Blob(chunksRef.current, { type: mimeType });
         cleanupRecording();
-        await uploadAndTranscribe(blob, "audio/webm"); // 서버/스토리지 content-type은 단순화
+
+        await uploadAndTranscribe({
+          blob,
+          mimeType, // ✅ 고정 "audio/webm"이 아니라 실제 mimeType 전달
+          fileName: `sale-audio-${Date.now()}.webm`,
+          maxBytes,
+          onUploadedFileId,
+          onTranscribed,
+          onState: (s) => setState(s),
+          onFinally: () => {
+            // done 상태는 잠깐 보여주고 idle로 복귀
+            setTimeout(() => setState("idle"), 1200);
+          },
+        });
       };
 
       mr.start(1000);
@@ -185,7 +96,7 @@ export default function VoiceRecorder({
       console.error(e);
       toast.error("마이크 접근 권한이 필요합니다.");
     }
-  }, [cleanupRecording, uploadAndTranscribe]);
+  }, [cleanupRecording, uploadAndTranscribe, maxBytes, onUploadedFileId, onTranscribed]);
 
   // 녹음 중지
   const stopRecording = useCallback(() => {
@@ -206,9 +117,20 @@ export default function VoiceRecorder({
         return;
       }
 
-      await uploadAndTranscribe(file, file.type || "audio/webm");
+      await uploadAndTranscribe({
+        blob: file,
+        mimeType: file.type || "audio/webm",
+        fileName: file.name || `sale-audio-${Date.now()}.webm`,
+        maxBytes,
+        onUploadedFileId,
+        onTranscribed,
+        onState: (s) => setState(s),
+        onFinally: () => {
+          setTimeout(() => setState("idle"), 1200);
+        },
+      });
     },
-    [uploadAndTranscribe]
+    [uploadAndTranscribe, maxBytes, onUploadedFileId, onTranscribed]
   );
 
   const label = useMemo(() => {
@@ -240,13 +162,13 @@ export default function VoiceRecorder({
           <label
             className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium cursor-pointer transition-all hover:scale-105"
             style={{
-              background: "rgba(148,163,184,0.12)",
-              border: "1px solid rgba(148,163,184,0.25)",
-              color: "#94a3b8",
+              background: "rgba(99,102,241,0.12)",
+              border: "1px solid rgba(99,102,241,0.3)",
+              color: "#818cf8",
             }}
           >
-            <Upload size={16} />
-            음성 파일 첨부
+            <UploadCloud size={15} />
+            음성 파일 첨부 (최대 {(maxBytes / (1024 * 1024)).toFixed(0)}MB)
             <input
               type="file"
               accept="audio/*,video/webm"
@@ -273,7 +195,11 @@ export default function VoiceRecorder({
           </div>
           <div className="flex items-end gap-0.5 h-5">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="waveform-bar w-1 rounded-full" style={{ background: "#f87171", minHeight: "4px" }} />
+              <div
+                key={i}
+                className="waveform-bar w-1 rounded-full"
+                style={{ background: "#f87171", minHeight: "4px" }}
+              />
             ))}
           </div>
           <span className="font-mono">{formatDuration(duration)}</span>
@@ -296,7 +222,7 @@ export default function VoiceRecorder({
             type="button"
             className="ml-2 text-xs opacity-80 hover:opacity-100"
             onClick={() => {
-              uploadingAbortRef.current?.abort();
+              abort();
               toast.message("작업을 취소했습니다.");
               setState("idle");
               cleanupRecording();
@@ -321,10 +247,10 @@ export default function VoiceRecorder({
         </div>
       )}
 
-      {/* 에러 디버깅용: mutation error 출력(원하면 제거) */}
-      {prepareUpload.error && <span className="text-xs text-red-500">prepareUpload 실패</span>}
-      {confirmUpload.error && <span className="text-xs text-red-500">confirmUpload 실패</span>}
-      {transcribeFile.error && <span className="text-xs text-red-500">transcribeFile 실패</span>}
+      {/* 디버깅용 - 필요 없으면 제거 */}
+      {errors.prepareUpload && <span className="text-xs text-red-500">prepareUpload 실패</span>}
+      {errors.confirmUpload && <span className="text-xs text-red-500">confirmUpload 실패</span>}
+      {errors.transcribeFile && <span className="text-xs text-red-500">transcribeFile 실패</span>}
     </div>
   );
 }

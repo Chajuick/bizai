@@ -40,7 +40,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cd /c/Users/USER/Downloads/sales-manager && pnpm prettier --write $FILE 2>/dev/null || true"
+            "command": "cd /c/Users/USER/Downloads/biz-ai && pnpm prettier --write $FILE 2>/dev/null || true"
           }
         ]
       }

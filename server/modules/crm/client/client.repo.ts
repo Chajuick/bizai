@@ -43,7 +43,7 @@ function orderByFor(sort?: { field: ClientSortField; dir: ClientSortDir }) {
 function buildWhere(params: { comp_idno: number; search?: string; onlyEnabled?: boolean }) {
   const conditions = [eq(CRM_CLIENT.comp_idno, params.comp_idno)];
 
-  // ✅ soft disable 정책: 기본 활성만
+  //  soft disable 정책: 기본 활성만
   if (params.onlyEnabled !== false) {
     conditions.push(eq(CRM_CLIENT.enab_yesn, true));
   }

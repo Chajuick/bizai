@@ -60,7 +60,7 @@ export default function SaleListCard({
           </div>
         </WorkItemCard.Body>
 
-        {/* ✅ 날짜는 location 자리(footer left)로 + 상태색 */}
+        {/*  날짜는 location 자리(footer left)로 + 상태색 */}
         <WorkItemCard.Footer left={<WorkItemCard.ScheduleMeta value={dateLabel} />} />
       </div>
     </WorkItemCard>

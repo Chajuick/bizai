@@ -2,7 +2,7 @@ import { Brain } from "lucide-react";
 import InfoCard from "../../common/info-card";
 import { Textarea } from "@/components/focuswin/common/ui/textarea";
 
-export default function SaleRegiContentCard({
+export default function SaleRegistContentCard({
   rawContent,
   onChangeRaw,
 }: {
@@ -18,12 +18,13 @@ export default function SaleRegiContentCard({
         rows={9}
         className="rounded-2xl bg-white border-slate-200 focus-visible:ring-2 focus-visible:ring-blue-200 resize-none"
       />
-      <div className="mt-3 flex items-center justify-between">
+      <div className="mt-3 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-1">
         <p className="text-[11px] text-slate-500">
           팁: "언제/누구/무엇/다음 일정/금액"이 들어가면 분석 정확도가 좋아져요.
         </p>
+
         <p className="text-[11px] font-semibold text-slate-400">
-          {rawContent.length.toLocaleString()} chars
+          {rawContent.length.toLocaleString()} 자
         </p>
       </div>
     </InfoCard>

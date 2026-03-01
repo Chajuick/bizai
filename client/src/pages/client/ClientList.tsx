@@ -1,6 +1,6 @@
 import { Plus } from "lucide-react";
 
-import { useClientsViewModel } from "@/hooks/focuswin/client/useClientsViewModel";
+import { useClientsViewModel } from "@/hooks/focuswin/client/useClientViewModel";
 import PageScaffold from "@/components/focuswin/common/page-scaffold";
 import ClientListHeadContent from "@/components/focuswin/client/list/HeadContent";
 import ClientListEmptyCard from "@/components/focuswin/client/list/EmptyCard";

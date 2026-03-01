@@ -103,7 +103,7 @@ export const dashboardRepo = {
             sql`${CRM_ORDER.stat_code} IN ('proposal','negotiation','confirmed')`
           )
         ),
-      // ✅ 월 매출 = 수금(paid) + paid_date 기준
+      //  월 매출 = 수금(paid) + paid_date 기준
       db
         .select({
           total: sql<string>`COALESCE(SUM(${CRM_SHIPMENT.ship_pric}), 0)`,

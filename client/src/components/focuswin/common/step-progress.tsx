@@ -23,19 +23,19 @@ type StepLineProps<K extends string = string> = {
   className?: string;
   showLabels?: boolean;
 
-  /** ✅ 기본값: 한 색(하늘/파랑) 그라데이션 */
+  /**  기본값: 한 색(하늘/파랑) 그라데이션 */
   scheme?: "monoSky" | "tone";
 
   /** tone 모드 fallback */
   tone?: ProgressTone;
 
-  /** ✅ 단계별 스타일 주입 (없으면 scheme 기본값 사용) */
+  /**  단계별 스타일 주입 (없으면 scheme 기본값 사용) */
   stepStyles?: Partial<Record<K, StepStyle>>;
 
-  /** ✅ 현재 dot hover 시 퍼짐 */
+  /**  현재 dot hover 시 퍼짐 */
   hoverPulse?: boolean;
 
-  /** ✅ 점 크기(옵션) */
+  /**  점 크기(옵션) */
   size?: "sm" | "md";
 };
 
@@ -73,7 +73,7 @@ function toneFallback(tone: ProgressTone) {
   };
 }
 
-/** ✅ 단일 색(하늘/파랑) 그라데이션 기본값 */
+/**  단일 색(하늘/파랑) 그라데이션 기본값 */
 function monoSkyByIndex(i: number) {
   const arr = [
     // 대기(가장 연함)
@@ -168,7 +168,7 @@ function StepLine<K extends string = string>({
                   isCurrent && cn(ringSize, st.ring)
                 )}
               >
-                {/* ✅ hover pulse (current only) */}
+                {/*  hover pulse (current only) */}
                 {isCurrent && hoverPulse ? (
                   <span
                     className={cn(

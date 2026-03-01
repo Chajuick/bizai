@@ -18,11 +18,11 @@ export type PageFab = UIAction & { icon: React.ReactNode };
 export type PageScaffoldProps = {
   // Header
   kicker: string;
-  /** ✅ string -> ReactNode */
+  /**  string -> ReactNode */
   title: React.ReactNode;
   description?: React.ReactNode;
 
-  /** ✅ PageHeader 고급 옵션 노출 */
+  /**  PageHeader 고급 옵션 노출 */
   onBack?: () => void;
   actions?: HeaderAction[];
   primaryAction?: HeaderAction;

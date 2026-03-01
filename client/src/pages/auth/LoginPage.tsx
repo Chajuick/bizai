@@ -1,3 +1,4 @@
+// src/pages/auth/LoginPage.tsx
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Eye, EyeOff } from "lucide-react";
@@ -8,19 +9,22 @@ import { Button } from "@/components/focuswin/common/ui/button";
 import { Input } from "@/components/focuswin/common/ui/input";
 import { trpc } from "@/lib/trpc";
 
+import { preserveAuthRedirect } from "@/router/redirect";
+
 export default function LoginPage() {
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
 
-  // ?redirect= 파라미터 읽기
-  const redirectTo = new URLSearchParams(window.location.search).get("redirect") ?? "/";
+  // ?redirect= 파라미터 읽기 (없으면 "/")
+  const redirectTo =
+    new URLSearchParams(window.location.search).get("redirect") ?? "/";
 
-  // OAuth 로그인 시 redirect를 잃지 않도록 sessionStorage에 보관
+  // OAuth/폼 로그인 모두를 위해 redirect 경로 보관
+  // - redirect.ts가 "/" 및 "/auth/*" 저장을 막고,
+  // - 기존 값이 있으면 덮어쓰지 않으므로 안전
   useEffect(() => {
-    if (redirectTo !== "/") {
-      sessionStorage.setItem("auth_redirect", redirectTo);
-    }
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    preserveAuthRedirect(redirectTo);
+  }, [redirectTo]);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -57,9 +61,11 @@ export default function LoginPage() {
         return;
       }
 
-      // 세션 쿠키가 설정됐으므로 auth 상태 갱신 후 redirect
+      // 세션 쿠키 설정 → auth 상태 갱신
       await utils.auth.me.invalidate();
-      sessionStorage.removeItem("auth_redirect"); // OAuth path에서 중복 처리 방지
+
+      // ✅ 폼 로그인 성공 시에는 redirectTo로 바로 이동
+      // (OAuth는 Router(index.tsx)에서 popAuthRedirect로 처리)
       setLocation(redirectTo);
     } catch {
       setError("네트워크 오류가 발생했습니다. 다시 시도해주세요.");
@@ -75,7 +81,10 @@ export default function LoginPage() {
       footer={
         <p className="text-center text-xs text-slate-500">
           계정이 없으신가요?{" "}
-          <a href="/auth/register" className="font-semibold text-blue-600 hover:underline">
+          <a
+            href="/auth/register"
+            className="font-semibold text-blue-600 hover:underline"
+          >
             회원가입
           </a>
         </p>
@@ -130,7 +139,13 @@ export default function LoginPage() {
           </p>
         ) : null}
 
-        <Button type="submit" tone="primary" variant="solid" fullWidth disabled={loading}>
+        <Button
+          type="submit"
+          tone="primary"
+          variant="solid"
+          fullWidth
+          disabled={loading}
+        >
           {loading ? "로그인 중…" : "로그인"}
         </Button>
       </form>

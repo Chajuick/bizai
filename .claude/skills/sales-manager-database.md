@@ -1,5 +1,5 @@
 ---
-name: sales-manager-database
+name: biz-ai-database
 description: Drizzle ORM + MySQL 스키마, 마이그레이션, 쿼리 패턴을 설명합니다. DB 관련 작업 시 참조하세요.
 ---
 

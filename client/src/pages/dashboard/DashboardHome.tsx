@@ -80,7 +80,7 @@ function KPICard({
           <Icon size={18} style={{ color }} />
         </div>
 
-        {/* ✅ 클릭 힌트: 작은 chevron + 라벨 */}
+        {/*  클릭 힌트: 작은 chevron + 라벨 */}
         <div className="flex items-center gap-1 text-[10px] font-semibold text-slate-400">
           <span className="bp-section-header text-[9px]">{label}</span>
           {href && <ArrowRight size={12} className="opacity-70" />}
@@ -136,7 +136,7 @@ function EmptyState({
   );
 }
 
-export default function DashHome() {
+export default function DashboardHome() {
   const { data: stats, isLoading } = trpc.crm.dashboard.stats.useQuery();
   const { data: trend } = trpc.crm.dashboard.revenueTrend.useQuery();
 

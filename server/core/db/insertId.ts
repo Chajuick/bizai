@@ -20,7 +20,7 @@ function coerceToPositiveNumber(v: unknown): number | null {
     return Number.isFinite(v) && v > 0 ? v : null;
   }
 
-  // ✅ BigInt literal(0n) 대신 BigInt(0) 사용 → ES2020 미만에서도 코드 자체는 OK
+  //  BigInt literal(0n) 대신 BigInt(0) 사용 → ES2020 미만에서도 코드 자체는 OK
   // (단, 런타임이 BigInt를 지원해야 함. Node 10+면 보통 OK)
   if (typeof v === "bigint") {
     return v > BigInt(0) ? Number(v) : null;

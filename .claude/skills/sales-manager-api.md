@@ -1,5 +1,5 @@
 ---
-name: sales-manager-api
+name: biz-ai-api
 description: tRPC 라우터 설계, 프로시저 패턴, 인증 흐름을 설명합니다. 새 API 추가 또는 기존 API 수정 시 참조하세요.
 ---
 

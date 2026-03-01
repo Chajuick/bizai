@@ -1,5 +1,5 @@
 import ClientsList from "./clients-list";
-import { useClientsViewModel } from "@/hooks/focuswin/client/useClientsViewModel";
+import { useClientsViewModel } from "@/hooks/focuswin/client/useClientViewModel";
 
 type Props = { vm: ReturnType<typeof useClientsViewModel> };
 

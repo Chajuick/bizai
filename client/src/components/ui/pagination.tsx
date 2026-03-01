@@ -39,7 +39,7 @@ function PaginationItem({ ...props }: React.ComponentProps<"li">) {
 
 type PaginationLinkProps = React.ComponentProps<"a"> & {
   isActive?: boolean;
-  size?: React.ComponentProps<typeof Button>["size"]; // ✅ Button size 타입 재사용
+  size?: React.ComponentProps<typeof Button>["size"]; //  Button size 타입 재사용
 };
 
 function PaginationLink({
@@ -72,7 +72,7 @@ function PaginationPrevious({
   return (
     <PaginationLink
       aria-label="Go to previous page"
-      size="md" // ✅ default → md
+      size="md" //  default → md
       className={cn("gap-1 px-2.5 sm:pl-2.5", className)}
       {...props}
     >
@@ -89,7 +89,7 @@ function PaginationNext({
   return (
     <PaginationLink
       aria-label="Go to next page"
-      size="md" // ✅ default → md
+      size="md" //  default → md
       className={cn("gap-1 px-2.5 sm:pr-2.5", className)}
       {...props}
     >

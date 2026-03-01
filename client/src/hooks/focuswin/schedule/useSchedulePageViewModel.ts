@@ -1,9 +1,9 @@
 import React, { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { toLocalDatetimeInputValue, toLocalDateInputValue } from "@/lib/utils";
-import { usePromisesViewModel } from "./usePromisesViewModel";
-import type { TabKey } from "./usePromisesViewModel";
-import { usePromiseActions } from "./usePromiseActions";
+import { usePromisesViewModel } from "./useScheduleViewModel";
+import type { TabKey } from "./useScheduleViewModel";
+import { usePromiseActions } from "./useScheduleActions";
 import { usePromiseAlerts } from "@/hooks/usePromiseAlerts";
 import type { PromiseFormState, ConfirmState, EnhancedPromise } from "@/types/promise";
 import type { OrderQuickFormState } from "@/types/order";

@@ -4,7 +4,7 @@ import InfoCard from "@/components/focuswin/common/info-card";
 import { Card, CardContent, CardHeader } from "@/components/focuswin/common/ui/card";
 
 /**
- * ✅ Demo timings
+ *  Demo timings
  */
 const RECORD_TIME = 3400;
 const UPLOAD_TIME = 1600;
@@ -14,19 +14,19 @@ const ANALYZE_TIME = 2600;
 const RESULT_HOLD = 11000;
 
 /**
- * ✅ Layout stability
+ *  Layout stability
  */
 const STAGE_H = 500;
 
 /**
- * ✅ Curtain transition (black cut)
+ *  Curtain transition (black cut)
  */
 const CURTAIN_IN_MS = 320;
 const CURTAIN_OUT_MS = 380;
 const CURTAIN_HOLD_MS = 100;
 
 /**
- * ✅ Debug / Control
+ *  Debug / Control
  * - debugPause: true면 자동 사이클이 돌지 않고 지정한 화면에서 "멈춤"
  * - debugStage: 멈출 화면 선택
  * - showDebugBar: 우상단 컨트롤 바 표시
@@ -46,13 +46,13 @@ export default function HeroDemo() {
   const [phase, setPhase] = React.useState<Phase>("recording");
   const [memo, setMemo] = React.useState("");
 
-  // ✅ Curtain opacity
+  //  Curtain opacity
   const [curtainOn, setCurtainOn] = React.useState(false);
 
-  // ✅ Page enter animation retrigger
+  //  Page enter animation retrigger
   const [enterKey, setEnterKey] = React.useState(0);
 
-  // ✅ Runtime controls (편집/디버그용)
+  //  Runtime controls (편집/디버그용)
   const [paused, setPaused] = React.useState<boolean>(debugPause);
   const [stage, setStage] = React.useState<DebugStage>(debugStage);
 
@@ -96,7 +96,7 @@ export default function HeroDemo() {
 
       swap();
 
-      // ✅ swap 직후 1프레임 쉬면 레이아웃/paint가 안정적
+      //  swap 직후 1프레임 쉬면 레이아웃/paint가 안정적
       await new Promise<void>((r) => requestAnimationFrame(() => r()));
 
       setCurtainOn(false);
@@ -118,7 +118,7 @@ export default function HeroDemo() {
     const cycle = async () => {
       if (!aliveRef.current) return;
 
-      // ✅ paused면 지정 stage에 고정
+      //  paused면 지정 stage에 고정
       if (paused) {
         applyStage(stage);
         // paused 상태에서는 계속 돌지 않게 하고, 주기적으로만 체크
@@ -193,25 +193,10 @@ export default function HeroDemo() {
   // -----------------------------
   return (
     <div className="relative" style={{ height: STAGE_H }}>
-      {/* ✅ Debug bar (optional) */}
-      {showDebugBar ? (
-        <DebugBar
-          paused={paused}
-          stage={stage}
-          setPaused={setPaused}
-          setStage={(s) => {
-            setStage(s);
-            // paused 상태에서 stage 바꾸면 즉시 반영
-            if (paused) applyStage(s);
-          }}
-          jump={(s) => applyStage(s)}
-        />
-      ) : null}
-
       {/* Content */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute inset-0 overflow-auto pr-1">
-          {/* ✅ 항상 page-enter 적용: 첫 화면만 다른 느낌 제거 */}
+          {/*  항상 page-enter 적용: 첫 화면만 다른 느낌 제거 */}
           <div key={enterKey} className="page-enter">
             {view === "regi" ? (
               <div className="space-y-4">
@@ -229,7 +214,7 @@ export default function HeroDemo() {
         </div>
       </div>
 
-      {/* ✅ Black curtain (inline transitionDuration fixes tailwind runtime class issue) */}
+      {/*  Black curtain (inline transitionDuration fixes tailwind runtime class issue) */}
       <div
         className="pointer-events-none absolute inset-0 bg-black transition-opacity"
         style={{
@@ -365,81 +350,6 @@ function Meta({ label, value }: { label: string; value: string }) {
     <div>
       <p className="text-xs text-slate-400">{label}</p>
       <p className="font-semibold">{value}</p>
-    </div>
-  );
-}
-
-/* ------------------------------------------------------------ */
-/**
- * ✅ DebugBar
- * - Pause 토글
- * - Stage 선택
- * - 즉시 점프(편집용)
- */
-function DebugBar({
-  paused,
-  stage,
-  setPaused,
-  setStage,
-  jump,
-}: {
-  paused: boolean;
-  stage: DebugStage;
-  setPaused: (v: boolean) => void;
-  setStage: (s: DebugStage) => void;
-  jump: (s: DebugStage) => void;
-}) {
-  const stages: DebugStage[] = [
-    "regi_recording",
-    "regi_uploading",
-    "regi_transcribing",
-    "regi_editing",
-    "regi_analyzing",
-    "deta",
-  ];
-
-  return (
-    <div className="absolute top-2 right-2 z-20">
-      <div className="rounded-2xl border border-slate-200 bg-white/90 backdrop-blur px-3 py-2 shadow-sm">
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setPaused(!paused)}
-            className={[
-              "px-3 py-1 rounded-xl text-xs font-bold border",
-              paused ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-800 border-slate-200",
-            ].join(" ")}
-          >
-            {paused ? "Paused" : "Auto"}
-          </button>
-
-          <select
-            className="text-xs rounded-xl border border-slate-200 px-2 py-1 bg-white"
-            value={stage}
-            onChange={(e) => setStage(e.target.value as DebugStage)}
-            title="편집할 화면 선택"
-          >
-            {stages.map((s) => (
-              <option key={s} value={s}>
-                {s}
-              </option>
-            ))}
-          </select>
-
-          <button
-            type="button"
-            onClick={() => jump(stage)}
-            className="px-3 py-1 rounded-xl text-xs font-bold border border-slate-200 bg-white text-slate-800"
-            title="지정 화면으로 즉시 이동"
-          >
-            Jump
-          </button>
-        </div>
-
-        <p className="mt-1 text-[11px] text-slate-500">
-          편집할 땐 <b>Paused</b>로 두고 stage 바꾸면 즉시 고정됩니다.
-        </p>
-      </div>
     </div>
   );
 }

@@ -1,7 +1,7 @@
 // server/core/env/env.ts
 
 // #region Imports
-import "dotenv/config"; // ✅ .env를 항상 로드 (dev/prod 모두)
+import "dotenv/config"; //  .env를 항상 로드 (dev/prod 모두)
 import path from "path";
 import dotenv from "dotenv";
 // #endregion
@@ -64,7 +64,7 @@ export const ENV = {
   isProduction: read("NODE_ENV") === "production",
 
   // --- auth / session
-  // ✅ jose "Zero-length key" 방지: 빈 값이면 부팅 단계에서 차단
+  //  jose "Zero-length key" 방지: 빈 값이면 부팅 단계에서 차단
   cookieSecret: required("JWT_SECRET"),
 
   // --- owner (최초 admin 지정, 이메일 기준)

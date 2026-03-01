@@ -1,5 +1,5 @@
 {
-  "name": "sales-manager",
+  "name": "biz-ai",
   "version": "1.0.0",
   "type": "module",
   "license": "MIT",
@@ -103,6 +103,7 @@
     "postcss": "^8.4.47",
     "prettier": "^3.6.2",
     "tailwindcss": "^4.1.14",
+    "ts-prune": "^0.10.3",
     "tsx": "^4.19.1",
     "tw-animate-css": "^1.4.0",
     "typescript": "5.9.3",

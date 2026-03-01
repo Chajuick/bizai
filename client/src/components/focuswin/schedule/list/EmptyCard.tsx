@@ -1,10 +1,10 @@
 import { Plus, Calendar } from "lucide-react";
 import EmptyState from "@/components/focuswin/common/empty-state";
-import { usePromisesPageViewModel } from "@/hooks/focuswin/schedule/usePromisesPageViewModel";
+import { usePromisesPageViewModel } from "@/hooks/focuswin/schedule/useSchedulePageViewModel";
 
 type Props = { vm: ReturnType<typeof usePromisesPageViewModel> };
 
-export default function ScheListEmptyCard({ vm }: Props) {
+export default function ScheduleListEmptyCard({ vm }: Props) {
   return (
     <EmptyState
       icon={<Calendar size={26} className="text-blue-600" />}

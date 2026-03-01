@@ -2,22 +2,22 @@ import { useMemo, useState } from "react";
 import { useLocation, useParams } from "wouter";
 
 import PageShell from "@/components/focuswin/common/page-shell";
-import StatusBanner from "@/components/focuswin/sale/deta/status-banner";
+import StatusBanner from "@/components/focuswin/sale/detail/status-banner";
 import ConfirmActionDialog, { ConfirmState } from "@/components/focuswin/common/confirm-action-dialog";
 
-import { useSalesLogDetailViewModel } from "@/hooks/focuswin/sale/useSalesLogDetailViewModel";
+import { useSalesLogDetailViewModel } from "@/hooks/focuswin/sale/useSaleDetailViewModel";
 
-import SalesLogDetailHeader from "@/components/focuswin/sale/deta/sales-log-detail-header";
-import SalesLogDetailLoading from "@/components/focuswin/sale/deta/sales-log-detail-loading";
-import SalesLogDetailNotFound from "@/components/focuswin/sale/deta/sales-log-detail-not-found";
-import SalesLogEditFormCard from "@/components/focuswin/sale/deta/sales-log-edit-form-card";
-import SalesLogMetaCard from "@/components/focuswin/sale/deta/sales-log-meta-card";
-import SalesLogAISummaryCard from "@/components/focuswin/sale/deta/sales-log-ai-summary-card";
-import SalesLogRawCard from "@/components/focuswin/sale/deta/sales-log-raw-card";
-import SalesLogTranscriptCard from "@/components/focuswin/sale/deta/sales-log-transcript-card";
+import SalesLogDetailHeader from "@/components/focuswin/sale/detail/sales-log-detail-header";
+import SalesLogDetailLoading from "@/components/focuswin/sale/detail/sales-log-detail-loading";
+import SalesLogDetailNotFound from "@/components/focuswin/sale/detail/sales-log-detail-not-found";
+import SalesLogEditFormCard from "@/components/focuswin/sale/detail/sales-log-edit-form-card";
+import SalesLogMetaCard from "@/components/focuswin/sale/detail/sales-log-meta-card";
+import SalesLogAISummaryCard from "@/components/focuswin/sale/detail/sales-log-ai-summary-card";
+import SalesLogRawCard from "@/components/focuswin/sale/detail/sales-log-raw-card";
+import SalesLogTranscriptCard from "@/components/focuswin/sale/detail/sales-log-transcript-card";
 import PostAnalyzeClientModal from "@/components/focuswin/sale/common/PostAnalyzeClientModal";
 
-export default function SaleDeta() {
+export default function SaleDetail() {
   const { id } = useParams<{ id: string }>();
   const [, navigate] = useLocation();
   const logId = Number(id);

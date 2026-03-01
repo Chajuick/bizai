@@ -80,7 +80,7 @@ export const orderService = {
     const data = withCreateAudit(ctx, {
       comp_idno: ctx.comp_idno,
 
-      // ✅ 현재 정책: 생성자 = 담당자
+      //  현재 정책: 생성자 = 담당자
       owne_idno: ctx.user_idno,
 
       clie_idno: input.clie_idno,
@@ -107,7 +107,7 @@ export const orderService = {
   async updateOrder(ctx: ServiceCtx, orde_idno: number, patch: OrderUpdatePayload) {
     const db = getDb();
 
-    // ✅ union 타입 방지: patch를 그대로 spread하지 않음
+    //  union 타입 방지: patch를 그대로 spread하지 않음
     const data: OrderUpdate = {};
 
     if (patch.clie_idno !== undefined) data.clie_idno = patch.clie_idno as any;

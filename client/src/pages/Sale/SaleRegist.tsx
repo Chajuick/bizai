@@ -1,19 +1,19 @@
-import { useSaleRegiViewModel } from "@/hooks/focuswin/sale/useSaleRegiViewModel";
+import { useSaleRegistViewModel } from "@/hooks/focuswin/sale/useSaleRegistViewModel";
 
-import SaleRegiPreSaveClientDialog from "@/components/focuswin/sale/regi/PreSaveClientModal";
+import SaleRegistPreSaveClientDialog from "@/components/focuswin/sale/regist/PreSaveClientModal";
 import PostAnalyzeClientModal from "@/components/focuswin/sale/common/PostAnalyzeClientModal";
 
 import PageScaffold from "@/components/focuswin/common/page-scaffold";
-import SaleRegiContent from "@/components/focuswin/sale/regi/Content";
-import SaleRegiAnalysisBanner from "@/components/focuswin/sale/regi/AnalysisBanner";
+import SaleRegistContent from "@/components/focuswin/sale/regist/Content";
+import SaleRegistAnalysisBanner from "@/components/focuswin/sale/regist/AnalysisBanner";
 
-export default function SaleRegi() {
-  const vm = useSaleRegiViewModel();
+export default function SaleRegist() {
+  const vm = useSaleRegistViewModel();
 
   return (
     <>
       {/* 저장 전 고객사 확인 */}
-      <SaleRegiPreSaveClientDialog
+      <SaleRegistPreSaveClientDialog
         open={!!vm.preSaveState}
         typedName={vm.preSaveState?.typedName}
         matchedName={vm.preSaveState?.matchedName}
@@ -36,12 +36,12 @@ export default function SaleRegi() {
         title="영업일지 작성"
         description="내용을 기록하면 AI가 일정/요약을 도와줘요"
         status="ready"
-        notice={<SaleRegiAnalysisBanner state={vm.bannerState} message={vm.bannerMessage} onDismiss={vm.canDismissBanner ? vm.dismissBanner : undefined} />}
+        notice={<SaleRegistAnalysisBanner state={vm.bannerState} message={vm.bannerMessage} onDismiss={vm.canDismissBanner ? vm.dismissBanner : undefined} />}
         onBack={vm.goList}
         primaryAction={{ label: "AI 저장", onClick: () => vm.submit(true), variant: "primary", disabled: vm.isBusy }}
         actions={[{ label: "저장", onClick: () => vm.submit(false), variant: "secondary", disabled: vm.isBusy }]}
       >
-        <SaleRegiContent vm={vm} />
+        <SaleRegistContent vm={vm} />
       </PageScaffold>
     </>
   );

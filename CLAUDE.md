@@ -42,7 +42,7 @@ pnpm db:push  # drizzle-kit generate && migrate
 ## 프로젝트 구조
 
 ```
-sales-manager/
+biz-ai/
 ├── client/                    # React 프론트엔드
 │   └── src/
 │       ├── _core/hooks/       # 인증 훅 (useAuth)

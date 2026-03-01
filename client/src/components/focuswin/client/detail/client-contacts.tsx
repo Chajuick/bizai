@@ -5,7 +5,7 @@ import { Input } from "@/components/focuswin/common/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/focuswin/common/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import type { ContactFormState } from "@/hooks/focuswin/client/detail/useClientDetailViewModel";
+import type { ContactFormState } from "@/hooks/focuswin/client/useClientDetailViewModel";
 import type { RouterOutputs } from "@/types/router";
 
 type ContactRow = RouterOutputs["crm"]["client"]["contact"]["list"][number];

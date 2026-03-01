@@ -1,6 +1,6 @@
 import { Plus, Users } from "lucide-react";
 import EmptyState from "@/components/focuswin/common/empty-state";
-import { useClientsViewModel } from "@/hooks/focuswin/client/useClientsViewModel";
+import { useClientsViewModel } from "@/hooks/focuswin/client/useClientViewModel";
 
 type Props = { vm: ReturnType<typeof useClientsViewModel> };
 

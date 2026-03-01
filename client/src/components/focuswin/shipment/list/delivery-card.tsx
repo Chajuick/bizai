@@ -17,7 +17,7 @@ const DELIVERY_STEPS = [
 
 type Stage = (typeof DELIVERY_STEPS)[number]["key"];
 
-/** ✅ 단계별 파스텔 컬러 주입 */
+/**  단계별 파스텔 컬러 주입 */
 const DELIVERY_STEP_STYLES = {
   pending: { text: "text-sky-200", ring: "ring-sky-100", line: "bg-sky-100", labelCurrent: "text-sky-500", labelDone: "text-slate-600" },
   delivered: { text: "text-sky-300", ring: "ring-sky-100", line: "bg-sky-100", labelCurrent: "text-sky-600", labelDone: "text-slate-600" },

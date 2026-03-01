@@ -1,7 +1,7 @@
 import StatCards from "@/components/focuswin/common/stat-cards";
 import TabPills from "@/components/focuswin/common/ui/tab-pills";
 import { deliveryTabs } from "@/types/delivery";
-import { useDeliveriesViewModel } from "@/hooks/focuswin/shipment/useDeliveriesViewModel";
+import { useDeliveriesViewModel } from "@/hooks/focuswin/shipment/useShipmentViewModel";
 
 type Props = { vm: ReturnType<typeof useDeliveriesViewModel> };
 

@@ -1,5 +1,5 @@
 ---
-name: sales-manager-frontend
+name: biz-ai-frontend
 description: React 컴포넌트 구조, shadcn/ui 패턴, TailwindCSS v4 스타일링, 라우팅(wouter)을 설명합니다. 프론트엔드 작업 시 참조하세요.
 ---
 

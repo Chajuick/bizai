@@ -27,7 +27,7 @@ function Calendar({
     <DayPicker
       showOutsideDays={showOutsideDays}
       className={cn(
-        // ✅ keep calendar area clean; popover provides the card surface
+        //  keep calendar area clean; popover provides the card surface
         "bg-transparent group/calendar p-1.5 [--cell-size:--spacing(8)]",
         String.raw`rtl:**:[.rdp-button\_next>svg]:rotate-180`,
         String.raw`rtl:**:[.rdp-button\_previous>svg]:rotate-180`,
@@ -53,7 +53,7 @@ function Calendar({
         ),
         button_previous: cn(
           buttonVariants({ variant: buttonVariant }),
-          // ✅ icon buttons should be subtle
+          //  icon buttons should be subtle
           "size-(--cell-size) p-0 select-none rounded-xl",
           "aria-disabled:opacity-40",
           defaultClassNames.button_previous
@@ -74,7 +74,7 @@ function Calendar({
           defaultClassNames.dropdowns
         ),
 
-        // ✅ month dropdown (subtle)
+        //  month dropdown (subtle)
         dropdown_root: cn(
           "relative rounded-xl border border-border bg-white shadow-[0_1px_2px_rgba(15,23,42,0.06)]",
           "has-focus:shadow-[0_0_0_1px_rgba(37,99,235,0.18),0_1px_2px_rgba(15,23,42,0.06)]",
@@ -103,12 +103,12 @@ function Calendar({
           defaultClassNames.day
         ),
 
-        // ✅ range styling (soft sky)
+        //  range styling (soft sky)
         range_start: cn("rounded-l-xl", defaultClassNames.range_start),
         range_middle: cn("rounded-none", defaultClassNames.range_middle),
         range_end: cn("rounded-r-xl", defaultClassNames.range_end),
 
-        // ✅ today: thin outline + very light sky
+        //  today: thin outline + very light sky
         today: cn(
           "rounded-xl bg-primary/10 text-foreground",
           "data-[selected=true]:bg-primary data-[selected=true]:text-primary-foreground",
@@ -183,15 +183,15 @@ function CalendarDayButton({
           "flex aspect-square w-full min-w-(--cell-size) items-center justify-center",
           "rounded-xl font-medium",
           "transition-[background-color,color,box-shadow] duration-150 ease-out",
-          // ✅ hover (soft sky)
+          //  hover (soft sky)
           "hover:bg-primary/10",
-          // ✅ single selected
+          //  single selected
           "data-[selected-single=true]:bg-primary data-[selected-single=true]:text-primary-foreground",
-          // ✅ range
+          //  range
           "data-[range-start=true]:bg-primary data-[range-start=true]:text-primary-foreground",
           "data-[range-end=true]:bg-primary data-[range-end=true]:text-primary-foreground",
           "data-[range-middle=true]:bg-primary/10 data-[range-middle=true]:text-foreground",
-          // ✅ focus (no thick ring)
+          //  focus (no thick ring)
           "outline-none focus-visible:shadow-[0_0_0_1px_rgba(37,99,235,0.18)]",
           // rounding for range edges
           "data-[range-start=true]:rounded-l-xl data-[range-end=true]:rounded-r-xl data-[range-middle=true]:rounded-none",

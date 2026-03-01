@@ -1,9 +1,9 @@
 import PromiseCard from "./promise-card";
-import { usePromisesPageViewModel } from "@/hooks/focuswin/schedule/usePromisesPageViewModel";
+import { usePromisesPageViewModel } from "@/hooks/focuswin/schedule/useSchedulePageViewModel";
 
 type Props = { vm: ReturnType<typeof usePromisesPageViewModel> };
 
-export default function ScheListContent({ vm }: Props) {
+export default function ScheduleListContent({ vm }: Props) {
   return (
     <div className="space-y-2">
       {vm.displayList.map(p => (

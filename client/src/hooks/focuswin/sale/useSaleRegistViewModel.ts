@@ -3,15 +3,10 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toLocalDatetimeInputValue } from "@/lib/utils";
 import { toast } from "sonner";
-import type {
-  PreSaveState,
-  SalesLogFormState,
-} from "@/types/salesLog";
-import type { PostAnalyzeClientState } from "./useSalesLogDetailViewModel";
+import type { PreSaveState, SalesLogFormState } from "@/types/salesLog";
+import type { PostAnalyzeClientState } from "./useSaleDetailViewModel";
 
-export type FileUploadState = "idle" | "uploading" | "transcribing" | "done" | "error";
-
-export function useSaleRegiViewModel() {
+export function useSaleRegistViewModel() {
   const [, navigate] = useLocation();
 
   const [form, setForm] = useState<SalesLogFormState>({
@@ -28,12 +23,11 @@ export function useSaleRegiViewModel() {
   const [preSaveState, setPreSaveState] = useState<PreSaveState | null>(null);
   const [isCheckingClient, setIsCheckingClient] = useState(false);
 
-  // AI 저장 후 고객사 확인 상태 (고객사 없이 저장된 경우 AI 추출 결과로 확인)
+  // AI 저장 후 고객사 확인 상태
   const [postAnalyzeClientState, setPostAnalyzeClientState] = useState<PostAnalyzeClientState>(null);
   const [savedSaleId, setSavedSaleId] = useState<number | null>(null);
 
-  const [fileUploadState, setFileUploadState] = useState<FileUploadState>("idle");
-  const [fileUploadError, setFileUploadError] = useState<string | null>(null);
+  // ✅ 업로드된 음성 파일 id (attachments로 저장)
   const [audioFileIdno, setAudioFileIdno] = useState<number | null>(null);
 
   const createMutation = trpc.crm.sale.create.useMutation();
@@ -41,9 +35,6 @@ export function useSaleRegiViewModel() {
   const updateMutation = trpc.crm.sale.update.useMutation();
   const findOrCreate = trpc.crm.client.findOrCreate.useMutation();
   const syncContacts = trpc.crm.client.syncContacts.useMutation();
-  const prepareUpload = trpc.crm.files.prepareUpload.useMutation();
-  const confirmUpload = trpc.crm.files.confirmUpload.useMutation();
-  const transcribeFile = trpc.crm.files.transcribeFile.useMutation();
   const utils = trpc.useUtils();
 
   const goList = () => navigate("/sale-list");
@@ -56,56 +47,6 @@ export function useSaleRegiViewModel() {
       sttx_text: text,
     }));
     toast.success("음성이 텍스트로 변환되었습니다.");
-  };
-
-  const MAX_AUDIO_SIZE = 50 * 1024 * 1024; // 50MB
-
-  const handleFileSelected = async (file: File) => {
-    if (file.size > MAX_AUDIO_SIZE) {
-      toast.error("파일 크기가 50MB를 초과합니다.");
-      return;
-    }
-
-    setFileUploadState("uploading");
-    setFileUploadError(null);
-
-    try {
-      const { file_path, upload_url } = await prepareUpload.mutateAsync({
-        file_name: file.name,
-        mime_type: file.type || undefined,
-      });
-
-      const uploadResp = await fetch(upload_url, {
-        method: "PUT",
-        headers: { "Content-Type": file.type || "audio/webm" },
-        body: file,
-      });
-      if (!uploadResp.ok) throw new Error("파일 업로드에 실패했습니다.");
-
-      const { file_idno } = await confirmUpload.mutateAsync({
-        file_path,
-        file_name: file.name,
-        mime_type: file.type || undefined,
-        file_size: file.size,
-      });
-
-      setFileUploadState("transcribing");
-      const { text } = await transcribeFile.mutateAsync({ file_idno });
-
-      handleTranscribed(text);
-      setAudioFileIdno(file_idno);
-      setFileUploadState("done");
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "처리 중 오류가 발생했습니다.";
-      setFileUploadState("error");
-      setFileUploadError(msg);
-      toast.error(msg);
-    }
-  };
-
-  const resetFileUpload = () => {
-    setFileUploadState("idle");
-    setFileUploadError(null);
   };
 
   const setAudioUrl = (url: string) => setForm((f) => ({ ...f, audi_addr: url }));
@@ -138,12 +79,8 @@ export function useSaleRegiViewModel() {
     if (analyze && result.sale_idno) {
       try {
         analyzeResult = await analyzeMutation.mutateAsync({ sale_idno: result.sale_idno });
-
-        if (analyzeResult.schedule_idno) {
-          toast.success("AI 분석 완료. 일정이 자동 등록되었습니다.");
-        } else {
-          toast.success("AI 분석이 완료되었습니다.");
-        }
+        if (analyzeResult.schedule_idno) toast.success("AI 분석 완료. 일정이 자동 등록되었습니다.");
+        else toast.success("AI 분석이 완료되었습니다.");
       } catch {
         toast.error("AI 분석에 실패했습니다. 나중에 다시 시도해주세요.");
       }
@@ -162,7 +99,7 @@ export function useSaleRegiViewModel() {
         matched_name: analyzeResult.matched_client_name ?? null,
         ai_contacts: analyzeResult.ai_contacts ?? [],
       });
-      return; // 다이얼로그 확인 후 이동
+      return;
     }
 
     goDetail(result.sale_idno);
@@ -174,7 +111,7 @@ export function useSaleRegiViewModel() {
       return;
     }
 
-    // ✅ 고객사명만 입력하고 clie_idno가 없으면: 저장 전 best match 확인
+    // 고객사명만 입력하고 clie_idno가 없으면: 저장 전 best match 확인
     if (form.clie_name.trim() && !form.clie_idno) {
       setIsCheckingClient(true);
       try {
@@ -220,11 +157,11 @@ export function useSaleRegiViewModel() {
     try {
       await syncContacts.mutateAsync({ clie_idno, contacts });
     } catch {
-      // 연락처 sync 실패는 조용히 처리 (고객사 연결 자체는 성공)
+      // 연락처 sync 실패는 조용히 처리
     }
   };
 
-  // AI 분석 후 고객사 확인 — 확인 (매칭 연결 OR 신규 등록)
+  // AI 분석 후 고객사 확인 — 확인
   const handlePostAnalyzeConfirm = async () => {
     if (!postAnalyzeClientState || !savedSaleId) return;
     const state = postAnalyzeClientState;
@@ -261,7 +198,7 @@ export function useSaleRegiViewModel() {
     goDetail(saleId);
   };
 
-  // AI 분석 후 고객사 확인 — 거부 (매칭 거부 → 신규 등록 / 신규 거부 → 건너뜀)
+  // AI 분석 후 고객사 확인 — 거부
   const handlePostAnalyzeDeny = async () => {
     if (!postAnalyzeClientState || !savedSaleId) return;
     const state = postAnalyzeClientState;
@@ -271,7 +208,6 @@ export function useSaleRegiViewModel() {
 
     try {
       if (state.matched_idno) {
-        // 매칭 거부 → AI 추출 이름으로 신규 등록
         const client = await findOrCreate.mutateAsync({ name: state.ai_client_name });
         if (client) {
           await updateMutation.mutateAsync({
@@ -284,7 +220,6 @@ export function useSaleRegiViewModel() {
           await utils.crm.client.list.invalidate();
         }
       } else {
-        // 신규 등록 거부 → 건너뜀
         toast.info("고객사 연결을 건너뛰었습니다.");
       }
     } catch {
@@ -297,8 +232,8 @@ export function useSaleRegiViewModel() {
   const isSaving = createMutation.isPending;
   const isAnalyzing = analyzeMutation.isPending;
 
-  const isUploadingFile = fileUploadState === "uploading" || fileUploadState === "transcribing";
-  const isBusy = isSaving || isAnalyzing || isCheckingClient || isUploadingFile;
+  // ✅ 업로드는 VoiceRecorder 내부 상태로 처리 (VM에서 제거)
+  const isBusy = isSaving || isAnalyzing || isCheckingClient;
 
   const bannerState: "idle" | "pending" | "success" | "error" = useMemo(() => {
     if (analyzeMutation.isPending) return "pending";
@@ -343,12 +278,9 @@ export function useSaleRegiViewModel() {
     handleTranscribed,
     setAudioUrl,
 
-    fileUploadState,
-    fileUploadError,
-    handleFileSelected,
-    resetFileUpload,
-
     handlePreSaveConfirm,
     handlePreSaveDeny,
+
+    setAudioFileIdno,
   };
 }

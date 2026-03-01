@@ -105,7 +105,7 @@ export const saleRepo = {
       );
   },
 
-  // ✅ soft delete
+  //  soft delete
   async remove(deps: SaleRepoDeps, args: { comp_idno: number; owne_idno: number; sale_idno: number; data: Partial<InsertSale> }) {
     await deps.db
       .update(CRM_SALE)

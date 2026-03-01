@@ -1,7 +1,6 @@
 import * as React from "react";
 import LogoAvatar from "@/components/focuswin/common/ui/avatar";
-
-const LOGO_SRC = "/brand/bizai-icon-512.png";
+import { COMPANY } from "@/config/company";
 
 type AuthCardProps = {
   title: string;
@@ -16,7 +15,7 @@ export default function AuthCard({ title, description, children, footer }: AuthC
       <div className="w-full max-w-sm">
         {/* Logo */}
         <div className="flex flex-col items-center gap-2 mb-7">
-          <LogoAvatar src={LOGO_SRC} size={52} />
+          <LogoAvatar src={COMPANY.appLogo} size={52} />
           <span className="font-black text-xl tracking-tight text-slate-900">BizAI</span>
           <p className="text-xs text-slate-500 -mt-1">AI 기반 영업관리</p>
         </div>

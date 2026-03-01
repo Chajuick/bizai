@@ -1,14 +1,14 @@
 import { Users } from "lucide-react";
 import { Button } from "@/components/focuswin/common/ui/button";
 
-import { useClientDetailViewModel } from "@/hooks/focuswin/client/detail/useClientDetailViewModel";
+import { useClientDetailViewModel } from "@/hooks/focuswin/client/useClientDetailViewModel";
 
-import ClientDetailHeader from "@/components/focuswin/client/deta/client-detail-header";
-import ClientProfileCard from "@/components/focuswin/client/deta/client-profile-card";
-import ClientKpiCards from "@/components/focuswin/client/deta/client-kpi-cards";
-import ClientContacts from "@/components/focuswin/client/deta/client-contacts";
-import ClientRecentLogs from "@/components/focuswin/client/deta/client-recent-logs";
-import ClientOrders from "@/components/focuswin/client/deta/client-orders";
+import ClientDetailHeader from "@/components/focuswin/client/detail/client-detail-header";
+import ClientProfileCard from "@/components/focuswin/client/detail/client-profile-card";
+import ClientKpiCards from "@/components/focuswin/client/detail/client-kpi-cards";
+import ClientContacts from "@/components/focuswin/client/detail/client-contacts";
+import ClientRecentLogs from "@/components/focuswin/client/detail/client-recent-logs";
+import ClientOrders from "@/components/focuswin/client/detail/client-orders";
 import PageShell from "@/components/focuswin/common/page-shell";
 import SkeletonCardList from "@/components/focuswin/common/skeleton-card-list";
 

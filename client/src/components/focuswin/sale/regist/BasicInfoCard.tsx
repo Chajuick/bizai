@@ -1,11 +1,11 @@
 import { Building2 } from "lucide-react";
 import UiCard from "../../common/info-card";
-import UiField from "./ui-field";
+import UiField from "../../common/ui-field";
 import { Input } from "@/components/focuswin/common/ui/input";
 import ClientNameInput from "@/components/ClientNameInput";
 import type { SalesLogFormState } from "@/types/salesLog";
 
-export default function SalesLogNewBasicCard({
+export default function SaleRegistBasicInfoCard({
   form,
   setForm,
 }: {

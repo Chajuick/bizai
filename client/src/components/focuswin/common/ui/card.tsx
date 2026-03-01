@@ -2,7 +2,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * ✅ 기본 Card = 기존 FwCard 룩
+ *  기본 Card = 기존 FwCard 룩
  * - rounded-3xl
  * - border-slate-100
  * - white surface

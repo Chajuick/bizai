@@ -23,11 +23,11 @@ function getSearchFromLocation(location: string) {
 export function useSaleListViewModel() {
   const [location, navigate] = useLocation();
 
-  // ✅ window 의존 제거 + 초기 1회만 파싱
+  //  window 의존 제거 + 초기 1회만 파싱
   const [search, setSearchState] = useState(() => getSearchFromLocation(location));
   const [filter, setFilter] = useState<SalesFilter>("all");
 
-  // ✅ URL → state 동기화 (뒤로가기/앞으로가기 등)
+  //  URL → state 동기화 (뒤로가기/앞으로가기 등)
   useEffect(() => {
     const urlSearch = getSearchFromLocation(location);
     if (urlSearch !== search) setSearchState(urlSearch);
@@ -38,10 +38,10 @@ export function useSaleListViewModel() {
     search: search || undefined,
   });
 
-  // ✅ 앱 켜둔 채 주(week) 넘어가도 기준이 갱신되도록 location 기준으로 재계산
+  //  앱 켜둔 채 주(week) 넘어가도 기준이 갱신되도록 location 기준으로 재계산
   const weekStart = useMemo(() => startOfWeekMonday(new Date()), [location]);
 
-  // ✅ Date 파싱/정규화: 한 번만
+  //  Date 파싱/정규화: 한 번만
   const normalizedLogs = useMemo(() => {
     const arr = logsData?.items ?? [];
     return arr.map((l) => ({
@@ -50,7 +50,7 @@ export function useSaleListViewModel() {
     }));
   }, [logsData]);
 
-  // ✅ counts 계산도 normalizedLogs 기준으로
+  //  counts 계산도 normalizedLogs 기준으로
   const counts = useMemo(() => {
     return {
       all: normalizedLogs.length,

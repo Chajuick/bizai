@@ -168,7 +168,7 @@ function CommandItem({
           "relative flex cursor-default select-none items-center gap-2",
           "rounded-xl px-3 py-2 text-sm",
           "text-foreground",
-          // ✅ fowin-like highlight: subtle sky
+          //  fowin-like highlight: subtle sky
           "data-[selected=true]:bg-primary/10 data-[selected=true]:text-foreground",
           // icons
           "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",

@@ -6,8 +6,9 @@ import LogoAvatar from "@/components/focuswin/common/ui/avatar";
 import AppFooter from "@/components/focuswin/common/app-footer";
 import HeroDemo from "@/components/focuswin/landing/hero-demo";
 
-export default function LandPage() {
-  const LOGO_SRC = "/brand/bizai-icon-512.png";
+import { COMPANY } from "@/config/company";
+
+export default function LandingPage() {
 
   const features = [
     { icon: Mic, title: "음성 기록", desc: "현장에서 바로 녹음으로 입력" },
@@ -47,7 +48,7 @@ export default function LandPage() {
       <header className="sticky top-0 z-30 border-b border-slate-100 bg-white/80 backdrop-blur">
         <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <LogoAvatar src={LOGO_SRC} />
+            <LogoAvatar src={COMPANY.appLogo} radius={0} />
             <span className="font-black tracking-tight text-slate-900">BizAI</span>
             <span className="text-xs text-slate-400">v1.0</span>
           </div>
@@ -118,7 +119,7 @@ export default function LandPage() {
                   "rounded-3xl border border-slate-200/70 bg-white",
                   "shadow-[0_18px_60px_rgba(15,23,42,0.10)]",
                   "p-5 sm:p-6",
-                  // ✅ 히어로 균형: 너무 길어지지 않게 상한을 걸고 내부는 딱 보이는 만큼만
+                  //  히어로 균형: 너무 길어지지 않게 상한을 걸고 내부는 딱 보이는 만큼만
                   "max-h-[520px] sm:max-h-[560px]",
                   "overflow-hidden",
                 ].join(" ")}
@@ -126,7 +127,7 @@ export default function LandPage() {
                 <HeroDemo />
               </div>
 
-              {/* ✅ 오른쪽 아래 안내 (과잉 장식 X) */}
+              {/*  오른쪽 아래 안내 (과잉 장식 X) */}
               <p className="mt-3 text-xs text-slate-400 text-center lg:text-right">“녹음 → 구조화 → 생성” 흐름만 핵심으로 보여줍니다.</p>
             </div>
           </div>
@@ -172,7 +173,7 @@ export default function LandPage() {
                       "rounded-3xl bg-white",
                       "border border-slate-200/70",
                       "p-4 shadow-sm",
-                      // ✅ 랜딩에서는 과한 -translate 제거 (잡다함 체감 줄어듦)
+                      //  랜딩에서는 과한 -translate 제거 (잡다함 체감 줄어듦)
                       "hover:shadow-md transition",
                     ].join(" ")}
                   >

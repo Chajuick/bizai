@@ -8,13 +8,13 @@ type HeaderActionBase = {
   label: string;
   icon?: React.ReactNode;
 
-  // ✅ 단순: 5개만 (필요한 것만)
+  //  단순: 5개만 (필요한 것만)
   variant?: "primary" | "secondary" | "outline" | "ghost" | "success" | "danger";
 
   disabled?: boolean;
   ariaLabel?: string;
 
-  // ✅ ghost에서만 “삭제 빨강” 같은 포인트 처리
+  //  ghost에서만 “삭제 빨강” 같은 포인트 처리
   danger?: boolean;
 };
 

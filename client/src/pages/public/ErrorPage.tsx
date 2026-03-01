@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/focuswin/common/ui/card";
 import { AlertCircle, Home } from "lucide-react";
 import { useLocation } from "wouter";
 
-export default function ErroPage() {
+export default function ErrorPage() {
   const [, setLocation] = useLocation();
 
   return (

@@ -1,5 +1,5 @@
 import DeliveryCard from "./delivery-card";
-import { useDeliveriesViewModel } from "@/hooks/focuswin/shipment/useDeliveriesViewModel";
+import { useDeliveriesViewModel } from "@/hooks/focuswin/shipment/useShipmentViewModel";
 
 type Props = { vm: ReturnType<typeof useDeliveriesViewModel> };
 

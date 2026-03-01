@@ -34,7 +34,7 @@ export default function SearchInput({
   debounceMs?: number;
   trimOnChange?: boolean;
 }) {
-  // ✅ debounce가 있을 때: 사용자가 타이핑 중인 값을 로컬로 들고 있다가,
+  //  debounce가 있을 때: 사용자가 타이핑 중인 값을 로컬로 들고 있다가,
   // 일정 시간 지나면 onChange로 확정 반영
   const [draft, setDraft] = useState(value);
   const isDebounced = debounceMs > 0;

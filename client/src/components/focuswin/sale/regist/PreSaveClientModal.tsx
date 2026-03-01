@@ -1,7 +1,7 @@
 import { Building2 } from "lucide-react";
 import ChoiceDialog from "@/components/focuswin/common/choice-dialog";
 
-export default function SaleRegiPreSaveClientDialog({
+export default function SaleRegistPreSaveClientDialog({
   open,
   typedName,
   matchedName,

@@ -1,6 +1,6 @@
 import { Plus } from "lucide-react";
 
-import { useDeliveriesViewModel } from "@/hooks/focuswin/shipment/useDeliveriesViewModel";
+import { useDeliveriesViewModel } from "@/hooks/focuswin/shipment/useShipmentViewModel";
 import PageScaffold from "@/components/focuswin/common/page-scaffold";
 import ShipListHeadContent from "@/components/focuswin/shipment/list/HeadContent";
 import ShipListEmptyCard from "@/components/focuswin/shipment/list/EmptyCard";
@@ -8,7 +8,7 @@ import ShipListContent from "@/components/focuswin/shipment/list/Content";
 import DeliveryFormDialog from "@/components/focuswin/shipment/list/delivery-form-dialog";
 import DeleteDeliveryDialog from "@/components/focuswin/shipment/list/delete-delivery-dialog";
 
-export default function ShipList() {
+export default function ShipmentList() {
   const vm = useDeliveriesViewModel();
   const status = vm.isLoading ? "loading" : vm.hasData ? "ready" : "empty";
 

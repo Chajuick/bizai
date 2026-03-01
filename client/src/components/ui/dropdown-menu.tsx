@@ -29,7 +29,7 @@ function DropdownMenuTrigger(
   );
 }
 
-/** ✅ 토스풍: 둥글고, 밝고, 은은한 그림자 */
+/**  토스풍: 둥글고, 밝고, 은은한 그림자 */
 function DropdownMenuContent({
   className,
   sideOffset = 8,
@@ -68,7 +68,7 @@ function DropdownMenuGroup(
   );
 }
 
-/** ✅ 토스풍: 아이템은 cursor-pointer, hover/focus 은은하게 */
+/**  토스풍: 아이템은 cursor-pointer, hover/focus 은은하게 */
 function DropdownMenuItem({
   className,
   inset,

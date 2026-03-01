@@ -116,7 +116,7 @@
   --sidebar-border: oklch(0.88 0.01 240);
   --sidebar-ring: oklch(0.62 0.19 250);
 
-  /* ✅ Focuswin-like elevation + ring tokens (light) */
+  /*  Focuswin-like elevation + ring tokens (light) */
   --fowin-card-bg: var(--card);
   --fowin-card-fg: var(--card-foreground);
 

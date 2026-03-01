@@ -11,7 +11,7 @@ export const CORE_COMPANY_USER = table(
     user_idno: int("user_idno").notNull(), // 사용자 FK(논리)
     role_code: companyRoleEnum.default("member").notNull(), // owner/admin/member
 
-    // ✅ 승인 필요 플로우 지원
+    //  승인 필요 플로우 지원
     status_code: memberStatusEnum.default("active").notNull(), // active | pending | removed
 
     ...auditCols(), // crea_idno/crea_date/modi_idno/modi_date

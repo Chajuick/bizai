@@ -1,7 +1,7 @@
 /**
  * Voice transcription helper using internal Speech-to-Text service (Whisper-compatible)
  *
- * ✅ Improvements vs original
+ *  Improvements vs original
  * - SSRF mitigation (allowlist + https-only + private/localhost block)
  * - Request timeouts via AbortController (download + STT call)
  * - Runtime guards for FormData/Blob (Node environments)
@@ -62,7 +62,7 @@ const MAX_AUDIO_BYTES = 16 * 1024 * 1024;
 const DOWNLOAD_TIMEOUT_MS = 20_000;
 const TRANSCRIBE_TIMEOUT_MS = 60_000;
 
-// ✅ 허용 도메인(SSRF 방지). 운영에서 꼭 세팅 권장.
+//  허용 도메인(SSRF 방지). 운영에서 꼭 세팅 권장.
 // 예: "s3.amazonaws.com,cdn.example.com,focuswin.iptime.org"
 function getAllowedAudioHosts(): Set<string> {
   const raw = ENV.allowedAudioHosts ?? ""; // env.ts에 없으면 ""로 동작 (아래에서 strict mode 처리)

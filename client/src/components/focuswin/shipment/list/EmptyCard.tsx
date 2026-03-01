@@ -1,6 +1,6 @@
 import { Plus, TrendingUp } from "lucide-react";
 import EmptyState from "@/components/focuswin/common/empty-state";
-import { useDeliveriesViewModel } from "@/hooks/focuswin/shipment/useDeliveriesViewModel";
+import { useDeliveriesViewModel } from "@/hooks/focuswin/shipment/useShipmentViewModel";
 
 type Props = { vm: ReturnType<typeof useDeliveriesViewModel> };
 

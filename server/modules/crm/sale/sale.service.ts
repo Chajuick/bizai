@@ -165,7 +165,7 @@ export const saleService = {
     const data = withCreateAudit(ctx, base);
     const { sale_idno } = await saleRepo.create({ db }, data as InsertSale);
 
-    // ✅ attachments 연결
+    //  attachments 연결
     if (input.attachments?.length) {
       await fileLinkService.linkFilesToRef(ctx, {
         ref_type: "sale_info",
@@ -199,7 +199,7 @@ export const saleService = {
     return { success: true as const };
   },
 
-  // ✅ soft delete
+  //  soft delete
   async deleteSale(ctx: ServiceCtx, sale_idno: number) {
     const db = getDb();
 

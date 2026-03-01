@@ -1,5 +1,5 @@
 import SearchInput from "@/components/focuswin/common/search-input";
-import { useClientsViewModel } from "@/hooks/focuswin/client/useClientsViewModel";
+import { useClientsViewModel } from "@/hooks/focuswin/client/useClientViewModel";
 
 type Props = { vm: ReturnType<typeof useClientsViewModel> };
 

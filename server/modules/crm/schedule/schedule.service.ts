@@ -80,7 +80,7 @@ export const scheduleService = {
     const data = withCreateAudit(ctx, {
       comp_idno: ctx.comp_idno,
 
-      // ✅ 현재 정책: 담당자 = 자기 자신
+      //  현재 정책: 담당자 = 자기 자신
       owne_idno: ctx.user_idno,
 
       sale_idno: input.sale_idno,
@@ -108,7 +108,7 @@ export const scheduleService = {
   async updateSchedule(ctx: ServiceCtx, sche_idno: number, patch: ScheduleUpdatePayload) {
     const db = getDb();
 
-    // ✅ TS 에러 방지: union(spread) 금지, 안전 빌드
+    //  TS 에러 방지: union(spread) 금지, 안전 빌드
     const data: ScheduleUpdate = {};
 
     if (patch.sche_name !== undefined) data.sche_name = patch.sche_name;
