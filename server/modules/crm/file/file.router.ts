@@ -11,6 +11,8 @@ import {
   ConfirmUploadOutput,
   ListByRefInput,
   ListByRefOutput,
+  TranscribeFileInput,
+  TranscribeFileOutput,
 } from "./file.dto";
 
 import { fileService } from "./file.service";
@@ -37,6 +39,13 @@ export const fileRouter = router({
     .input(ListByRefInput)
     .output(ListByRefOutput)
     .query(({ ctx, input }) => fileService.listByRef(svcCtxFromTrpc(ctx), input)),
+  // #endregion
+
+  // #region transcribeFile
+  transcribeFile: protectedProcedure
+    .input(TranscribeFileInput)
+    .output(TranscribeFileOutput)
+    .mutation(({ ctx, input }) => fileService.transcribeFile(svcCtxFromTrpc(ctx), input)),
   // #endregion
 });
 // #endregion

@@ -62,6 +62,7 @@ export type InvokeParams = {
   tool_choice?: ToolChoice;
   maxTokens?: number;
   max_tokens?: number;
+  temperature?: number;
   outputSchema?: OutputSchema;
   output_schema?: OutputSchema;
   responseFormat?: ResponseFormat;
@@ -280,6 +281,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     tools,
     toolChoice,
     tool_choice,
+    temperature,
     outputSchema,
     output_schema,
     responseFormat,
@@ -304,6 +306,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   }
 
   payload.max_tokens = 32768;
+  if (temperature !== undefined) payload.temperature = temperature;
 
   const normalizedResponseFormat = normalizeResponseFormat({
     responseFormat,

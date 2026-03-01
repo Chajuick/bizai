@@ -1,6 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Route, Switch } from "wouter";
+import { Route, Switch, useLocation } from "wouter";
+import { useEffect, useRef } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import AppLayout from "./components/AppLayout";
@@ -18,6 +19,12 @@ import ErroPage from "@/pages/public/ErroPage";
 import DevsShow from "./pages/devs/DevsShow";
 import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
+import SettingsHub from "./pages/settings/SettingsHub";
+import SettingsTeam from "./pages/settings/SettingsTeam";
+import SettingsUsage from "./pages/settings/SettingsUsage";
+import SettingsBilling from "./pages/settings/SettingsBilling";
+import InviteAcceptPage from "./pages/invite/InviteAcceptPage";
+import InviteEnterPage from "./pages/invite/InviteEnterPage";
 import { useAuth } from "./_core/hooks/useAuth";
 
 const DEV = import.meta.env.DEV;
@@ -35,6 +42,12 @@ function AuthenticatedApp() {
         <Route path="/ship-list" component={ShipList} />
         <Route path="/clie-list" component={ClientList} />
         <Route path="/clie-list/:id" component={ClientDeta} />
+        <Route path="/settings" component={SettingsHub} />
+        <Route path="/settings/team" component={SettingsTeam} />
+        <Route path="/settings/members" component={SettingsTeam} />
+        <Route path="/settings/usage" component={SettingsUsage} />
+        <Route path="/settings/billing" component={SettingsBilling} />
+        <Route path="/invite/enter" component={InviteEnterPage} />
         <Route path="/404" component={ErroPage} />
         {DEV ? <Route path="/__dev/components" component={DevsShow} /> : null}
         <Route component={ErroPage} />
@@ -45,6 +58,21 @@ function AuthenticatedApp() {
 
 function Router() {
   const { isAuthenticated, loading } = useAuth();
+  const [, navigate] = useLocation();
+  const didHandleOAuthRedirect = useRef(false);
+
+  // OAuth 완료 후 sessionStorage에 저장된 redirect 경로로 이동
+  useEffect(() => {
+    if (!loading && isAuthenticated && !didHandleOAuthRedirect.current) {
+      didHandleOAuthRedirect.current = true;
+      const pending = sessionStorage.getItem("auth_redirect");
+      if (pending) {
+        sessionStorage.removeItem("auth_redirect");
+        navigate(pending);
+      }
+    }
+  }, [loading, isAuthenticated, navigate]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -63,11 +91,20 @@ function Router() {
       <Switch>
         <Route path="/auth/login" component={LoginPage} />
         <Route path="/auth/register" component={RegisterPage} />
+        <Route path="/invite/enter" component={InviteEnterPage} />
+        <Route path="/invite/:token" component={InviteAcceptPage} />
         <Route component={LandPage} />
       </Switch>
     );
   }
-  return <AuthenticatedApp />;
+  // 로그인 상태에서도 /invite/:token, /invite/enter 접근 가능
+  return (
+    <Switch>
+      <Route path="/invite/enter" component={InviteEnterPage} />
+      <Route path="/invite/:token" component={InviteAcceptPage} />
+      <Route component={AuthenticatedApp} />
+    </Switch>
+  );
 }
 
 function App() {

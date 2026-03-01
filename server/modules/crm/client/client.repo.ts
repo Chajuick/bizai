@@ -3,7 +3,7 @@
 // #region Imports
 import { and, asc, desc, eq, like } from "drizzle-orm";
 
-import { CRM_CLIENT } from "../../../../drizzle/schema";
+import { CRM_CLIENT, CRM_CLIENT_CONT } from "../../../../drizzle/schema";
 import { escapeLike } from "../shared/like";
 import { getInsertId } from "../../../core/db";
 import type { DbOrTx } from "../../../core/db/tx";
@@ -14,6 +14,9 @@ type RepoDeps = { db: DbOrTx };
 
 export type ClientRow = typeof CRM_CLIENT.$inferSelect;
 export type ClientInsert = typeof CRM_CLIENT.$inferInsert;
+
+export type ClientContactRow = typeof CRM_CLIENT_CONT.$inferSelect;
+export type ClientContactInsert = typeof CRM_CLIENT_CONT.$inferInsert;
 
 type ClientSortField = "modi_date" | "crea_date" | "clie_name";
 type ClientSortDir = "asc" | "desc";
@@ -164,6 +167,202 @@ export const clientRepo = {
         and(
           eq(CRM_CLIENT.comp_idno, params.comp_idno),
           eq(CRM_CLIENT.clie_idno, params.clie_idno)
+        )
+      );
+  },
+  // #endregion
+
+  // #region syncContact — 빈 필드만 채움 (사용자 수동 입력 우선) + CRM_CLIENT_CONT upsert
+  async syncContact(
+    { db }: RepoDeps,
+    params: {
+      comp_idno: number;
+      clie_idno: number;
+      cont_name?: string | null;
+      cont_tele?: string | null;
+      cont_mail?: string | null;
+      crea_idno: number;
+    }
+  ): Promise<void> {
+    const client = await clientRepo.getById({ db }, { comp_idno: params.comp_idno, clie_idno: params.clie_idno });
+    if (!client) return;
+
+    // 1. CRM_CLIENT 캐시 업데이트 (빈 필드만)
+    const cacheUpdates: Partial<ClientInsert> = {};
+    if (!client.cont_name && params.cont_name) cacheUpdates.cont_name = params.cont_name;
+    if (!client.cont_tele && params.cont_tele) cacheUpdates.cont_tele = params.cont_tele;
+    if (!client.cont_mail && params.cont_mail) cacheUpdates.cont_mail = params.cont_mail;
+
+    if (Object.keys(cacheUpdates).length > 0) {
+      await clientRepo.update({ db }, { comp_idno: params.comp_idno, clie_idno: params.clie_idno, data: cacheUpdates });
+    }
+
+    // 2. CRM_CLIENT_CONT — main_yesn=true 담당자가 없으면 insert
+    if (!params.cont_name) return; // 이름 없으면 담당자 생성 불가
+
+    const [existingMain] = await db
+      .select()
+      .from(CRM_CLIENT_CONT)
+      .where(
+        and(
+          eq(CRM_CLIENT_CONT.comp_idno, params.comp_idno),
+          eq(CRM_CLIENT_CONT.clie_idno, params.clie_idno),
+          eq(CRM_CLIENT_CONT.main_yesn, true),
+          eq(CRM_CLIENT_CONT.enab_yesn, true)
+        )
+      )
+      .limit(1);
+
+    if (!existingMain) {
+      // 대표 담당자 없음 → AI 추출 담당자를 대표로 insert
+      await db.insert(CRM_CLIENT_CONT).values({
+        comp_idno: params.comp_idno,
+        clie_idno: params.clie_idno,
+        cont_name: params.cont_name,
+        cont_tele: params.cont_tele ?? null,
+        cont_mail: params.cont_mail ?? null,
+        main_yesn: true,
+        enab_yesn: true,
+        crea_idno: params.crea_idno,
+        crea_date: new Date(),
+        modi_idno: params.crea_idno,
+        modi_date: new Date(),
+      });
+    } else {
+      // 대표 담당자 있음 → 빈 필드만 보완
+      const contUpdates: Partial<ClientContactInsert> = {};
+      if (!existingMain.cont_tele && params.cont_tele) contUpdates.cont_tele = params.cont_tele;
+      if (!existingMain.cont_mail && params.cont_mail) contUpdates.cont_mail = params.cont_mail;
+
+      if (Object.keys(contUpdates).length > 0) {
+        await db
+          .update(CRM_CLIENT_CONT)
+          .set(contUpdates)
+          .where(eq(CRM_CLIENT_CONT.cont_idno, existingMain.cont_idno));
+      }
+    }
+  },
+  // #endregion
+
+  // #region listContacts — 고객사 담당자 목록
+  async listContacts(
+    { db }: RepoDeps,
+    params: { comp_idno: number; clie_idno: number }
+  ): Promise<ClientContactRow[]> {
+    return db
+      .select()
+      .from(CRM_CLIENT_CONT)
+      .where(
+        and(
+          eq(CRM_CLIENT_CONT.comp_idno, params.comp_idno),
+          eq(CRM_CLIENT_CONT.clie_idno, params.clie_idno),
+          eq(CRM_CLIENT_CONT.enab_yesn, true)
+        )
+      )
+      .orderBy(desc(CRM_CLIENT_CONT.main_yesn), asc(CRM_CLIENT_CONT.cont_idno));
+  },
+  // #endregion
+
+  // #region getMainContact — main_yesn=true 대표 담당자 (없으면 null)
+  async getMainContact(
+    { db }: RepoDeps,
+    params: { comp_idno: number; clie_idno: number }
+  ): Promise<ClientContactRow | null> {
+    const [row] = await db
+      .select()
+      .from(CRM_CLIENT_CONT)
+      .where(
+        and(
+          eq(CRM_CLIENT_CONT.comp_idno, params.comp_idno),
+          eq(CRM_CLIENT_CONT.clie_idno, params.clie_idno),
+          eq(CRM_CLIENT_CONT.main_yesn, true),
+          eq(CRM_CLIENT_CONT.enab_yesn, true)
+        )
+      )
+      .limit(1);
+
+    return row ?? null;
+  },
+  // #endregion
+
+  // #region getContactById
+  async getContactById(
+    { db }: RepoDeps,
+    params: { comp_idno: number; cont_idno: number }
+  ): Promise<ClientContactRow | null> {
+    const [row] = await db
+      .select()
+      .from(CRM_CLIENT_CONT)
+      .where(
+        and(
+          eq(CRM_CLIENT_CONT.comp_idno, params.comp_idno),
+          eq(CRM_CLIENT_CONT.cont_idno, params.cont_idno),
+          eq(CRM_CLIENT_CONT.enab_yesn, true)
+        )
+      )
+      .limit(1);
+    return row ?? null;
+  },
+  // #endregion
+
+  // #region createContact
+  async createContact(
+    { db }: RepoDeps,
+    data: ClientContactInsert
+  ): Promise<{ cont_idno: number }> {
+    const res = await db.insert(CRM_CLIENT_CONT).values(data);
+    return { cont_idno: getInsertId(res) };
+  },
+  // #endregion
+
+  // #region updateContact
+  async updateContact(
+    { db }: RepoDeps,
+    params: { comp_idno: number; cont_idno: number; data: Partial<ClientContactInsert> }
+  ): Promise<void> {
+    await db
+      .update(CRM_CLIENT_CONT)
+      .set(params.data)
+      .where(
+        and(
+          eq(CRM_CLIENT_CONT.comp_idno, params.comp_idno),
+          eq(CRM_CLIENT_CONT.cont_idno, params.cont_idno),
+          eq(CRM_CLIENT_CONT.enab_yesn, true)
+        )
+      );
+  },
+  // #endregion
+
+  // #region clearMainContact — clie_idno 내 모든 main_yesn=false 처리
+  async clearMainContact(
+    { db }: RepoDeps,
+    params: { comp_idno: number; clie_idno: number }
+  ): Promise<void> {
+    await db
+      .update(CRM_CLIENT_CONT)
+      .set({ main_yesn: false })
+      .where(
+        and(
+          eq(CRM_CLIENT_CONT.comp_idno, params.comp_idno),
+          eq(CRM_CLIENT_CONT.clie_idno, params.clie_idno),
+          eq(CRM_CLIENT_CONT.enab_yesn, true)
+        )
+      );
+  },
+  // #endregion
+
+  // #region disableContact (soft delete)
+  async disableContact(
+    { db }: RepoDeps,
+    params: { comp_idno: number; cont_idno: number; modi_idno: number }
+  ): Promise<void> {
+    await db
+      .update(CRM_CLIENT_CONT)
+      .set({ enab_yesn: false, modi_idno: params.modi_idno, modi_date: new Date() })
+      .where(
+        and(
+          eq(CRM_CLIENT_CONT.comp_idno, params.comp_idno),
+          eq(CRM_CLIENT_CONT.cont_idno, params.cont_idno)
         )
       );
   },

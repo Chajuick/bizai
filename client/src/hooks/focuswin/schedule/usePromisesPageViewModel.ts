@@ -163,7 +163,7 @@ export function usePromisesPageViewModel() {
     setSelectedPromise(p);
     setOrderForm({
       prod_serv: "",
-      orde_pric: "",
+      orde_pric: p.sche_pric ? String(Math.round(Number(p.sche_pric))) : "",
       stat_code: "proposal",
       ctrt_date: toLocalDateInputValue(new Date(p.sche_date)),
       orde_memo: p.sche_desc || "",

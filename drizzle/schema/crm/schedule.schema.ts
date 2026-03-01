@@ -2,6 +2,7 @@ import { int, varchar, text, decimal, timestamp, boolean, index } from "drizzle-
 import { scheduleStatusEnum } from "../common/enums";
 import { companyCols, auditCols } from "../common/default";
 import { table } from "../common/table";
+import type { ActionOwner } from "../common/enums";
 
 export const CRM_SCHEDULE = table(
   "CRM_SCHEDULE",
@@ -20,6 +21,7 @@ export const CRM_SCHEDULE = table(
     sche_date: timestamp("sche_date").notNull(),                    // 예정 일시
 
     stat_code: scheduleStatusEnum.default("scheduled").notNull(),   // 상태
+    actn_ownr: varchar("actn_ownr", { length: 16 }).$type<ActionOwner>(), // 수행 주체: self/client/shared
     remd_sent: boolean("remd_sent").default(false).notNull(),       // 리마인드 발송 여부
     auto_gene: boolean("auto_gene").default(false).notNull(),       // AI 자동 생성 여부
 

@@ -13,6 +13,8 @@ import { orderRouter } from "../../modules/crm/order/order.router";
 import { shipmentRouter } from "../../modules/crm/shipment/shipment.router";
 import { dashboardRouter } from "../../modules/crm/dashboard/dashboard.router";
 import { fileRouter } from "../../modules/crm/file/file.router";
+import { companyRouter } from "../../modules/org/company/company.router";
+import { billingRouter } from "../../modules/billing/billing.router";
 // #endregion
 
 // #region appRouter (Root — single source of truth)
@@ -25,6 +27,14 @@ import { fileRouter } from "../../modules/crm/file/file.router";
 export const appRouter = router({
   // #region System
   system: systemRouter,
+  // #endregion
+
+  // #region Company (org-level: membership, invite)
+  company: companyRouter,
+  // #endregion
+
+  // #region Billing
+  billing: billingRouter,
   // #endregion
 
   // #region Auth

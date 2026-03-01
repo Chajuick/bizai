@@ -242,6 +242,120 @@ function isWhisperResponse(x: unknown): x is WhisperResponse {
 }
 
 /**
+ * Buffer를 직접 받아 Groq Whisper STT를 호출한다.
+ * URL 다운로드 / SSRF 검증 없이 서버 내부에서 직접 사용.
+ */
+export async function transcribeBuffer(
+  buffer: Buffer,
+  contentType: string,
+  opts?: { language?: string; prompt?: string }
+): Promise<TranscriptionResponse | TranscriptionError> {
+  try {
+    if (typeof FormData === "undefined" || typeof Blob === "undefined") {
+      return {
+        error: "Server runtime missing FormData/Blob",
+        code: "SERVICE_ERROR",
+        details: "Node 런타임에서 FormData/Blob이 필요합니다.",
+      };
+    }
+
+    const sttUrl = resolveSttApiUrl();
+    const sttKey = resolveSttApiKey();
+
+    if (!sttUrl) {
+      return {
+        error: "Voice transcription service is not configured",
+        code: "SERVICE_ERROR",
+        details: "STT_API_URL을 .env에 설정하세요.",
+      };
+    }
+    if (!sttKey) {
+      return {
+        error: "Voice transcription service authentication is missing",
+        code: "SERVICE_ERROR",
+        details: "STT_API_KEY를 .env에 설정하세요.",
+      };
+    }
+
+    if (buffer.length > MAX_AUDIO_BYTES) {
+      return {
+        error: "Audio file exceeds maximum size limit",
+        code: "FILE_TOO_LARGE",
+        details: `File size is ${(buffer.length / (1024 * 1024)).toFixed(2)}MB, maximum allowed is ${(MAX_AUDIO_BYTES / (1024 * 1024)).toFixed(0)}MB`,
+      };
+    }
+
+    const mimeType = normalizeMimeType(contentType);
+    const ext = getFileExtension(mimeType);
+    const audioBlob = new Blob([new Uint8Array(buffer)], { type: mimeType });
+
+    const formData = new FormData();
+    formData.append("file", audioBlob, `audio.${ext}`);
+    formData.append("model", ENV.sttModel || "whisper-1");
+    formData.append("response_format", "verbose_json");
+
+    const prompt =
+      opts?.prompt ||
+      (opts?.language
+        ? `Transcribe the user's voice to text. The user's working language is ${getLanguageName(opts.language)}.`
+        : "Transcribe the user's voice to text.");
+    formData.append("prompt", prompt);
+
+    if (opts?.language) {
+      formData.append("language", opts.language);
+    }
+
+    const { ac, clear } = abortAfter(TRANSCRIBE_TIMEOUT_MS);
+    try {
+      const response = await fetch(sttUrl, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${sttKey}`,
+          "Accept-Encoding": "identity",
+        },
+        body: formData,
+        signal: ac.signal,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => "");
+        return {
+          error: "Transcription service request failed",
+          code: "TRANSCRIPTION_FAILED",
+          details: `${response.status} ${response.statusText}${errorText ? `: ${errorText}` : ""}`,
+        };
+      }
+
+      const json = (await response.json()) as unknown;
+      if (!isWhisperResponse(json)) {
+        return {
+          error: "Invalid transcription response",
+          code: "SERVICE_ERROR",
+          details: "Transcription service returned an invalid response format",
+        };
+      }
+
+      return json;
+    } catch (error) {
+      const aborted = error instanceof Error && error.name === "AbortError";
+      return {
+        error: aborted ? "Transcription timed out" : "Voice transcription failed",
+        code: "SERVICE_ERROR",
+        details: error instanceof Error ? error.message : "An unexpected error occurred",
+      };
+    } finally {
+      clear();
+    }
+  } catch (error) {
+    return {
+      error: "Voice transcription failed",
+      code: "SERVICE_ERROR",
+      details: error instanceof Error ? error.message : "An unexpected error occurred",
+    };
+  }
+}
+
+/**
  * Transcribe audio to text using the internal Speech-to-Text service
  */
 export async function transcribeAudio(

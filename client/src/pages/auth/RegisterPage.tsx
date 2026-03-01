@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Eye, EyeOff } from "lucide-react";
 import AuthCard from "@/components/focuswin/auth/AuthCard";
@@ -11,6 +11,14 @@ import { trpc } from "@/lib/trpc";
 export default function RegisterPage() {
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
+
+  const redirectTo = new URLSearchParams(window.location.search).get("redirect") ?? "/";
+
+  useEffect(() => {
+    if (redirectTo !== "/") {
+      sessionStorage.setItem("auth_redirect", redirectTo);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -54,7 +62,8 @@ export default function RegisterPage() {
       }
 
       await utils.auth.me.invalidate();
-      setLocation("/");
+      sessionStorage.removeItem("auth_redirect");
+      setLocation(redirectTo);
     } catch {
       setError("네트워크 오류가 발생했습니다. 다시 시도해주세요.");
     } finally {

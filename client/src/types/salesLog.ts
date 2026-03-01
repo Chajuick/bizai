@@ -25,6 +25,7 @@ export type SalesLogFormState = {
 /** 영업일지 수정 폼 상태 */
 export type SalesLogEditForm = {
   clie_name: string;
+  clie_idno?: number;
   cont_name: string;
   sale_loca: string;
   vist_date: string;

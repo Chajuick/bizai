@@ -6,6 +6,7 @@ import { useClientDetailViewModel } from "@/hooks/focuswin/client/detail/useClie
 import ClientDetailHeader from "@/components/focuswin/client/deta/client-detail-header";
 import ClientProfileCard from "@/components/focuswin/client/deta/client-profile-card";
 import ClientKpiCards from "@/components/focuswin/client/deta/client-kpi-cards";
+import ClientContacts from "@/components/focuswin/client/deta/client-contacts";
 import ClientRecentLogs from "@/components/focuswin/client/deta/client-recent-logs";
 import ClientOrders from "@/components/focuswin/client/deta/client-orders";
 import PageShell from "@/components/focuswin/common/page-shell";
@@ -38,6 +39,21 @@ export default function ClieDeta() {
       <ClientKpiCards
         logsCount={vm.logs?.length ?? 0}
         totalOrderAmount={vm.totalOrderAmount}
+      />
+
+      <ClientContacts
+        contacts={vm.contacts}
+        loading={vm.contactsLoading}
+        showContactForm={vm.showContactForm}
+        editingContactId={vm.editingContactId}
+        contactForm={vm.contactForm}
+        setContactForm={vm.setContactForm}
+        isSavingContact={vm.isSavingContact}
+        onOpenNew={vm.openNewContact}
+        onOpenEdit={vm.openEditContact}
+        onCloseForm={vm.closeContactForm}
+        onSave={vm.saveContact}
+        onDelete={vm.deleteContact}
       />
 
       <ClientRecentLogs

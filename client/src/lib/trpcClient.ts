@@ -7,6 +7,10 @@ export const trpcClient = trpc.createClient({
     httpBatchLink({
       url: "/api/trpc",
       transformer: superjson,
+      headers() {
+        const compId = localStorage.getItem("active_comp_id");
+        return compId ? { "x-comp-id": compId } : {};
+      },
       fetch(input, init) {
         return fetch(input, {
           ...(init ?? {}),

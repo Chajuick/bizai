@@ -96,6 +96,28 @@ export const fileRepo = {
   },
   // #endregion
 
+  // #region findById
+  async findById(
+    deps: FileRepoDeps,
+    args: { file_idno: number; comp_idno: number }
+  ): Promise<{ file_path: string; mime_type: string | null } | null> {
+    const rows = await deps.db
+      .select({ file_path: CORE_FILE.file_path, mime_type: CORE_FILE.mime_type })
+      .from(CORE_FILE)
+      .where(
+        and(
+          eq(CORE_FILE.comp_idno, args.comp_idno),
+          eq(CORE_FILE.file_idno, args.file_idno),
+          eq(CORE_FILE.dele_yesn, 0)
+        )
+      )
+      .limit(1);
+
+    if (!rows.length) return null;
+    return { file_path: String(rows[0].file_path), mime_type: rows[0].mime_type ?? null };
+  },
+  // #endregion
+
   // #region listByRef
   async listByRef(deps: FileRepoDeps, args: ListByRefArgs): Promise<ListByRefRow[]> {
     const dirFn = args.sort_dir === "asc" ? asc : desc;

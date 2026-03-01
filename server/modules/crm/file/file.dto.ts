@@ -97,14 +97,24 @@ export const ListByRefOutput = z.object({
     hasMore: z.boolean(),
   }),
 });
+
+export const TranscribeFileInput = z.object({
+  file_idno: z.number().int().positive(),
+});
+
+export const TranscribeFileOutput = z.object({
+  text: z.string(),
+});
 // #endregion
 
 // #region Types
 export type PrepareUploadInput = z.infer<typeof PrepareUploadInput>;
 export type ConfirmUploadInput = z.infer<typeof ConfirmUploadInput>;
 export type ListByRefInput = z.infer<typeof ListByRefInput>;
+export type TranscribeFileInput = z.infer<typeof TranscribeFileInput>;
 
 export type PrepareUploadOutput = z.infer<typeof PrepareUploadOutput>;
 export type ConfirmUploadOutput = z.infer<typeof ConfirmUploadOutput>;
 export type ListByRefOutput = z.infer<typeof ListByRefOutput>;
+export type TranscribeFileOutput = z.infer<typeof TranscribeFileOutput>;
 // #endregion

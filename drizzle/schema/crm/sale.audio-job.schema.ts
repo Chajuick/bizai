@@ -10,7 +10,7 @@ export const CRM_SALE_AUDIO_JOB = table(
     ...companyCols(),                                                 // comp_idno (회사 키)
 
     sale_idno: int("sale_idno").notNull(),                            // 영업일지 PK(대상)
-    file_idno: int("file_idno").notNull(),                            // 음성 파일 PK(CORE_FILE)
+    file_idno: int("file_idno"),                                      // 음성 파일 PK(CORE_FILE) — 텍스트 전용 분석 시 NULL
 
     jobs_stat: jobsStatusEnum.default("queued").notNull(),            // queued|running|done|failed
     fail_mess: text("fail_mess"),                                     // 실패 메시지(옵션)

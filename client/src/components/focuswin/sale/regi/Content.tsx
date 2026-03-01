@@ -17,7 +17,14 @@ export default function SaleRegiContent({ vm }: Props) {
       }}
       className="space-y-4"
     >
-      <SalesLogNewVoiceCard onTranscribed={vm.handleTranscribed} onAudioUrl={vm.setAudioUrl} />
+      <SalesLogNewVoiceCard
+        onTranscribed={vm.handleTranscribed}
+        onAudioUrl={vm.setAudioUrl}
+        onFileSelected={vm.handleFileSelected}
+        fileUploadState={vm.fileUploadState}
+        fileUploadError={vm.fileUploadError}
+        onResetFileUpload={vm.resetFileUpload}
+      />
 
       <SalesLogNewBasicCard form={vm.form} setForm={vm.setForm} />
 

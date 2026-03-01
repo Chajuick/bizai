@@ -1,6 +1,7 @@
 import { useSaleRegiViewModel } from "@/hooks/focuswin/sale/useSaleRegiViewModel";
 
 import SaleRegiPreSaveClientDialog from "@/components/focuswin/sale/regi/PreSaveClientModal";
+import PostAnalyzeClientModal from "@/components/focuswin/sale/common/PostAnalyzeClientModal";
 
 import PageScaffold from "@/components/focuswin/common/page-scaffold";
 import SaleRegiContent from "@/components/focuswin/sale/regi/Content";
@@ -11,13 +12,22 @@ export default function SaleRegi() {
 
   return (
     <>
-      {/* Modals */}
+      {/* 저장 전 고객사 확인 */}
       <SaleRegiPreSaveClientDialog
         open={!!vm.preSaveState}
         typedName={vm.preSaveState?.typedName}
         matchedName={vm.preSaveState?.matchedName}
         onConfirm={vm.handlePreSaveConfirm}
         onDeny={vm.handlePreSaveDeny}
+      />
+
+      {/* AI 분석 후 고객사 확인 (고객사 미설정 상태에서 AI가 추출한 경우) */}
+      <PostAnalyzeClientModal
+        open={!!vm.postAnalyzeClientState}
+        ai_client_name={vm.postAnalyzeClientState?.ai_client_name ?? ""}
+        matched_name={vm.postAnalyzeClientState?.matched_name}
+        onConfirm={vm.handlePostAnalyzeConfirm}
+        onDeny={vm.handlePostAnalyzeDeny}
       />
 
       {/* contents */}

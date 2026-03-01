@@ -11,9 +11,9 @@ export const CRM_CLIENT = table(
     clie_name: varchar("clie_name", { length: 200 }).notNull(), // 고객사명
     indu_type: varchar("indu_type", { length: 100 }),           // 업종
 
-    cont_name: varchar("cont_name", { length: 100 }),           // 담당자명
-    cont_tele: varchar("cont_tele", { length: 50 }),            // 담당자 연락처
-    cont_mail: varchar("cont_mail", { length: 320 }),           // 담당자 이메일
+    cont_name: varchar("cont_name", { length: 100 }),           // 대표 담당자명 (캐시)
+    cont_tele: varchar("cont_tele", { length: 50 }),            // 대표 담당자 연락처 (캐시)
+    cont_mail: varchar("cont_mail", { length: 320 }),           // 대표 담당자 이메일 (캐시)
 
     clie_addr: text("clie_addr"),                               // 주소
     clie_memo: text("clie_memo"),                               // 메모

@@ -92,6 +92,31 @@ export async function storageGet(
 }
 
 /**
+ * R2 파일을 서버 내부에서 Buffer로 직접 다운로드한다.
+ * presigned URL 방식의 SSRF 검증 없이 S3 SDK로 직접 접근.
+ */
+export async function storageGetBuffer(
+  relKey: string
+): Promise<{ buffer: Buffer; contentType: string }> {
+  const key = normalizeKey(relKey);
+  const client = getS3Client();
+
+  const res = await client.send(
+    new GetObjectCommand({ Bucket: ENV.r2Bucket, Key: key })
+  );
+
+  const chunks: Uint8Array[] = [];
+  for await (const chunk of res.Body as AsyncIterable<Uint8Array>) {
+    chunks.push(chunk);
+  }
+
+  return {
+    buffer: Buffer.concat(chunks),
+    contentType: res.ContentType ?? "application/octet-stream",
+  };
+}
+
+/**
  * 클라이언트가 R2에 직접 업로드하기 위한 presigned PUT URL을 반환한다.
  *
  * - 클라이언트는 반환된 url에 PUT 요청으로 파일 본문을 전송한다.

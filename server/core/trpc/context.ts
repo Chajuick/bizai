@@ -114,22 +114,59 @@ export async function createContext(opts: CreateExpressContextOptions): Promise<
     }
     // #endregion
 
-    // #region 2) Resolve company by membership (policy: 1 user -> 1 company)
+    // #region 2) Resolve company by membership
     if (user) {
       const db = getDb();
 
-      const [membership] = await db
-        .select({
-          comp_idno: CORE_COMPANY_USER.comp_idno,
-          role_code: CORE_COMPANY_USER.role_code,
-          status_code: CORE_COMPANY_USER.status_code,
-        })
-        .from(CORE_COMPANY_USER)
-        .where(and(eq(CORE_COMPANY_USER.user_idno, user.user_idno), eq(CORE_COMPANY_USER.status_code, "active")))
-        .limit(1);
+      // x-comp-id 헤더: 프론트 WorkspaceSwitcher에서 전달 (optional)
+      const rawXCompId = opts.req.headers["x-comp-id"];
+      const requestedCompId =
+        typeof rawXCompId === "string" && rawXCompId.length > 0
+          ? parseInt(rawXCompId, 10)
+          : NaN;
 
-      comp_idno = membership?.comp_idno ?? null;
-      company_role = normalizeCompanyRole(membership?.role_code);
+      if (!isNaN(requestedCompId) && requestedCompId > 0) {
+        // 요청된 회사에 대한 멤버십 검증
+        const [m] = await db
+          .select({
+            comp_idno: CORE_COMPANY_USER.comp_idno,
+            role_code: CORE_COMPANY_USER.role_code,
+          })
+          .from(CORE_COMPANY_USER)
+          .where(
+            and(
+              eq(CORE_COMPANY_USER.user_idno, user.user_idno),
+              eq(CORE_COMPANY_USER.comp_idno, requestedCompId),
+              eq(CORE_COMPANY_USER.status_code, "active"),
+            ),
+          )
+          .limit(1);
+
+        if (m) {
+          comp_idno = m.comp_idno;
+          company_role = normalizeCompanyRole(m.role_code);
+        }
+      }
+
+      // x-comp-id 없거나 해당 회사 멤버십 없음 → 기본 회사 (가입일 오름차순 첫 번째)
+      if (comp_idno === null) {
+        const [membership] = await db
+          .select({
+            comp_idno: CORE_COMPANY_USER.comp_idno,
+            role_code: CORE_COMPANY_USER.role_code,
+          })
+          .from(CORE_COMPANY_USER)
+          .where(
+            and(
+              eq(CORE_COMPANY_USER.user_idno, user.user_idno),
+              eq(CORE_COMPANY_USER.status_code, "active"),
+            ),
+          )
+          .limit(1);
+
+        comp_idno = membership?.comp_idno ?? null;
+        company_role = normalizeCompanyRole(membership?.role_code);
+      }
     }
     // #endregion
   } catch (err) {

@@ -15,6 +15,7 @@ import SalesLogMetaCard from "@/components/focuswin/sale/deta/sales-log-meta-car
 import SalesLogAISummaryCard from "@/components/focuswin/sale/deta/sales-log-ai-summary-card";
 import SalesLogRawCard from "@/components/focuswin/sale/deta/sales-log-raw-card";
 import SalesLogTranscriptCard from "@/components/focuswin/sale/deta/sales-log-transcript-card";
+import PostAnalyzeClientModal from "@/components/focuswin/sale/common/PostAnalyzeClientModal";
 
 export default function SaleDeta() {
   const { id } = useParams<{ id: string }>();
@@ -63,6 +64,15 @@ export default function SaleDeta() {
 
   return (
     <PageShell>
+      {/* AI 분석 완료 후 고객사 확인 다이얼로그 */}
+      <PostAnalyzeClientModal
+        open={!!vm.postAnalyzeClientState}
+        ai_client_name={vm.postAnalyzeClientState?.ai_client_name ?? ""}
+        matched_name={vm.postAnalyzeClientState?.matched_name}
+        onConfirm={vm.handlePostAnalyzeConfirm}
+        onDeny={vm.handlePostAnalyzeDeny}
+      />
+
       <SalesLogDetailHeader
         title={title}
         visitedLabel={visitedLabel}
@@ -102,8 +112,11 @@ export default function SaleDeta() {
           <div className="mt-4">
             <SalesLogMetaCard
               clientName={vm.log.sale.clie_name}
-              contactPerson={vm.log.sale.cont_name}
+              contactPerson={vm.log.sale.cont_name ?? vm.log.client_contact?.cont_name}
+              clientPhone={vm.log.client_contact?.cont_tele}
+              clientEmail={vm.log.client_contact?.cont_mail}
               location={vm.log.sale.sale_loca}
+              salePric={vm.log.sale.sale_pric}
               visitedLabel={visitedLabel}
             />
           </div>
@@ -127,6 +140,7 @@ export default function SaleDeta() {
               <SalesLogTranscriptCard transcribedText={vm.log.sale.sttx_text} />
             </div>
           )}
+
         </>
       )}
 

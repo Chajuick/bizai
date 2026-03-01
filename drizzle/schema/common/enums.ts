@@ -83,6 +83,11 @@ export const LEDGER_REASONS = [
 ] as const;
 // #endregion
 
+// #region CRM action owner
+export const ACTION_OWNERS = ["self", "client", "shared"] as const;
+export type ActionOwner = typeof ACTION_OWNERS[number];
+// #endregion
+
 // #region CRM statuses
 export const SCHEDULE_STATUSES = [
   "scheduled",

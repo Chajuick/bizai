@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Eye, EyeOff } from "lucide-react";
 import AuthCard from "@/components/focuswin/auth/AuthCard";
@@ -11,6 +11,16 @@ import { trpc } from "@/lib/trpc";
 export default function LoginPage() {
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
+
+  // ?redirect= 파라미터 읽기
+  const redirectTo = new URLSearchParams(window.location.search).get("redirect") ?? "/";
+
+  // OAuth 로그인 시 redirect를 잃지 않도록 sessionStorage에 보관
+  useEffect(() => {
+    if (redirectTo !== "/") {
+      sessionStorage.setItem("auth_redirect", redirectTo);
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -47,9 +57,10 @@ export default function LoginPage() {
         return;
       }
 
-      // 세션 쿠키가 설정됐으므로 auth 상태 갱신 후 홈으로
+      // 세션 쿠키가 설정됐으므로 auth 상태 갱신 후 redirect
       await utils.auth.me.invalidate();
-      setLocation("/");
+      sessionStorage.removeItem("auth_redirect"); // OAuth path에서 중복 처리 방지
+      setLocation(redirectTo);
     } catch {
       setError("네트워크 오류가 발생했습니다. 다시 시도해주세요.");
     } finally {

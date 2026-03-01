@@ -9,7 +9,7 @@ import { getDb } from "../../../core/db";
 import { normalizePage } from "../shared/pagination";
 import { withCreateAudit, withUpdateAudit } from "../shared/audit";
 
-import type { ClientCreatePayload, ClientListInputType, ClientSort, ClientUpdatePayload } from "./client.dto";
+import type { AiContactItem, ClientContactCreatePayload, ClientContactUpdatePayload, ClientCreatePayload, ClientListInputType, ClientSort, ClientUpdatePayload } from "./client.dto";
 import { clientRepo } from "./client.repo";
 // #endregion
 
@@ -192,6 +192,191 @@ export const clientService = {
     }
 
     return best;
+  },
+  // #endregion
+
+  // #region syncContact — AI 추출 연락처를 고객사에 반영 (빈 필드만, 단일)
+  async syncContact(
+    ctx: ServiceCtx,
+    input: { clie_idno: number; cont_name?: string; cont_tele?: string; cont_mail?: string }
+  ) {
+    const db = getDb();
+    await clientRepo.syncContact({ db }, {
+      comp_idno: ctx.comp_idno,
+      clie_idno: input.clie_idno,
+      cont_name: input.cont_name ?? null,
+      cont_tele: input.cont_tele ?? null,
+      cont_mail: input.cont_mail ?? null,
+      crea_idno: ctx.user_idno,
+    });
+    return { success: true as const };
+  },
+  // #endregion
+
+  // #region syncContacts — AI 추출 복수 담당자를 고객사에 upsert (이름 기준 중복 방지)
+  async syncContacts(ctx: ServiceCtx, input: { clie_idno: number; contacts: AiContactItem[] }) {
+    const db = getDb();
+
+    const existing = await clientRepo.listContacts({ db }, { comp_idno: ctx.comp_idno, clie_idno: input.clie_idno });
+    const hasMain = existing.some((c) => c.main_yesn);
+    let needsMain = !hasMain; // 기존 대표 담당자가 없으면 첫 번째가 대표로
+
+    for (const contact of input.contacts) {
+      const normName = contact.cont_name.trim();
+      if (!normName) continue;
+
+      // 이름 기준 중복 탐지 (대소문자·공백 무시)
+      const found = existing.find(
+        (e) => e.cont_name.trim().toLowerCase() === normName.toLowerCase()
+      );
+
+      if (found) {
+        // 빈 필드만 보완
+        const updates: Record<string, unknown> = { modi_idno: ctx.user_idno, modi_date: new Date() };
+        if (!found.cont_role && contact.cont_role) updates.cont_role = contact.cont_role;
+        if (!found.cont_tele && contact.cont_tele) updates.cont_tele = contact.cont_tele;
+        if (!found.cont_mail && contact.cont_mail) updates.cont_mail = contact.cont_mail;
+
+        if (Object.keys(updates).length > 2) {
+          await clientRepo.updateContact({ db }, { comp_idno: ctx.comp_idno, cont_idno: found.cont_idno, data: updates });
+        }
+      } else {
+        // 신규 담당자 insert
+        const isMain = needsMain;
+        if (isMain) needsMain = false;
+
+        await clientRepo.createContact({ db }, {
+          comp_idno: ctx.comp_idno,
+          clie_idno: input.clie_idno,
+          cont_name: normName,
+          cont_role: contact.cont_role ?? null,
+          cont_tele: contact.cont_tele ?? null,
+          cont_mail: contact.cont_mail ?? null,
+          cont_memo: null,
+          main_yesn: isMain,
+          enab_yesn: true,
+          crea_idno: ctx.user_idno,
+          crea_date: new Date(),
+          modi_idno: ctx.user_idno,
+          modi_date: new Date(),
+        });
+
+        // 대표 담당자로 설정된 경우 CRM_CLIENT 캐시 갱신
+        if (isMain) {
+          await clientRepo.update({ db }, {
+            comp_idno: ctx.comp_idno,
+            clie_idno: input.clie_idno,
+            data: {
+              cont_name: normName,
+              cont_tele: contact.cont_tele ?? null,
+              cont_mail: contact.cont_mail ?? null,
+            },
+          });
+        }
+      }
+    }
+
+    return { success: true as const };
+  },
+  // #endregion
+
+  // #region listContacts
+  async listContacts(ctx: ServiceCtx, clie_idno: number) {
+    const db = getDb();
+    return clientRepo.listContacts({ db }, { comp_idno: ctx.comp_idno, clie_idno });
+  },
+  // #endregion
+
+  // #region createContact
+  async createContact(ctx: ServiceCtx, input: ClientContactCreatePayload) {
+    const db = getDb();
+
+    // main_yesn=true로 등록 시 기존 대표 담당자 해제
+    if (input.main_yesn) {
+      await clientRepo.clearMainContact({ db }, { comp_idno: ctx.comp_idno, clie_idno: input.clie_idno });
+    }
+
+    const result = await clientRepo.createContact({ db }, {
+      comp_idno: ctx.comp_idno,
+      clie_idno: input.clie_idno,
+      cont_name: input.cont_name,
+      cont_role: input.cont_role ?? null,
+      cont_tele: input.cont_tele ?? null,
+      cont_mail: input.cont_mail || null,
+      cont_memo: input.cont_memo ?? null,
+      main_yesn: input.main_yesn ?? false,
+      enab_yesn: true,
+      crea_idno: ctx.user_idno,
+      crea_date: new Date(),
+      modi_idno: ctx.user_idno,
+      modi_date: new Date(),
+    });
+
+    // 대표 담당자면 CRM_CLIENT 캐시도 갱신
+    if (input.main_yesn) {
+      await clientRepo.update({ db }, {
+        comp_idno: ctx.comp_idno,
+        clie_idno: input.clie_idno,
+        data: {
+          cont_name: input.cont_name,
+          cont_tele: input.cont_tele ?? null,
+          cont_mail: input.cont_mail || null,
+        },
+      });
+    }
+
+    return result;
+  },
+  // #endregion
+
+  // #region updateContact
+  async updateContact(ctx: ServiceCtx, input: ClientContactUpdatePayload) {
+    const db = getDb();
+
+    const existing = await clientRepo.getContactById({ db }, { comp_idno: ctx.comp_idno, cont_idno: input.cont_idno });
+    if (!existing) throw new TRPCError({ code: "NOT_FOUND", message: "담당자를 찾을 수 없습니다." });
+
+    // main_yesn=true로 변경 시 기존 대표 담당자 해제
+    if (input.main_yesn && !existing.main_yesn) {
+      await clientRepo.clearMainContact({ db }, { comp_idno: ctx.comp_idno, clie_idno: existing.clie_idno });
+    }
+
+    const patch: Parameters<typeof clientRepo.updateContact>[1]["data"] = {
+      modi_idno: ctx.user_idno,
+      modi_date: new Date(),
+    };
+    if (input.cont_name !== undefined) patch.cont_name = input.cont_name;
+    if (input.cont_role !== undefined) patch.cont_role = input.cont_role ?? null;
+    if (input.cont_tele !== undefined) patch.cont_tele = input.cont_tele ?? null;
+    if (input.cont_mail !== undefined) patch.cont_mail = input.cont_mail || null;
+    if (input.cont_memo !== undefined) patch.cont_memo = input.cont_memo ?? null;
+    if (input.main_yesn !== undefined) patch.main_yesn = input.main_yesn;
+
+    await clientRepo.updateContact({ db }, { comp_idno: ctx.comp_idno, cont_idno: input.cont_idno, data: patch });
+
+    // 대표 담당자로 지정/수정된 경우 CRM_CLIENT 캐시 갱신
+    const isMain = input.main_yesn ?? existing.main_yesn;
+    if (isMain) {
+      await clientRepo.update({ db }, {
+        comp_idno: ctx.comp_idno,
+        clie_idno: existing.clie_idno,
+        data: {
+          cont_name: input.cont_name ?? existing.cont_name,
+          cont_tele: input.cont_tele ?? existing.cont_tele ?? null,
+          cont_mail: input.cont_mail || existing.cont_mail || null,
+        },
+      });
+    }
+
+    return { success: true as const };
+  },
+  // #endregion
+
+  // #region deleteContact (soft)
+  async deleteContact(ctx: ServiceCtx, cont_idno: number) {
+    const db = getDb();
+    await clientRepo.disableContact({ db }, { comp_idno: ctx.comp_idno, cont_idno, modi_idno: ctx.user_idno });
+    return { success: true as const };
   },
   // #endregion
 

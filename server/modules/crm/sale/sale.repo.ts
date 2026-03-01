@@ -166,6 +166,16 @@ export const saleRepo = {
     return { jobs_idno: getInsertId(res) };
   },
 
+  async updateAudioJob(
+    deps: SaleRepoDeps,
+    args: { jobs_idno: number; data: Partial<InsertSaleAudioJob> }
+  ): Promise<void> {
+    await deps.db
+      .update(CRM_SALE_AUDIO_JOB)
+      .set(args.data)
+      .where(eq(CRM_SALE_AUDIO_JOB.jobs_idno, args.jobs_idno));
+  },
+
   async createSchedule(deps: SaleRepoDeps, data: InsertSchedule) {
     const res = await deps.db.insert(CRM_SCHEDULE).values(data);
     return { sche_idno: getInsertId(res) };

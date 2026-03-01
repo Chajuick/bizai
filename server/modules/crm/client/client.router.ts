@@ -1,10 +1,17 @@
 // server/modules/crm/client/client.router.ts
 
 // #region Imports
+import { z } from "zod";
 import { protectedProcedure, router } from "../../../core/trpc";
 import { svcCtxFromTrpc } from "../../../core/svcCtx";
 
 import {
+  ClientContactCreateInput,
+  ClientContactDeleteInput,
+  ClientContactItemOutput,
+  ClientContactListInput,
+  ClientContactListOutput,
+  ClientContactUpdateInput,
   ClientCreateInput,
   ClientCreateOutput,
   ClientDeleteInput,
@@ -14,6 +21,8 @@ import {
   ClientListOutput,
   ClientMatchOutput,
   ClientItemOutput,
+  ClientSyncContactInput,
+  ClientSyncContactsInput,
   ClientUpdateInput,
 } from "./client.dto";
 
@@ -80,6 +89,58 @@ export const clientRouter = router({
     .mutation(({ ctx, input }) =>
       clientService.disableClient(svcCtxFromTrpc(ctx), input.clie_idno)
     ),
+  // #endregion
+
+  // #region syncContact — AI 추출 연락처를 고객사 빈 필드에 반영 (단일)
+  syncContact: protectedProcedure
+    .input(ClientSyncContactInput)
+    .mutation(({ ctx, input }) =>
+      clientService.syncContact(svcCtxFromTrpc(ctx), input)
+    ),
+  // #endregion
+
+  // #region syncContacts — AI 추출 복수 담당자 upsert
+  syncContacts: protectedProcedure
+    .input(ClientSyncContactsInput)
+    .mutation(({ ctx, input }) =>
+      clientService.syncContacts(svcCtxFromTrpc(ctx), input)
+    ),
+  // #endregion
+
+  // #region contact (nested router)
+  contact: router({
+    // 담당자 목록
+    list: protectedProcedure
+      .input(ClientContactListInput)
+      .output(ClientContactListOutput)
+      .query(({ ctx, input }) =>
+        clientService.listContacts(svcCtxFromTrpc(ctx), input.clie_idno)
+      ),
+
+    // 담당자 등록
+    create: protectedProcedure
+      .input(ClientContactCreateInput)
+      .output(z.object({ cont_idno: z.number().int().positive() }))
+      .mutation(({ ctx, input }) =>
+        clientService.createContact(svcCtxFromTrpc(ctx), input)
+      ),
+
+    // 담당자 수정
+    update: protectedProcedure
+      .input(ClientContactUpdateInput)
+      .output(z.object({ success: z.literal(true) }))
+      .mutation(({ ctx, input }) =>
+        clientService.updateContact(svcCtxFromTrpc(ctx), input)
+      ),
+
+    // 담당자 삭제 (soft)
+    delete: protectedProcedure
+      .input(ClientContactDeleteInput)
+      .output(z.object({ success: z.literal(true) }))
+      .mutation(({ ctx, input }) =>
+        clientService.deleteContact(svcCtxFromTrpc(ctx), input.cont_idno)
+      ),
+  }),
   // #endregion
 });
 // #endregion

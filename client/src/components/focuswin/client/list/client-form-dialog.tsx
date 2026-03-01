@@ -15,6 +15,7 @@ export default function ClientFormDialog({
   setForm,
   onSubmit,
   isSubmitting,
+  editing = false,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -22,12 +23,13 @@ export default function ClientFormDialog({
   setForm: React.Dispatch<React.SetStateAction<ClientFormState>>;
   onSubmit: (e: React.FormEvent) => void;
   isSubmitting: boolean;
+  editing?: boolean;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="rounded-3xl border border-slate-100 bg-white max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-slate-900 font-black">고객사 등록</DialogTitle>
+          <DialogTitle className="text-slate-900 font-black">{editing ? "고객사 수정" : "고객사 등록"}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={onSubmit} className="space-y-4">
@@ -115,7 +117,7 @@ export default function ClientFormDialog({
             }}
           >
             {isSubmitting ? <Loader2 size={16} className="animate-spin mr-2" /> : null}
-            등록
+            {editing ? "수정" : "등록"}
           </Button>
         </form>
       </DialogContent>

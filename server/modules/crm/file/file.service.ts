@@ -1,6 +1,8 @@
 // server/modules/crm/file/file.service.ts
 
 // #region Imports
+import { TRPCError } from "@trpc/server";
+
 import type { ServiceCtx } from "../../../core/serviceCtx";
 import { getDb } from "../../../core/db";
 
@@ -11,6 +13,8 @@ import type {
   PrepareUploadOutput,
   ConfirmUploadOutput,
   ListByRefOutput,
+  TranscribeFileInput,
+  TranscribeFileOutput,
 } from "./file.dto";
 
 import { fileRepo } from "./file.repo";
@@ -18,7 +22,8 @@ import { fileLinkService } from "./fileLink.service";
 
 import { buildFilePath, getExt } from "../shared/fileKey";
 import { normalizePage } from "../shared/pagination";
-import { storageGetPutUrl } from "../../../storage";
+import { storageGetBuffer, storageGetPutUrl } from "../../../storage";
+import { transcribeBuffer } from "../../../core/ai/voiceTranscription";
 // #endregion
 
 // #region Service
@@ -141,6 +146,23 @@ export const fileService = {
         hasMore,
       },
     };
+  },
+  // #endregion
+  // #region transcribeFile
+  async transcribeFile(ctx: ServiceCtx, input: TranscribeFileInput): Promise<TranscribeFileOutput> {
+    const db = getDb();
+
+    const file = await fileRepo.findById({ db }, { file_idno: input.file_idno, comp_idno: ctx.comp_idno });
+    if (!file) throw new TRPCError({ code: "NOT_FOUND", message: "파일을 찾을 수 없습니다." });
+
+    const { buffer, contentType } = await storageGetBuffer(file.file_path);
+    const result = await transcribeBuffer(buffer, file.mime_type ?? contentType);
+
+    if ("error" in result) {
+      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: result.error });
+    }
+
+    return { text: result.text };
   },
   // #endregion
 } as const;

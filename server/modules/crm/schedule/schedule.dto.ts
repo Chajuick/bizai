@@ -2,7 +2,7 @@
 
 // #region Imports
 import { z } from "zod";
-import { SCHEDULE_STATUSES } from "../../../../drizzle/schema/common/enums";
+import { ACTION_OWNERS, SCHEDULE_STATUSES } from "../../../../drizzle/schema/common/enums";
 import { PaginationInput } from "../shared/pagination";
 import { makeSortInput } from "../shared/sort";
 // #endregion
@@ -79,6 +79,7 @@ export const ScheduleItemOutput = z.object({
   sche_date: z.date(),
 
   stat_code: z.enum(SCHEDULE_STATUSES),
+  actn_ownr: z.enum(ACTION_OWNERS).nullable().optional(),
   remd_sent: z.boolean().optional(),
   auto_gene: z.boolean().optional(),
   enab_yesn: z.boolean().optional(),

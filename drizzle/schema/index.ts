@@ -44,6 +44,7 @@ export * from "./ai/ai-usage-month.schema";
 
 
 // #region CRM domain
+export * from "./crm/client-contact.schema";
 export * from "./crm/client.schema";
 export * from "./crm/sale.schema";
 export * from "./crm/sale.audio-job.schema";

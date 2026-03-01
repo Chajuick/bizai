@@ -1,4 +1,4 @@
-import { int, varchar, text, json, boolean, timestamp, index } from "drizzle-orm/mysql-core";
+import { int, varchar, text, json, boolean, timestamp, decimal, index } from "drizzle-orm/mysql-core";
 import { companyCols, auditCols } from "../common/default";
 import { table } from "../common/table";
 
@@ -15,6 +15,7 @@ export const CRM_SALE = table(
     sale_loca: varchar("sale_loca", { length: 200 }),              // 방문/미팅 장소
 
     vist_date: timestamp("vist_date").notNull(),                   // 방문일시
+    sale_pric: decimal("sale_pric", { precision: 15, scale: 2 }), // AI/수동 입력 금액(옵션)
     orig_memo: text("orig_memo").notNull(),                        // 원문(사용자 입력/음성 텍스트)
     aiex_summ: text("aiex_summ"),                                  // AI 요약 결과
     aiex_text: json("aiex_text"),                                  // AI 추출(json)

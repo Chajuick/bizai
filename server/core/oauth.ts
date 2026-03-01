@@ -13,6 +13,7 @@ import { z } from "zod/v4";
 import { getSessionCookieOptions } from "./cookies";
 import { signSession } from "./sdk";
 import { userRepo } from "./auth/user.repo";
+import { bootstrapService } from "../modules/org/bootstrap/bootstrap.service";
 import { ENV } from "./env/env";
 import { logger } from "./logger";
 // #endregion
@@ -251,6 +252,13 @@ export function registerOAuthRoutes(app: Express) {
         return;
       }
 
+      // 워크스페이스 자동 생성 (멱등)
+      await bootstrapService.bootstrapForUser({
+        user_idno: user.user_idno,
+        user_name: user.user_name ?? null,
+        mail_idno: user.mail_idno ?? null,
+      });
+
       const sessionToken = await signSession(
         { userId: user.user_idno, name: user.user_name ?? "" },
         { expiresInMs: SEVEN_DAYS_MS }
@@ -299,6 +307,13 @@ export function registerOAuthRoutes(app: Express) {
         return;
       }
 
+      // 워크스페이스 자동 생성 (멱등)
+      await bootstrapService.bootstrapForUser({
+        user_idno: user.user_idno,
+        user_name: user.user_name ?? null,
+        mail_idno: user.mail_idno ?? null,
+      });
+
       const sessionToken = await signSession(
         { userId: user.user_idno, name: user.user_name ?? "" },
         { expiresInMs: SEVEN_DAYS_MS }
@@ -337,6 +352,13 @@ export function registerOAuthRoutes(app: Express) {
       }
 
       await userRepo.upsertById(user.user_idno, { last_sign: new Date() });
+
+      // 워크스페이스 자동 생성 (멱등 — 기존 유저 로그인 시에도 회사 없으면 생성)
+      await bootstrapService.bootstrapForUser({
+        user_idno: user.user_idno,
+        user_name: user.user_name ?? null,
+        mail_idno: user.mail_idno ?? null,
+      });
 
       const sessionToken = await signSession(
         { userId: user.user_idno, name: user.user_name ?? "" },

@@ -34,6 +34,16 @@ export default function ClientList() {
         onSubmit={vm.handleCreate}
         isSubmitting={vm.createMutation.isPending}
       />
+
+      <ClientFormDialog
+        editing
+        open={vm.showEditForm}
+        onOpenChange={o => { if (!o) vm.closeEdit(); }}
+        form={vm.editForm}
+        setForm={vm.setEditForm}
+        onSubmit={vm.handleUpdate}
+        isSubmitting={vm.updateMutation.isPending}
+      />
     </>
   );
 }

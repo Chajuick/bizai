@@ -1,7 +1,7 @@
 // client/src/components/focuswin/clients/clients-list.tsx
 
 import { Link } from "wouter";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Pencil } from "lucide-react";
 import { WorkItemCard } from "@/components/focuswin/common/work-item-card";
 import type { ClientRow } from "@/types/client";
 
@@ -10,7 +10,12 @@ function getInitial(name: string) {
   return t ? t[0] : "C";
 }
 
-export default function ClientsList({ clients }: { clients: ClientRow[] }) {
+type Props = {
+  clients: ClientRow[];
+  onEdit?: (client: ClientRow) => void;
+};
+
+export default function ClientsList({ clients, onEdit }: Props) {
   return (
     <div className="space-y-2">
       {clients.map((client) => (
@@ -39,8 +44,19 @@ export default function ClientsList({ clients }: { clients: ClientRow[] }) {
                   ) : null
                 }
                 actions={
-                  <div className="w-8 h-8 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center transition group-hover:bg-blue-50 group-hover:border-blue-100">
-                    <ChevronRight size={16} className="text-slate-400 group-hover:text-blue-600" />
+                  <div className="flex items-center gap-1">
+                    {onEdit && (
+                      <button
+                        type="button"
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); onEdit(client); }}
+                        className="w-8 h-8 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center transition hover:bg-amber-50 hover:border-amber-100"
+                      >
+                        <Pencil size={14} className="text-slate-400 hover:text-amber-600" />
+                      </button>
+                    )}
+                    <div className="w-8 h-8 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center transition group-hover:bg-blue-50 group-hover:border-blue-100">
+                      <ChevronRight size={16} className="text-slate-400 group-hover:text-blue-600" />
+                    </div>
                   </div>
                 }
               />

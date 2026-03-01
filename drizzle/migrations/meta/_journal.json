@@ -29,6 +29,34 @@
       "when": 1772253596130,
       "tag": "0003_remarkable_power_man",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1772293106651,
+      "tag": "0004_jittery_oracle",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1772325844003,
+      "tag": "0005_regular_virginia_dare",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1772330446466,
+      "tag": "0006_secret_black_queen",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1772346162771,
+      "tag": "0007_cute_luminals",
+      "breakpoints": true
     }
   ]
 }
