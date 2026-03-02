@@ -10,8 +10,9 @@ import { SaleDetailHeaderTitle } from "@/components/focuswin/sale/detail/HeaderT
 
 export default function SaleDetailPage() {
   const { id } = useParams<{ id: string }>();
-
+  // #region ViewModel
   const vm = useSaleDetailVM(Number(id));
+  // #endregion
 
   return (
     <>
