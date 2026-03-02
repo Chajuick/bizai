@@ -5,7 +5,7 @@ type Props = {
   onCreateNew: () => void;
 };
 
-export default function SalesLogDetailNotFound({ onGoList, onCreateNew }: Props) {
+export default function SaleDetailNotFound({ onGoList, onCreateNew }: Props) {
   return (
     <div className="max-w-md mx-auto py-14">
       <div className="p-6 text-center">

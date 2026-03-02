@@ -294,12 +294,9 @@ export async function transcribeBuffer(
     formData.append("model", ENV.sttModel || "whisper-1");
     formData.append("response_format", "verbose_json");
 
-    const prompt =
-      opts?.prompt ||
-      (opts?.language
-        ? `Transcribe the user's voice to text. The user's working language is ${getLanguageName(opts.language)}.`
-        : "Transcribe the user's voice to text.");
-    formData.append("prompt", prompt);
+    if (opts?.prompt?.trim()) {
+      formData.append("prompt", opts.prompt.trim());
+    }
 
     if (opts?.language) {
       formData.append("language", opts.language);
@@ -469,13 +466,9 @@ export async function transcribeAudio(
 
     formData.append("response_format", "verbose_json");
 
-    const prompt =
-      options.prompt ||
-      (options.language
-        ? `Transcribe the user's voice to text. The user's working language is ${getLanguageName(options.language)}.`
-        : "Transcribe the user's voice to text.");
-
-    formData.append("prompt", prompt);
+    if (options.prompt?.trim()) {
+      formData.append("prompt", options.prompt.trim());
+    }
 
     // (Optional) language hint — some Whisper-compatible servers accept it.
     if (options.language) {

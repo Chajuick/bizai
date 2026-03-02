@@ -1,28 +1,29 @@
 import * as React from "react";
-import { Link } from "wouter";
 
 import PageShell from "@/components/focuswin/common/page-shell";
-import PageHeader, { type HeaderAction } from "@/components/focuswin/common/page-header";
+import PageHeader, {
+  type HeaderAction,
+} from "@/components/focuswin/common/page-header";
 import SkeletonCardList from "@/components/focuswin/common/skeleton-card-list";
 import Fab from "@/components/focuswin/common/fab";
 
-/** PageHeader 액션 타입을 그대로 사용 */
+
+// #region Types
+
+/** 페이지 상태 */
 export type PageStatus = "loading" | "empty" | "ready";
 
-/** Fab은 기존 UIAction 유지해도 되고, HeaderAction으로 통일해도 됨 */
-export type UIAction =
-  | { label: string; icon?: React.ReactNode; onClick: () => void; disabled?: boolean }
-  | { label: string; icon?: React.ReactNode; href: string; disabled?: boolean };
-export type PageFab = UIAction & { icon: React.ReactNode };
+/** Fab 액션 (Fab 컴포넌트와 동일한 계약) */
+export type PageFab =
+  | { label: string; icon: React.ReactNode; href: string }
+  | { label: string; icon: React.ReactNode; onClick: () => void };
 
 export type PageScaffoldProps = {
   // Header
   kicker: string;
-  /**  string -> ReactNode */
   title: React.ReactNode;
   description?: React.ReactNode;
 
-  /**  PageHeader 고급 옵션 노출 */
   onBack?: () => void;
   actions?: HeaderAction[];
   primaryAction?: HeaderAction;
@@ -38,9 +39,16 @@ export type PageScaffoldProps = {
   empty?: React.ReactNode;
   children: React.ReactNode;
 
+  // Floating Action Button
   fab?: PageFab;
+
   contentClassName?: string;
 };
+
+// #endregion
+
+
+// #region Component
 
 export default function PageScaffold({
   kicker,
@@ -65,6 +73,7 @@ export default function PageScaffold({
 }: PageScaffoldProps) {
   return (
     <PageShell>
+      {/* ---------- Header ---------- */}
       <PageHeader
         kicker={kicker}
         title={title}
@@ -76,37 +85,29 @@ export default function PageScaffold({
         {headerChildren}
       </PageHeader>
 
+      {/* ---------- Notice ---------- */}
       {notice ? <div className="mt-4">{notice}</div> : null}
 
+      {/* ---------- Main Content ---------- */}
       <div className={contentClassName}>
-        {status === "loading" ? (
-          loading ?? <SkeletonCardList count={6} variant="detailed" />
-        ) : status === "empty" ? (
-          empty ?? null
-        ) : (
-          children
-        )}
+        {status === "loading"
+          ? loading ?? <SkeletonCardList count={6} variant="detailed" />
+          : status === "empty"
+            ? empty ?? null
+            : children}
       </div>
 
+      {/* ---------- Floating Action Button ---------- */}
       {fab ? (
-        isHrefAction(fab) ? (
-          <Link href={fab.href}>
-            <Fab label={fab.label} onClick={() => {}}>
-              {fab.icon}
-            </Fab>
-          </Link>
-        ) : (
-          <Fab label={fab.label} onClick={fab.onClick}>
-            {fab.icon}
-          </Fab>
-        )
+        <Fab {...fab}>
+          {fab.icon}
+        </Fab>
       ) : null}
 
+      {/* ---------- Footer ---------- */}
       {footer}
     </PageShell>
   );
 }
 
-function isHrefAction(a: UIAction): a is Extract<UIAction, { href: string }> {
-  return "href" in a;
-}
+// #endregion

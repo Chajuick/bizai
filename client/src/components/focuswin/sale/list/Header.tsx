@@ -1,13 +1,13 @@
 import SearchInput from "@/components/focuswin/common/search-input";
 import TabPills from "@/components/focuswin/common/ui/tab-pills";
-import { useSaleListViewModel } from "@/hooks/focuswin/sale/useSaleListViewModel";
+import { useSaleListVM } from "@/hooks/focuswin/sale/useSaleListVM";
 
 type Props = {
-  vm: ReturnType<typeof useSaleListViewModel>;
+  vm: ReturnType<typeof useSaleListVM>;
   className?: string;
 };
 
-export default function SaleListHeadContent({ vm, className }: Props) {
+export default function SaleListHeader({ vm, className }: Props) {
   return (
     <div className={className}>
       <SearchInput
@@ -19,7 +19,7 @@ export default function SaleListHeadContent({ vm, className }: Props) {
       />
 
       <div className="mt-3">
-        <TabPills tabs={vm.salesTabs} value={vm.filter} onChange={vm.setFilter} />
+        <TabPills tabs={vm.tabs} value={vm.filter} onChange={vm.setFilter} />
       </div>
     </div>
   );

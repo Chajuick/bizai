@@ -1,12 +1,12 @@
 import { Plus, BookOpen } from "lucide-react";
 import EmptyState from "@/components/focuswin/common/empty-state";
-import { useSaleListViewModel } from "@/hooks/focuswin/sale/useSaleListViewModel";
+import { useSaleListVM } from "@/hooks/focuswin/sale/useSaleListVM";
 
 type Props = {
-  vm: ReturnType<typeof useSaleListViewModel>;
+  vm: ReturnType<typeof useSaleListVM>;
 };
 
-export default function SaleListEmptyCard({ vm }: Props) {
+export default function SaleListEmpty({ vm }: Props) {
   const showReset = !!vm.search.trim() || vm.filter !== "all";
 
   const actions = [

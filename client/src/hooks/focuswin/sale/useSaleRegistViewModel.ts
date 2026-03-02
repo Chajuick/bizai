@@ -4,7 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { toLocalDatetimeInputValue } from "@/lib/utils";
 import { toast } from "sonner";
 import type { PreSaveState, SalesLogFormState } from "@/types/salesLog";
-import type { PostAnalyzeClientState } from "./useSaleDetailViewModel";
+import type { PostAnalyzeClientState } from "./useSaleDetailVM";
 
 export function useSaleRegistViewModel() {
   const [, navigate] = useLocation();

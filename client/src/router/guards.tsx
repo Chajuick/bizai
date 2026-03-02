@@ -3,8 +3,8 @@ import { Switch, Route } from "wouter";
 import AppLayout from "@/components/AppLayout";
 
 import DashboardHome from "@/pages/dashboard/DashboardHome";
-import SaleList from "@/pages/sale/SaleList";
-import SaleDetail from "@/pages/sale/SaleDetail";
+import SaleListPage from "@/pages/sale/SaleListPage";
+import SaleDetailPage from "@/pages/sale/SaleDetailPage";
 import SaleRegist from "@/pages/sale/SaleRegist";
 import ScheduleList from "@/pages/schedule/ScheduleList";
 import OrderList from "@/pages/order/OrderList";
@@ -26,9 +26,9 @@ export function AppGuard() {
     <AppLayout>
       <Switch>
         <Route path="/" component={DashboardHome} />
-        <Route path="/sale-list" component={SaleList} />
+        <Route path="/sale-list" component={SaleListPage} />
         <Route path="/sale-list/regi" component={SaleRegist} />
-        <Route path="/sale-list/:id" component={SaleDetail} />
+        <Route path="/sale-list/:id" component={SaleDetailPage} />
         <Route path="/sche-list" component={ScheduleList} />
         <Route path="/orde-list" component={OrderList} />
         <Route path="/ship-list" component={ShipmentList} />

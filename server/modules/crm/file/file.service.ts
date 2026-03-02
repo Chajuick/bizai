@@ -156,13 +156,27 @@ export const fileService = {
     if (!file) throw new TRPCError({ code: "NOT_FOUND", message: "파일을 찾을 수 없습니다." });
 
     const { buffer, contentType } = await storageGetBuffer(file.file_path);
-    const result = await transcribeBuffer(buffer, file.mime_type ?? contentType);
-
+    const result = await transcribeBuffer(buffer, file.mime_type ?? contentType, {
+      language: input.language ?? "ko",
+    });
     if ("error" in result) {
-      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: result.error });
+      const code =
+        result.code === "FILE_TOO_LARGE" || result.code === "INVALID_FORMAT"
+          ? "BAD_REQUEST"
+          : "INTERNAL_SERVER_ERROR";
+
+      throw new TRPCError({ code, message: result.details ?? result.error });
     }
 
-    return { text: result.text };
+    const text = result.text.trim();
+    if ((result.duration ?? 0) < 2 || text.length < 2) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "음성이 너무 짧거나 인식할 수 없습니다. 2초 이상 다시 녹음해 주세요.",
+      });
+    }
+
+    return { text };
   },
   // #endregion
 } as const;

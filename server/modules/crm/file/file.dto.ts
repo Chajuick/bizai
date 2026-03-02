@@ -100,6 +100,7 @@ export const ListByRefOutput = z.object({
 
 export const TranscribeFileInput = z.object({
   file_idno: z.number().int().positive(),
+  language: z.string().min(2).max(10).optional(),
 });
 
 export const TranscribeFileOutput = z.object({

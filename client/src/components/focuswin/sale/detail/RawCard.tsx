@@ -1,6 +1,6 @@
 import { Card } from "../../common/ui/card";
 
-export default function SalesLogRawCard({ rawContent }: { rawContent: string }) {
+export default function SaleDetailRawCard({ rawContent }: { rawContent: string }) {
   return (
     <Card>
       <p className="text-sm font-black text-slate-900 mb-2">원문</p>

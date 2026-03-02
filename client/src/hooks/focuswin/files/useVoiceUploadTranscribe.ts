@@ -1,6 +1,7 @@
 import { useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { TRPCClientError } from "@trpc/client";
 
 export function useVoiceUploadTranscribe() {
   const uploadingAbortRef = useRef<AbortController | null>(null);
@@ -83,16 +84,23 @@ export function useVoiceUploadTranscribe() {
         // 4) transcribeFile
         onState?.("transcribing");
         const tx = await transcribeFile.mutateAsync({ file_idno: fileId });
+        console.log("transcribe response =", tx);
+        console.log("transcribe text =", (tx as any)?.text);
         onTranscribed(tx.text);
 
         onState?.("done");
       } catch (e) {
         if ((e as any)?.name === "AbortError") {
           toast.message("작업을 취소했습니다.");
-        } else {
+        }
+        else if (e instanceof TRPCClientError) {
+          toast.error(e.message);
+        }
+        else {
           console.error(e);
           toast.error("처리 중 오류가 발생했습니다.");
         }
+
         onState?.("idle");
       } finally {
         uploadingAbortRef.current = null;

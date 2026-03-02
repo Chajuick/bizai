@@ -280,7 +280,9 @@ export const saleService = {
     }
 
     // STT 호출
-    const sttResult = await transcribeBuffer(buffer, contentType, { language: input.language });
+    const sttResult = await transcribeBuffer(buffer, contentType, {
+      language: input.language ?? "ko",
+    });
 
     if ("error" in sttResult) {
       await saleRepo.updateAudioJob({ db }, {

@@ -7,7 +7,7 @@ type Props = {
   onKeywordClick: (kw: string) => void;
 };
 
-export default function SalesLogAISummaryCard({ aiSummary, aiExtracted, onKeywordClick }: Props) {
+export default function SaleDetailAISummaryCard({ aiSummary, aiExtracted, onKeywordClick }: Props) {
   const extracted = (aiExtracted ?? {}) as any;
 
   return (

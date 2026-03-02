@@ -1,9 +1,9 @@
 import { Link } from "wouter";
-import { useSaleListViewModel } from "@/hooks/focuswin/sale/useSaleListViewModel";
+import { useSaleListVM } from "@/hooks/focuswin/sale/useSaleListVM";
 import SaleListCard from "./ListCard";
 
 type Props = {
-  vm: ReturnType<typeof useSaleListViewModel>;
+  vm: ReturnType<typeof useSaleListVM>;
 };
 
 export default function SaleListContent({ vm }: Props) {

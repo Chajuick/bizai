@@ -19,7 +19,7 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 const inputCls =
   "w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-300 bg-white";
 
-export default function SalesLogEditFormCard({ form, setForm }: Props) {
+export default function SaleDetailEditFormCard({ form, setForm }: Props) {
   return (
     <Card>
       <p className="text-xs font-extrabold tracking-[0.14em] text-slate-400 uppercase mb-4">
