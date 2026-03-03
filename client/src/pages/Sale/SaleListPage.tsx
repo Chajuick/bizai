@@ -8,9 +8,7 @@ import SaleListContent from "@/components/focuswin/sale/list/Content";
 import SaleListEmpty from "@/components/focuswin/sale/list/Empty";
 
 export default function SaleListPage() {
-  // #region ViewModel
   const vm = useSaleListVM();
-  // #endregion
 
   return (
     <PageScaffold

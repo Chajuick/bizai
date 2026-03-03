@@ -1,22 +1,28 @@
 // server/modules/crm/sale/sale.dto.ts
 
+// #region Imports
+
 import { z } from "zod";
 import { PaginationInput } from "../shared/pagination";
 import { makeSortInput } from "../shared/sort";
 import { FILE_PURP_TYPES } from "../../../../drizzle/schema";
 
-// Sort
+// #endregion
+
+// #region Sort / Inputs Common
+
 const SaleSortInput = makeSortInput(["vist_date", "modi_date", "crea_date"] as const);
 
-// vist_date: ISO 8601 string 또는 timestamp(ms) 정수만 허용
-// "x:38" 같은 애매한 문자열 → Zod 레벨에서 400 BAD_REQUEST
 const VistDateInput = z.union([
-  z.number().int(),                        // timestamp ms
-  z.string().datetime({ offset: true }),   // ISO 8601 (UTC or +offset)
+  z.number().int(), // timestamp ms
+  z.string().datetime({ offset: true }), // ISO 8601
 ]);
 
-// Attachment input
 const FilePurpTypeZ = z.enum(FILE_PURP_TYPES);
+
+// #endregion
+
+// #region Attachment Input
 
 export const SaleAttachmentInput = z.object({
   file_idno: z.number().int().positive(),
@@ -25,7 +31,10 @@ export const SaleAttachmentInput = z.object({
 });
 export type SaleAttachmentInput = z.infer<typeof SaleAttachmentInput>;
 
-// Inputs
+// #endregion
+
+// #region Inputs
+
 export const SaleListInput = z.object({
   clie_idno: z.number().int().positive().optional(),
   search: z.string().optional(),
@@ -50,8 +59,6 @@ export const SaleCreateInput = z.object({
 
   attachments: z.array(SaleAttachmentInput).optional(),
 
-  // legacy (keep but discouraged)
-  audi_addr: z.string().url().optional(),
   sttx_text: z.string().optional(),
 });
 
@@ -67,7 +74,6 @@ export const SaleUpdateInput = z.object({
   sale_pric: z.number().nonnegative().nullable().optional(),
   orig_memo: z.string().nullable().optional(),
 
-  audi_addr: z.string().url().nullable().optional(),
   sttx_text: z.string().nullable().optional(),
 });
 
@@ -86,7 +92,45 @@ export const SaleTranscribeInput = z.object({
   language: z.string().optional(),
 });
 
-// Outputs
+// #endregion
+
+// #region Outputs: AI Core
+
+const AiCoreAppointmentOutput = z.object({
+  title: z.string(),
+  date: z.string().nullable(),
+  desc: z.string(),
+  action_owner: z.enum(["self", "client", "shared"]),
+  key: z.string(), // ✅ schedule.aiex_keys와 매칭하는 키
+});
+
+const AiCorePricingEntryOutput = z.object({
+  amount: z.number().int().nullable(),
+  min: z.number().int().nullable(),
+  max: z.number().int().nullable(),
+  type: z.enum(["one_time", "monthly", "yearly"]),
+  vat: z.enum(["included", "excluded", "unknown"]),
+  approximate: z.boolean(),
+  inferred: z.boolean(),
+  label: z.string(),
+});
+
+const AiCorePricingOutput = z.object({
+  primary: AiCorePricingEntryOutput.nullable(),
+  alternatives: z.array(AiCorePricingEntryOutput),
+  final: AiCorePricingEntryOutput.nullable(),
+}).nullable();
+
+export const AiCoreOutput = z.object({
+  pricing: AiCorePricingOutput,
+  notes: z.string(),
+  appointments: z.array(AiCoreAppointmentOutput),
+});
+
+// #endregion
+
+// #region Outputs: Sale List/Get
+
 export const SaleItemOutput = z.object({
   sale_idno: z.number().int().positive(),
 
@@ -111,34 +155,51 @@ export const SaleListOutput = z.object({
   }),
 });
 
+export const ScheduleSummaryOutput = z.object({
+  sche_idno: z.number().int().positive(),
+  sche_name: z.string(),
+  sche_date: z.string(), // ISO
+  sche_desc: z.string().nullable().optional(),
+  stat_code: z.string(),
+  actn_ownr: z.string().nullable(),
+  auto_gene: z.boolean(),
+  aiex_keys: z.string().nullable(),
+});
+
 export const SaleGetOutput = z.object({
   sale: z.object({
     sale_idno: z.number().int().positive(),
 
     clie_idno: z.number().int().nullable(),
     clie_name: z.string().nullable(),
+
     cont_name: z.string().nullable(),
+    cont_role: z.string().nullable(),
+    cont_mail: z.string().nullable(),
+    cont_tele: z.string().nullable(),
+
     sale_loca: z.string().nullable(),
 
     vist_date: z.string(),
     sale_pric: z.union([z.string(), z.number()]).nullable(),
     orig_memo: z.string(),
 
-    // legacy
-    audi_addr: z.string().nullable(),
     sttx_text: z.string().nullable(),
 
     aiex_done: z.boolean(),
     aiex_summ: z.string().nullable(),
+
+    aiex_core: AiCoreOutput.nullable(),
   }),
 
-  // 연결된 고객사의 공식 연락처 (clie_idno가 있을 때만)
-  client_contact: z.object({
-    cont_name: z.string().nullable(),
-    cont_tele: z.string().nullable(),
-    cont_mail: z.string().nullable(),
-    clie_addr: z.string().nullable(),
-  }).nullable(),
+  client_contact: z
+    .object({
+      cont_name: z.string().nullable(),
+      cont_tele: z.string().nullable(),
+      cont_mail: z.string().nullable(),
+      clie_addr: z.string().nullable(),
+    })
+    .nullable(),
 
   attachments: z.array(
     z.object({
@@ -147,7 +208,13 @@ export const SaleGetOutput = z.object({
       sort_orde: z.number().int(),
     })
   ),
+
+  schedules: z.array(ScheduleSummaryOutput), // ✅ 후속조치 생성여부 판단용
 });
+
+// #endregion
+
+// #region Outputs: Analyze/Transcribe
 
 export const AiContactOutput = z.object({
   cont_name: z.string(),
@@ -160,16 +227,16 @@ export type AiContactOutput = z.infer<typeof AiContactOutput>;
 export const SaleAnalyzeOutput = z.object({
   jobs_idno: z.number().int().positive(),
   jobs_stat: z.string(),
+
   summary: z.string().nullable().optional(),
   schedule_idno: z.number().int().nullable().optional(),
-  // AI가 추출한 원본 고객사명 (사용자 확인 전)
+
   ai_client_name: z.string().nullable().optional(),
-  // DB 퍼지 매칭 결과 (신뢰도 ≥ 0.7)
   matched_client_idno: z.number().int().nullable().optional(),
   matched_client_name: z.string().nullable().optional(),
-  // AI가 추출한 담당자 목록 (고객사 연결 확정 시 sync에 사용)
+
   ai_contacts: z.array(AiContactOutput).optional(),
-  // 하위 호환: 첫 번째(대표) 담당자 단일 필드
+
   ai_contact_person: z.string().nullable().optional(),
   ai_contact_phone: z.string().nullable().optional(),
   ai_contact_email: z.string().nullable().optional(),
@@ -181,6 +248,11 @@ export const SaleTranscribeOutput = z.object({
   sttx_text: z.string().nullable().optional(),
 });
 
-// Types
+// #endregion
+
+// #region Types
+
 export type SaleCreatePayload = z.infer<typeof SaleCreateInput>;
 export type SaleUpdatePayload = Omit<z.infer<typeof SaleUpdateInput>, "sale_idno">;
+
+// #endregion

@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { trpc } from "@/lib/trpc";
-import { usePromiseAlerts } from "@/hooks/usePromiseAlerts";
+import { useScheduleAlerts } from "@/hooks/focuswin/schedule/useScheduleAlerts";
 import { Link } from "wouter";
 import { formatKRW } from "@/lib/format";
 import {
@@ -144,7 +144,7 @@ export default function DashboardHome() {
   const monthLabel = `${now.getMonth() + 1}월`;
 
   // 브라우저 알림 (세션 당 1회)
-  usePromiseAlerts(stats?.overdueCount ?? 0, stats?.imminentCount ?? 0);
+  // useScheduleAlerts(stats?.overdueCount ?? 0, stats?.imminentCount ?? 0);
 
   // 차트 해석 한 줄
   const chartInsight = useMemo(() => {

@@ -1,78 +1,78 @@
-// hooks/focuswin/promise/usePromiseActions.ts
+// src/hooks/focuswin/schedule/useScheduleActions.ts
+
+// #region Imports
 import { trpc } from "@/lib/trpc";
+// #endregion
 
-export function usePromiseActions() {
+export function useScheduleActions() {
+  // #region Base
   const utils = trpc.useUtils();
+  // #endregion
 
+  // #region Mutations
   const create = trpc.crm.schedule.create.useMutation();
   const update = trpc.crm.schedule.update.useMutation();
   const remove = trpc.crm.schedule.delete.useMutation();
   const complete = trpc.crm.schedule.complete.useMutation();
   const cancel = trpc.crm.schedule.cancel.useMutation();
   const createOrder = trpc.crm.order.create.useMutation();
+  // #endregion
 
+  // #region Helpers
   const refresh = async () => {
-    await Promise.all([
-      utils.crm.schedule.list.invalidate(),
-      utils.crm.dashboard.stats.invalidate(),
-    ]);
+    await Promise.all([utils.crm.schedule.list.invalidate(), utils.crm.dashboard.stats.invalidate()]);
   };
+  // #endregion
 
-  //  "mutation + refresh"를 한 번에 처리하는 래퍼
-  const createPromise = async (input: Parameters<typeof create.mutateAsync>[0]) => {
+  // #region Schedule wrappers
+  const createSchedule = async (input: Parameters<typeof create.mutateAsync>[0]) => {
     const res = await create.mutateAsync(input);
     await refresh();
     return res;
   };
 
-  const updatePromise = async (input: Parameters<typeof update.mutateAsync>[0]) => {
+  const updateSchedule = async (input: Parameters<typeof update.mutateAsync>[0]) => {
     const res = await update.mutateAsync(input);
     await refresh();
     return res;
   };
 
-  const deletePromise = async (input: Parameters<typeof remove.mutateAsync>[0]) => {
+  const deleteSchedule = async (input: Parameters<typeof remove.mutateAsync>[0]) => {
     const res = await remove.mutateAsync(input);
     await refresh();
     return res;
   };
 
-  const completePromise = async (input: Parameters<typeof complete.mutateAsync>[0]) => {
+  const completeSchedule = async (input: Parameters<typeof complete.mutateAsync>[0]) => {
     const res = await complete.mutateAsync(input);
     await refresh();
     return res;
   };
 
-  const cancelPromise = async (input: Parameters<typeof cancel.mutateAsync>[0]) => {
+  const cancelSchedule = async (input: Parameters<typeof cancel.mutateAsync>[0]) => {
     const res = await cancel.mutateAsync(input);
     await refresh();
     return res;
   };
+  // #endregion
 
-  //  수주 생성 + (선택) 해당 일정 완료처리 + refresh 1번만
-  const createOrderAndCompletePromise = async (args: {
+  // #region Order + complete schedule
+  const createOrderAndCompleteSchedule = async (args: {
     order: Parameters<typeof createOrder.mutateAsync>[0];
-    promiseId?: number | null;
+    scheduleId?: number | null;
   }) => {
-    const { order, promiseId } = args;
+    const { order, scheduleId } = args;
 
     const orderRes = await createOrder.mutateAsync(order);
 
-    if (promiseId) {
-      await complete.mutateAsync({ sche_idno: promiseId });
+    if (scheduleId) {
+      await complete.mutateAsync({ sche_idno: scheduleId });
     }
 
     await refresh();
     return orderRes;
   };
-
-  const isBusy =
-    create.isPending ||
-    update.isPending ||
-    remove.isPending ||
-    complete.isPending ||
-    cancel.isPending ||
-    createOrder.isPending;
+  // #endregion
 
   return {
     // raw mutations (pending 상태 등 UI에 필요하면 사용)
@@ -83,14 +83,12 @@ export function usePromiseActions() {
     cancel,
     createOrder,
 
-    //  page에서 쓰는 "실무식" 액션 함수들
-    createPromise,
-    updatePromise,
-    deletePromise,
-    completePromise,
-    cancelPromise,
-    createOrderAndCompletePromise,
-
-    isBusy,
+    // page에서 쓰는 액션 함수들
+    createSchedule,
+    updateSchedule,
+    deleteSchedule,
+    completeSchedule,
+    cancelSchedule,
+    createOrderAndCompleteSchedule,
   };
 }

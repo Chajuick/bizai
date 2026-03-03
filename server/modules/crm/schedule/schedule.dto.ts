@@ -12,17 +12,18 @@ const ScheduleSortInput = makeSortInput(["modi_date", "crea_date", "sche_date"] 
 type ScheduleSortField = z.infer<typeof ScheduleSortInput>["field"];
 // #endregion
 
+// #region Tab
+export const SCHEDULE_TAB_KEYS = ["all", "scheduled", "overdue", "imminent", "completed", "canceled"] as const;
+export type ScheduleTabKey = (typeof SCHEDULE_TAB_KEYS)[number];
+// #endregion
+
 // #region Inputs
 export const ScheduleListInput = z
   .object({
-    stat_code: z.enum(SCHEDULE_STATUSES).optional(),
-    upcoming: z.boolean().optional(),
+    tab: z.enum(SCHEDULE_TAB_KEYS).optional(),
 
     page: PaginationInput.optional(),
     sort: ScheduleSortInput.optional(),
-
-    // legacy compatibility
-    limit: z.number().int().positive().max(200).optional(),
   })
   .optional();
 
@@ -88,6 +89,10 @@ export const ScheduleItemOutput = z.object({
   crea_date: z.date().optional(),
   modi_idno: z.number().int().nullable().optional(),
   modi_date: z.date().nullable().optional(),
+
+  // ✅ 서버 계산 파생 플래그
+  overdue: z.boolean(),
+  imminent: z.boolean(),
 });
 
 export type ScheduleItem = z.infer<typeof ScheduleItemOutput>;
@@ -101,6 +106,17 @@ export const ScheduleListOutput = z.object({
   }),
 });
 export type ScheduleListOutput = z.infer<typeof ScheduleListOutput>;
+
+// ✅ 탭 카운트(전체 기준) 전용 output
+export const ScheduleStatsOutput = z.object({
+  all: z.number().int().nonnegative(),
+  imminent: z.number().int().nonnegative(),
+  overdue: z.number().int().nonnegative(),
+  scheduled: z.number().int().nonnegative(),
+  completed: z.number().int().nonnegative(),
+  canceled: z.number().int().nonnegative(),
+});
+export type ScheduleStatsOutput = z.infer<typeof ScheduleStatsOutput>;
 // #endregion
 
 // #region Service Contracts

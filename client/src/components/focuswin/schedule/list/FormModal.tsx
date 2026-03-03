@@ -6,11 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/focuswin/common/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import ClientNameInput from "@/components/ClientNameInput";
-import type { PromiseFormState } from "@/types/promise";
+import type { ScheduleFormState } from "@/types/schedule";
 
-export type { PromiseFormState };
-
-export default function PromiseFormDialog({
+export default function ScheduleListFormModal({
   open,
   onOpenChange,
   editing,
@@ -22,8 +20,8 @@ export default function PromiseFormDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   editing: boolean;
-  form: PromiseFormState;
-  setForm: React.Dispatch<React.SetStateAction<PromiseFormState>>;
+  form: ScheduleFormState;
+  setForm: React.Dispatch<React.SetStateAction<ScheduleFormState>>;
   onSubmit: (e: React.FormEvent) => void;
   isSubmitting?: boolean;
 }) {

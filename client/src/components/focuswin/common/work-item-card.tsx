@@ -2,64 +2,35 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Clock } from "lucide-react";
 
+// #region Types
 type WorkItemCardRootProps = {
   children: React.ReactNode;
   className?: string;
 
   /**
    * 스타일만 인터랙티브하게(hover/group 등) 만들고 싶을 때
-   * - onClick이 없어도 hover 느낌/그룹 hover를 쓰고 싶으면 true
+   * - onClick/onDoubleClick이 없어도 hover 느낌/그룹 hover를 쓰고 싶으면 true
    */
   interactive?: boolean;
 
   /**
    * 카드 전체 클릭(버튼처럼 동작)
-   * - 내부에 버튼/링크가 있으면 그쪽에서 e.stopPropagation() 권장
+   * - 내부에 버튼/링크가 있으면 e.stopPropagation() 권장 (또는 preventInteractiveClick 사용)
    */
   onClick?: () => void;
+
+  /**
+   * 카드 더블클릭 동작(예: 수정 모달 오픈)
+   */
+  onDoubleClick?: () => void;
+
+  /**
+   * 내부 인터랙티브 요소(button/a/input/...)에서 발생한 이벤트면
+   * 카드 onClick/onDoubleClick을 무시할지
+   * - 기본 true
+   */
+  preventInteractiveClick?: boolean;
 };
-
-function Root({ children, className, interactive, onClick }: WorkItemCardRootProps) {
-  const clickable = !!onClick; //  실제 버튼 역할은 onClick 있을 때만
-  const isInteractive = clickable || !!interactive;
-
-  return (
-    <div
-      role={clickable ? "button" : undefined}
-      tabIndex={clickable ? 0 : undefined}
-      onClick={onClick}
-      onKeyDown={(e) => {
-        if (!clickable) return;
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onClick?.();
-        }
-      }}
-      className={cn(
-        isInteractive && "group",
-        //  토큰 기반: 배경/보더/텍스트
-        "rounded-3xl border bg-card text-card-foreground p-4 transition",
-        // border 색을 토큰으로 (없으면 border-border로 fallback)
-        "border-[color:var(--fowin-border,theme(colors.border))]",
-
-        //  기본 카드 shadow (토큰)
-        "[box-shadow:var(--fowin-shadow-card)]",
-
-        //  hover (토큰) - 인터랙티브한 카드만
-        isInteractive &&
-          "cursor-pointer hover:border-[color:var(--fowin-border-hover)] hover:[box-shadow:var(--fowin-shadow-card-hover)] hover:-translate-y-[1px]",
-
-        //  focus (토큰): 카드 기본 그림자 + 링을 동시에
-        clickable &&
-          "focus-visible:outline-none focus-visible:[box-shadow:var(--fowin-shadow-card),var(--fowin-ring)]",
-
-        className
-      )}
-    >
-      <div className="flex items-start gap-3">{children}</div>
-    </div>
-  );
-}
 
 type SlotProps = {
   children: React.ReactNode;
@@ -73,6 +44,115 @@ type IconProps = {
   iconClassName?: string;
 };
 
+type HeaderProps = {
+  title: React.ReactNode;
+  tags?: React.ReactNode;
+  actions?: React.ReactNode;
+  className?: string;
+};
+
+type FooterProps = {
+  left?: React.ReactNode;
+  right?: React.ReactNode;
+  className?: string;
+};
+
+type MetaProps = {
+  icon?: React.ReactNode;
+  label?: React.ReactNode;
+  value: React.ReactNode;
+  tone?: "muted" | "default";
+  className?: string;
+};
+
+type StagePillProps = {
+  children: React.ReactNode;
+  variant?: "blue" | "slate" | "emerald" | "red";
+  className?: string;
+};
+
+type ScheduleMetaProps = {
+  value: React.ReactNode;
+  status?: "default" | "imminent" | "overdue";
+  icon?: React.ReactNode;
+  className?: string;
+};
+// #endregion
+
+// #region Helpers
+function isFromInteractiveElement(target: EventTarget | null) {
+  const el = target as HTMLElement | null;
+  if (!el) return false;
+
+  // 기본 인터랙티브 요소 + role/button + 커스텀 가드용 data attribute
+  return !!el.closest(
+    "button, a, input, textarea, select, [role='button'], [data-card-interactive]"
+  );
+}
+// #endregion
+
+// #region Root
+function Root({
+  children,
+  className,
+  interactive,
+  onClick,
+  onDoubleClick,
+  preventInteractiveClick = true,
+}: WorkItemCardRootProps) {
+  const clickable = !!onClick; // 실제 버튼 역할은 onClick 있을 때만
+  const dblClickable = !!onDoubleClick;
+  const isInteractive = clickable || dblClickable || !!interactive;
+
+  return (
+    <div
+      role={clickable ? "button" : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onClick={(e) => {
+        if (!onClick) return;
+        if (preventInteractiveClick && isFromInteractiveElement(e.target)) return;
+        onClick();
+      }}
+      onDoubleClick={(e) => {
+        if (!onDoubleClick) return;
+        if (preventInteractiveClick && isFromInteractiveElement(e.target)) return;
+        onDoubleClick();
+      }}
+      onKeyDown={(e) => {
+        if (!clickable) return;
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick?.();
+        }
+      }}
+      className={cn(
+        isInteractive && "group",
+        // 토큰 기반: 배경/보더/텍스트
+        "rounded-3xl border bg-card text-card-foreground p-4 transition",
+        // border 색을 토큰으로 (없으면 border-border로 fallback)
+        "border-[color:var(--fowin-border,theme(colors.border))]",
+
+        // 기본 카드 shadow (토큰)
+        "[box-shadow:var(--fowin-shadow-card)]",
+
+        // hover (토큰) - 인터랙티브한 카드만
+        isInteractive &&
+          "cursor-pointer hover:border-[color:var(--fowin-border-hover)] hover:[box-shadow:var(--fowin-shadow-card-hover)] hover:-translate-y-[1px]",
+
+        // focus (토큰): 카드 기본 그림자 + 링을 동시에
+        clickable &&
+          "focus-visible:outline-none focus-visible:[box-shadow:var(--fowin-shadow-card),var(--fowin-ring)]",
+
+        className
+      )}
+    >
+      <div className="flex items-start gap-3">{children}</div>
+    </div>
+  );
+}
+// #endregion
+
+// #region Icon
 function Icon({ children, className, variant = "primary", iconClassName }: IconProps) {
   const v =
     variant === "danger"
@@ -81,19 +161,19 @@ function Icon({ children, className, variant = "primary", iconClassName }: IconP
           hover: "group-hover:border-red-300",
         }
       : variant === "warning"
-      ? {
-          base: "bg-orange-50 border-orange-200 text-orange-600",
-          hover: "group-hover:border-orange-300",
-        }
-      : variant === "slate"
-      ? {
-          base: "bg-muted border-border text-muted-foreground",
-          hover: "group-hover:border-slate-300 dark:group-hover:border-slate-600",
-        }
-      : {
-          base: "bg-blue-50 border-blue-200 text-blue-600",
-          hover: "group-hover:border-blue-300",
-        };
+        ? {
+            base: "bg-orange-50 border-orange-200 text-orange-600",
+            hover: "group-hover:border-orange-300",
+          }
+        : variant === "slate"
+          ? {
+              base: "bg-muted border-border text-muted-foreground",
+              hover: "group-hover:border-slate-300 dark:group-hover:border-slate-600",
+            }
+          : {
+              base: "bg-blue-50 border-blue-200 text-blue-600",
+              hover: "group-hover:border-blue-300",
+            };
 
   return (
     <div
@@ -108,14 +188,9 @@ function Icon({ children, className, variant = "primary", iconClassName }: IconP
     </div>
   );
 }
+// #endregion
 
-type HeaderProps = {
-  title: React.ReactNode;
-  tags?: React.ReactNode;
-  actions?: React.ReactNode;
-  className?: string;
-};
-
+// #region Header
 function Header({ title, tags, actions, className }: HeaderProps) {
   return (
     <div className={cn("flex items-center justify-between gap-3", className)}>
@@ -136,17 +211,15 @@ function Header({ title, tags, actions, className }: HeaderProps) {
     </div>
   );
 }
+// #endregion
 
+// #region Body
 function Body({ children, className }: SlotProps) {
   return <div className={cn("my-2", className)}>{children}</div>;
 }
+// #endregion
 
-type FooterProps = {
-  left?: React.ReactNode;
-  right?: React.ReactNode;
-  className?: string;
-};
-
+// #region Footer
 function Footer({ left, right, className }: FooterProps) {
   if (!left && !right) return null;
 
@@ -157,15 +230,9 @@ function Footer({ left, right, className }: FooterProps) {
     </div>
   );
 }
+// #endregion
 
-type MetaProps = {
-  icon?: React.ReactNode;
-  label?: React.ReactNode;
-  value: React.ReactNode;
-  tone?: "muted" | "default";
-  className?: string;
-};
-
+// #region Meta
 function Meta({ icon, label, value, tone = "muted", className }: MetaProps) {
   return (
     <div
@@ -181,22 +248,18 @@ function Meta({ icon, label, value, tone = "muted", className }: MetaProps) {
     </div>
   );
 }
+// #endregion
 
-type StagePillProps = {
-  children: React.ReactNode;
-  variant?: "blue" | "slate" | "emerald" | "red";
-  className?: string;
-};
-
+// #region StagePill
 function StagePill({ children, variant = "slate", className }: StagePillProps) {
   const v =
     variant === "blue"
       ? "bg-blue-50 border-blue-100 text-blue-700"
       : variant === "emerald"
-      ? "bg-emerald-50 border-emerald-100 text-emerald-700"
-      : variant === "red"
-      ? "bg-red-50 border-red-100 text-red-700"
-      : "bg-muted border-border text-muted-foreground";
+        ? "bg-emerald-50 border-emerald-100 text-emerald-700"
+        : variant === "red"
+          ? "bg-red-50 border-red-100 text-red-700"
+          : "bg-muted border-border text-muted-foreground";
 
   return (
     <span
@@ -210,21 +273,16 @@ function StagePill({ children, variant = "slate", className }: StagePillProps) {
     </span>
   );
 }
+// #endregion
 
-type ScheduleMetaProps = {
-  value: React.ReactNode;
-  status?: "default" | "imminent" | "overdue";
-  icon?: React.ReactNode;
-  className?: string;
-};
-
+// #region ScheduleMeta
 function ScheduleMeta({ value, status = "default", icon, className }: ScheduleMetaProps) {
   const color =
     status === "overdue"
       ? "text-red-500"
       : status === "imminent"
-      ? "text-orange-600"
-      : "text-blue-600";
+        ? "text-orange-600"
+        : "text-blue-600";
 
   return (
     <div className={cn("text-xs font-semibold flex items-center gap-1", color, className)}>
@@ -233,6 +291,7 @@ function ScheduleMeta({ value, status = "default", icon, className }: ScheduleMe
     </div>
   );
 }
+// #endregion
 
 export const WorkItemCard = Object.assign(Root, {
   Icon,

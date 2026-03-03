@@ -1,5 +1,7 @@
 // server/modules/crm/sale/sale.router.ts
 
+// #region Imports
+
 import { protectedProcedure, router } from "../../../core/trpc";
 import { svcCtxFromTrpc } from "../../../core/svcCtx";
 
@@ -18,6 +20,10 @@ import {
 } from "./sale.dto";
 
 import { saleService } from "./sale.service";
+
+// #endregion
+
+// #region Router
 
 export const saleRouter = router({
   list: protectedProcedure
@@ -55,3 +61,5 @@ export const saleRouter = router({
     .output(SaleTranscribeOutput)
     .mutation(({ ctx, input }) => saleService.transcribe(svcCtxFromTrpc(ctx), input)),
 });
+
+// #endregion

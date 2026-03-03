@@ -7,8 +7,8 @@ import { getDb } from "../../../core/db";
 import { normalizePage } from "../shared/pagination";
 import { withCreateAudit, withUpdateAudit } from "../shared/audit";
 
-import type { ScheduleCreatePayload, ScheduleSort, ScheduleUpdatePayload } from "./schedule.dto";
-import { scheduleRepo, type ScheduleUpdate } from "./schedule.repo";
+import type { ScheduleCreatePayload, ScheduleSort, ScheduleTabKey, ScheduleUpdatePayload } from "./schedule.dto";
+import { scheduleRepo, type ScheduleUpdate, type TabFilter } from "./schedule.repo";
 // #endregion
 
 // #region Helpers
@@ -29,6 +29,16 @@ function moneyToDecimalStringOrNull(v: number | null | undefined): string | null
   if (v === null) return null;
   return v.toFixed(2);
 }
+
+function computeKstTodayMidnightDate(nowMs: number) {
+  const kstNow = new Date(nowMs + 9 * 60 * 60 * 1000);
+  const y = kstNow.getUTCFullYear();
+  const m = kstNow.getUTCMonth();
+  const d = kstNow.getUTCDate();
+  // KST 00:00 == UTC 전날 15:00
+  const kstMidnightUtcMs = Date.UTC(y, m, d) - 9 * 60 * 60 * 1000;
+  return new Date(kstMidnightUtcMs);
+}
 // #endregion
 
 export const scheduleService = {
@@ -36,33 +46,86 @@ export const scheduleService = {
   async listSchedules(ctx: ServiceCtx, input?: any) {
     const db = getDb();
 
-    const fallbackLimit = input?.limit;
-    const page = normalizePage(input?.page ?? { limit: fallbackLimit ?? 20, offset: 0 });
+    const nowMs = Date.now();
+    const now = new Date(nowMs);
+    const kstMidnight = computeKstTodayMidnightDate(nowMs);
+    const imminentEnd = new Date(nowMs + 48 * 60 * 60 * 1000);
+
+    const tabType: ScheduleTabKey = input?.tab ?? "all";
+    const tab: TabFilter = { type: tabType, now, kstMidnight, imminentEnd };
+
+    const page = normalizePage(input?.page ?? { limit: 20, offset: 0 });
 
     const sort: ScheduleSort | undefined = input?.sort
       ? { field: input.sort.field, dir: input.sort.dir }
       : undefined;
 
+    // ✅ limit+1 로 조회해서 hasMore 판정
     const rows = await scheduleRepo.list(
       { db },
       {
         comp_idno: ctx.comp_idno,
-        stat_code: input?.stat_code,
-        upcoming: input?.upcoming,
-
-        limit: page.limit,
+        tab,
+        limit: page.limit + 1,
         offset: page.offset,
         sort,
-        onlyEnabled: true,
       }
     );
 
     const hasMore = rows.length > page.limit;
+    const items = hasMore ? rows.slice(0, page.limit) : rows;
+
+    // ✅ 서버에서 overdue/imminent 플래그 계산 후 주입
+    const enhanced = items.map((row) => ({
+      ...row,
+      overdue: row.stat_code === "scheduled" && row.sche_date < kstMidnight,
+      imminent:
+        row.stat_code === "scheduled" && row.sche_date >= now && row.sche_date < imminentEnd,
+    }));
 
     return {
-      items: hasMore ? rows.slice(0, page.limit) : rows,
+      items: enhanced,
       page: { ...page, hasMore },
     };
+  },
+  // #endregion
+
+  // #region statsSchedules
+  async statsSchedules(ctx: ServiceCtx) {
+    const db = getDb();
+
+    const nowMs = Date.now();
+    const now = new Date(nowMs);
+    const imminentEnd = new Date(nowMs + 48 * 60 * 60 * 1000);
+
+    const kstTodayMidnight = computeKstTodayMidnightDate(nowMs);
+
+    // base status counts
+    const byStatus = await scheduleRepo.countByStatus(
+      { db },
+      { comp_idno: ctx.comp_idno, onlyEnabled: true }
+    );
+
+    // time-based counts (scheduled only)
+    const overdue = await scheduleRepo.countScheduledBefore(
+      { db },
+      { comp_idno: ctx.comp_idno, before: kstTodayMidnight, onlyEnabled: true }
+    );
+
+    const imminent = await scheduleRepo.countScheduledBetween(
+      { db },
+      { comp_idno: ctx.comp_idno, from: now, to: imminentEnd, onlyEnabled: true }
+    );
+
+    const scheduledTotal = byStatus.scheduled ?? 0;
+    const completed = byStatus.completed ?? 0;
+    const canceled = byStatus.canceled ?? 0;
+
+    // UI 정책: "예정" 탭 = scheduled 중 overdue/imminent 제외
+    const scheduled = Math.max(0, scheduledTotal - overdue - imminent);
+    const all = scheduledTotal + completed + canceled;
+
+    return { all, imminent, overdue, scheduled, completed, canceled };
   },
   // #endregion
 
@@ -80,7 +143,7 @@ export const scheduleService = {
     const data = withCreateAudit(ctx, {
       comp_idno: ctx.comp_idno,
 
-      //  현재 정책: 담당자 = 자기 자신
+      // 현재 정책: 담당자 = 자기 자신
       owne_idno: ctx.user_idno,
 
       sale_idno: input.sale_idno,
@@ -108,7 +171,7 @@ export const scheduleService = {
   async updateSchedule(ctx: ServiceCtx, sche_idno: number, patch: ScheduleUpdatePayload) {
     const db = getDb();
 
-    //  TS 에러 방지: union(spread) 금지, 안전 빌드
+    // TS 에러 방지: union(spread) 금지, 안전 빌드
     const data: ScheduleUpdate = {};
 
     if (patch.sche_name !== undefined) data.sche_name = patch.sche_name;

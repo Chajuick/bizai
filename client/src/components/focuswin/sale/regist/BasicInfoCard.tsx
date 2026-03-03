@@ -3,14 +3,14 @@ import UiCard from "../../common/info-card";
 import UiField from "../../common/ui-field";
 import { Input } from "@/components/focuswin/common/ui/input";
 import ClientNameInput from "@/components/ClientNameInput";
-import type { SalesLogFormState } from "@/types/salesLog";
+import type { SaleFormState } from "@/types/sale";
 
 export default function SaleRegistBasicInfoCard({
   form,
   setForm,
 }: {
-  form: SalesLogFormState;
-  setForm: React.Dispatch<React.SetStateAction<SalesLogFormState>>;
+  form: SaleFormState;
+  setForm: React.Dispatch<React.SetStateAction<SaleFormState>>;
 }) {
   return (
     <UiCard title="기본 정보" desc="필수는 아니지만, 입력하면 검색/정리가 훨씬 쉬워져요." icon={Building2}>
@@ -19,7 +19,7 @@ export default function SaleRegistBasicInfoCard({
           <ClientNameInput
             value={form.clie_name}
             clientId={form.clie_idno}
-            onChange={(name, id) => setForm((f: SalesLogFormState) => ({ ...f, clie_name: name, clie_idno: id }))}
+            onChange={(name, id) => setForm((f: SaleFormState) => ({ ...f, clie_name: name, clie_idno: id }))}
             placeholder="(주)삼성전자"
           />
         </UiField>
@@ -27,7 +27,7 @@ export default function SaleRegistBasicInfoCard({
         <UiField label="담당자">
           <Input
             value={form.cont_name}
-            onChange={(e) => setForm((f: SalesLogFormState) => ({ ...f, cont_name: e.target.value }))}
+            onChange={(e) => setForm((f: SaleFormState) => ({ ...f, cont_name: e.target.value }))}
             placeholder="홍길동 부장"
             className="rounded-2xl bg-white border-slate-200 focus-visible:ring-2 focus-visible:ring-blue-200"
           />
@@ -37,7 +37,7 @@ export default function SaleRegistBasicInfoCard({
           <Input
             type="datetime-local"
             value={form.vist_date}
-            onChange={(e) => setForm((f: SalesLogFormState) => ({ ...f, vist_date: e.target.value }))}
+            onChange={(e) => setForm((f: SaleFormState) => ({ ...f, vist_date: e.target.value }))}
             className="rounded-2xl bg-white border-slate-200 focus-visible:ring-2 focus-visible:ring-blue-200"
           />
         </UiField>
@@ -45,7 +45,7 @@ export default function SaleRegistBasicInfoCard({
         <UiField label="장소 (선택)">
           <Input
             value={form.sale_loca}
-            onChange={(e) => setForm((f: SalesLogFormState) => ({ ...f, sale_loca: e.target.value }))}
+            onChange={(e) => setForm((f: SaleFormState) => ({ ...f, sale_loca: e.target.value }))}
             placeholder="서울 강남구"
             className="rounded-2xl bg-white border-slate-200 focus-visible:ring-2 focus-visible:ring-blue-200"
           />

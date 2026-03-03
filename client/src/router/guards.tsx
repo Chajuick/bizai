@@ -5,8 +5,8 @@ import AppLayout from "@/components/AppLayout";
 import DashboardHome from "@/pages/dashboard/DashboardHome";
 import SaleListPage from "@/pages/sale/SaleListPage";
 import SaleDetailPage from "@/pages/sale/SaleDetailPage";
-import SaleRegist from "@/pages/sale/SaleRegist";
-import ScheduleList from "@/pages/schedule/ScheduleList";
+import SaleRegistPage from "@/pages/sale/SaleRegistPage";
+import ScheduleListPage from "@/pages/schedule/ScheduleListPage";
 import OrderList from "@/pages/order/OrderList";
 import ShipmentList from "@/pages/shipment/ShipmentList";
 import ClientList from "@/pages/client/ClientList";
@@ -27,9 +27,9 @@ export function AppGuard() {
       <Switch>
         <Route path="/" component={DashboardHome} />
         <Route path="/sale-list" component={SaleListPage} />
-        <Route path="/sale-list/regi" component={SaleRegist} />
+        <Route path="/sale-list/regi" component={SaleRegistPage} />
         <Route path="/sale-list/:id" component={SaleDetailPage} />
-        <Route path="/sche-list" component={ScheduleList} />
+        <Route path="/sche-list" component={ScheduleListPage} />
         <Route path="/orde-list" component={OrderList} />
         <Route path="/ship-list" component={ShipmentList} />
         <Route path="/clie-list" component={ClientList} />

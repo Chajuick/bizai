@@ -1,0 +1,1 @@
+ALTER TABLE `COAPP_CRM_SCHEDULE` ADD `aiex_keys` varchar(64);

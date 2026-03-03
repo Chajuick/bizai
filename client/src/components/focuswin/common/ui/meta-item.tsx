@@ -1,6 +1,6 @@
-import React from "react";
+// #region Tone
 
-type Tone = "blue" | "sky" | "amber" | "violet" | "slate";
+export type Tone = "blue" | "sky" | "amber" | "violet" | "slate";
 
 const toneStyles: Record<
   Tone,
@@ -13,33 +13,41 @@ const toneStyles: Record<
   slate: { bg: "bg-slate-50", bd: "border-slate-200", fg: "text-slate-700" },
 };
 
+// #endregion
+
 export default function MetaItem({
   icon: Icon,
   label,
   value,
   tone = "blue",
+  href,
 }: {
   icon: React.ElementType;
   label: string;
   value: React.ReactNode;
   tone?: Tone;
+  href?: string;
 }) {
   const styles = toneStyles[tone];
+  const ValueTag: any = href ? "a" : "p";
 
   return (
     <div className="flex items-start gap-3">
-      <div
-        className={[
-          "w-10 h-10 rounded-2xl border flex items-center justify-center shrink-0",
-          styles.bg,
-          styles.bd,
-        ].join(" ")}
-      >
+      <div className={["w-10 h-10 rounded-2xl border flex items-center justify-center shrink-0", styles.bg, styles.bd].join(" ")}>
         <Icon size={16} className={styles.fg} />
       </div>
+
       <div className="min-w-0">
         <p className="text-xs font-semibold text-slate-500">{label}</p>
-        <p className="text-sm font-bold text-slate-900 truncate">{value}</p>
+        <ValueTag
+          className={[
+            "text-sm font-bold text-slate-900 truncate",
+            href ? "hover:underline underline-offset-4" : "",
+          ].join(" ")}
+          href={href}
+        >
+          {value}
+        </ValueTag>
       </div>
     </div>
   );

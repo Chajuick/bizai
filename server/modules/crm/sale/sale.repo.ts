@@ -1,5 +1,7 @@
 // server/modules/crm/sale/sale.repo.ts
 
+// #region Imports
+
 import { and, asc, desc, eq, like } from "drizzle-orm";
 import { escapeLike } from "../shared/like";
 import {
@@ -11,6 +13,10 @@ import {
 
 import { getInsertId } from "../../../core/db";
 import type { DbClient } from "../../../core/db";
+
+// #endregion
+
+// #region Types
 
 type SaleRepoDeps = { db: DbClient };
 
@@ -36,7 +42,13 @@ export type ListSalesArgs = {
   sort_dir: "asc" | "desc";
 };
 
+// #endregion
+
+// #region Repo
+
 export const saleRepo = {
+  // #region Sales
+
   async list(deps: SaleRepoDeps, args: ListSalesArgs) {
     const { db } = deps;
 
@@ -105,8 +117,10 @@ export const saleRepo = {
       );
   },
 
-  //  soft delete
-  async remove(deps: SaleRepoDeps, args: { comp_idno: number; owne_idno: number; sale_idno: number; data: Partial<InsertSale> }) {
+  async remove(
+    deps: SaleRepoDeps,
+    args: { comp_idno: number; owne_idno: number; sale_idno: number; data: Partial<InsertSale> }
+  ) {
     await deps.db
       .update(CRM_SALE)
       .set(args.data)
@@ -119,6 +133,10 @@ export const saleRepo = {
         )
       );
   },
+
+  // #endregion
+
+  // #region Attachments
 
   async listAttachments(deps: SaleRepoDeps, args: { comp_idno: number; sale_idno: number }) {
     const rows = await deps.db
@@ -145,6 +163,10 @@ export const saleRepo = {
     }));
   },
 
+  // #endregion
+
+  // #region Audio Jobs
+
   async getAudioJobByRef(deps: SaleRepoDeps, args: { comp_idno: number; sale_idno: number; file_idno: number }) {
     const rows = await deps.db
       .select()
@@ -166,18 +188,59 @@ export const saleRepo = {
     return { jobs_idno: getInsertId(res) };
   },
 
-  async updateAudioJob(
-    deps: SaleRepoDeps,
-    args: { jobs_idno: number; data: Partial<InsertSaleAudioJob> }
-  ): Promise<void> {
-    await deps.db
-      .update(CRM_SALE_AUDIO_JOB)
-      .set(args.data)
-      .where(eq(CRM_SALE_AUDIO_JOB.jobs_idno, args.jobs_idno));
+  async updateAudioJob(deps: SaleRepoDeps, args: { jobs_idno: number; data: Partial<InsertSaleAudioJob> }): Promise<void> {
+    await deps.db.update(CRM_SALE_AUDIO_JOB).set(args.data).where(eq(CRM_SALE_AUDIO_JOB.jobs_idno, args.jobs_idno));
   },
+
+  // #endregion
+
+  // #region Schedules
 
   async createSchedule(deps: SaleRepoDeps, data: InsertSchedule) {
     const res = await deps.db.insert(CRM_SCHEDULE).values(data);
     return { sche_idno: getInsertId(res) };
   },
+
+  /** ✅ 상세에서 sale_idno 기준으로 일정 목록 내려주기 */
+  async listSchedulesBySale(
+    deps: SaleRepoDeps,
+    args: { comp_idno: number; owne_idno: number; sale_idno: number }
+  ) {
+    return deps.db
+      .select()
+      .from(CRM_SCHEDULE)
+      .where(
+        and(
+          eq(CRM_SCHEDULE.comp_idno, args.comp_idno),
+          eq(CRM_SCHEDULE.owne_idno, args.owne_idno),
+          eq(CRM_SCHEDULE.sale_idno, args.sale_idno),
+          eq(CRM_SCHEDULE.enab_yesn, true)
+        )
+      )
+      .orderBy(asc(CRM_SCHEDULE.sche_date), asc(CRM_SCHEDULE.sche_idno));
+  },
+
+  /** ✅ analyze에서 aiex_keys 중복 방지 */
+  async findScheduleByAiKey(
+    deps: SaleRepoDeps,
+    args: { comp_idno: number; sale_idno: number; aiex_keys: string }
+  ) {
+    const rows = await deps.db
+      .select()
+      .from(CRM_SCHEDULE)
+      .where(
+        and(
+          eq(CRM_SCHEDULE.comp_idno, args.comp_idno),
+          eq(CRM_SCHEDULE.sale_idno, args.sale_idno),
+          eq(CRM_SCHEDULE.aiex_keys, args.aiex_keys)
+        )
+      )
+      .limit(1);
+
+    return rows[0] ?? null;
+  },
+
+  // #endregion
 } as const;
+
+// #endregion

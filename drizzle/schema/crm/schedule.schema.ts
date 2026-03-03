@@ -7,7 +7,7 @@ import type { ActionOwner } from "../common/enums";
 export const CRM_SCHEDULE = table(
   "CRM_SCHEDULE",
   {
-    sche_idno: int("sche_idno").autoincrement().primaryKey(),        // 약속 PK
+    sche_idno: int("sche_idno").autoincrement().primaryKey(),       // 일정 PK
     ...companyCols(),                                               // comp_idno (회사 키)
 
     owne_idno: int("owne_idno").notNull(),                          // 소유자/담당자 user_idno
@@ -24,6 +24,7 @@ export const CRM_SCHEDULE = table(
     actn_ownr: varchar("actn_ownr", { length: 16 }).$type<ActionOwner>(), // 수행 주체: self/client/shared
     remd_sent: boolean("remd_sent").default(false).notNull(),       // 리마인드 발송 여부
     auto_gene: boolean("auto_gene").default(false).notNull(),       // AI 자동 생성 여부
+    aiex_keys: varchar("aiex_keys", { length: 64 }),                // 자동생성한 AI 키 (영업테이블 AIEX_TEXT 내부 데이터와 연동)
 
     enab_yesn: boolean("enab_yesn").default(true).notNull(),        // 활성 여부
 

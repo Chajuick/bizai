@@ -1,19 +1,15 @@
-import { useSaleRegistViewModel } from "@/hooks/focuswin/sale/useSaleRegistViewModel";
+import { useSaleRegistVM } from "@/hooks/focuswin/sale/useSaleRegistVM";
 import SaleRegistVoiceCard from "./SaleRegistVoiceCard";
 import SaleRegistBasicInfoCard from "./BasicInfoCard";
 import SaleRegistContentCard from "./SaleRegistContentCard";
 
 type Props = {
-  vm: ReturnType<typeof useSaleRegistViewModel>;
+  vm: ReturnType<typeof useSaleRegistVM>;
 };
 
 export default function SaleRegistContent({ vm }: Props) {
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        vm.submit(false);
-      }}
+    <div
       className="space-y-4"
     >
       <SaleRegistVoiceCard
@@ -27,6 +23,6 @@ export default function SaleRegistContent({ vm }: Props) {
         rawContent={vm.form.orig_memo}
         onChangeRaw={(v) => vm.setForm((f) => ({ ...f, orig_memo: v }))}
       />
-    </form>
+    </div>
   );
 }

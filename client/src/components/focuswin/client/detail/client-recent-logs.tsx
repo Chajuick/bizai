@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { BookOpen, ChevronRight } from "lucide-react";
 import { WorkItemCard } from "@/components/focuswin/common/work-item-card";
-import type { SalesLogRow } from "@/types/salesLog";
+import type { SalesLogRow } from "@/types/sale";
 
 export default function ClientRecentLogs({
   logs,

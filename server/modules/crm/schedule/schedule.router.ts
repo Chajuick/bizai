@@ -10,6 +10,7 @@ import {
   ScheduleIdInput,
   ScheduleListInput,
   ScheduleListOutput,
+  ScheduleStatsOutput,
   ScheduleUpdateInput,
 } from "./schedule.dto";
 
@@ -23,6 +24,12 @@ export const scheduleRouter = router({
     .input(ScheduleListInput)
     .output(ScheduleListOutput)
     .query(({ ctx, input }) => scheduleService.listSchedules(svcCtxFromTrpc(ctx), input ?? undefined)),
+  // #endregion
+
+  // #region stats
+  stats: protectedProcedure
+    .output(ScheduleStatsOutput)
+    .query(({ ctx }) => scheduleService.statsSchedules(svcCtxFromTrpc(ctx))),
   // #endregion
 
   // #region get

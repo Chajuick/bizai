@@ -2,7 +2,7 @@ import * as React from "react";
 import { BookOpen, Brain, ChevronRight, MapPin } from "lucide-react";
 import { WorkItemCard } from "@/components/focuswin/common/work-item-card"; // 경로 맞게
 import Chip from "../../common/ui/chip";
-import type { SalesLogRow } from "@/types/salesLog";
+import type { SalesLogRow } from "@/types/sale";
 
 export default function SaleListCard({
   log,

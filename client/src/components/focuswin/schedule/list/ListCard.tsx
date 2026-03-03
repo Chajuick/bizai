@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Calendar, CheckCircle, Clock, Edit2, MoreHorizontal, ShoppingCart, Trash2, XCircle } from "lucide-react";
-import type { EnhancedPromise } from "@/types/promise";
+import type { EnhancedSchedule } from "@/types/schedule";
 
 import { WorkItemCard } from "@/components/focuswin/common/work-item-card";
 import StatusBadge from "@/components/StatusBadge";
@@ -11,22 +11,20 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 
 type EffectiveStatus = "scheduled" | "completed" | "canceled" | "overdue" | "imminent";
 
-export default function PromiseCard({
+export default function ScheduleListCard({
   p,
   onCreateOrder,
-  onComplete,
   onEdit,
   onCancelRequest,
   onDeleteRequest,
-  completePending,
+  onCompleteRequest,
 }: {
-  p: EnhancedPromise;
-  onCreateOrder: (p: EnhancedPromise) => void;
-  onComplete: (id: number) => void;
-  onEdit: (p: EnhancedPromise) => void;
-  onCancelRequest: (p: EnhancedPromise) => void;
-  onDeleteRequest: (p: EnhancedPromise) => void;
-  completePending?: boolean;
+  p: EnhancedSchedule;
+  onCreateOrder: (p: EnhancedSchedule) => void;
+  onEdit: (p: EnhancedSchedule) => void;
+  onCancelRequest: (p: EnhancedSchedule) => void;
+  onDeleteRequest: (p: EnhancedSchedule) => void;
+  onCompleteRequest: (p: EnhancedSchedule) => void;
 }) {
   const isScheduled = p.stat_code === "scheduled";
 
@@ -35,7 +33,7 @@ export default function PromiseCard({
   const iconVariant = p.overdue ? "danger" : p.imminent ? "warning" : "primary";
 
   return (
-    <WorkItemCard interactive className="pr-3">
+    <WorkItemCard interactive className="pr-3" onDoubleClick={() => onEdit(p)}>
       {/* LEFT ICON */}
       <WorkItemCard.Icon variant={iconVariant}>
         <Calendar size={18} />
@@ -57,7 +55,7 @@ export default function PromiseCard({
                     <ShoppingCart size={16} className="text-slate-700" />
                   </IconButton>
 
-                  <IconButton title="완료" onClick={() => onComplete(p.sche_idno)} disabled={!!completePending}>
+                  <IconButton title="완료" onClick={() => onCompleteRequest(p)}>
                     <CheckCircle size={16} className="text-emerald-600" />
                   </IconButton>
                 </>

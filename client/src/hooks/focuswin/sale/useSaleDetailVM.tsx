@@ -1,92 +1,98 @@
 // src/hooks/focuswin/sale/useSaleDetailVM.tsx
 
-import { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
-import type { PageStatus } from "@/components/focuswin/common/page-scaffold";
+import type { AiCore, AiCorePricing } from "@/types/ai";
+import type { PageInvalidState, PageStatus } from "@/components/focuswin/common/page-scaffold";
 import type { ConfirmState } from "@/components/focuswin/common/confirm-action-dialog";
-import type { SalesLogEditForm } from "@/types/salesLog";
+import type { SaleEditForm } from "@/types/sale";
 
 import ConfirmActionDialog from "@/components/focuswin/common/confirm-action-dialog";
 import PostAnalyzeClientModal from "@/components/focuswin/sale/common/PostAnalyzeClientModal";
+import { useSaleAiClientLinkFlow } from "./useSaleAiClientLinkFlow";
 
-import { Check, Loader2, Pencil, Sparkles, Trash2, XCircle } from "lucide-react";
-
+import { BookMarked, Check, List, Loader2, Pencil, Plus, Sparkles, Trash2, XCircle } from "lucide-react";
 
 // #region Types
 
 type BannerState = "idle" | "pending" | "success" | "error";
 
-// TODO: 기존에 쓰던 PostAnalyzeClientState 타입이 있으면 any 제거 추천
-type PostAnalyzeClientState = any;
+export type AiActionUI = {
+  key: string;
+  title: string;
+  date: string | null;
+  desc: string;
+  action_owner: "self" | "client" | "shared";
+
+  status: "created" | "pending" | "no-date";
+  sche_idno?: number;
+};
 
 // #endregion
 
-
-// #region ViewModel
-
 export function useSaleDetailVM(logId: number) {
-
   // #region Router / Utils
 
   const [, navigate] = useLocation();
   const utils = trpc.useUtils();
 
   const goList = () => navigate("/sale-list");
-
-  const goKeywordSearch = (kw: string) => {
-    navigate(`/sale-list?search=${encodeURIComponent(kw)}`);
-  };
+  const goKeywordSearch = (kw: string) => navigate(`/sale-list?search=${encodeURIComponent(kw)}`);
+  const goScheduleDetail = (sche_idno: number) => navigate(`/schedule/${sche_idno}`);
 
   // #endregion
 
+  // #region Queries / Mutations
 
-  // #region Data
-
-  const { data: log, isLoading } = trpc.crm.sale.get.useQuery(
+  const saleGet = trpc.crm.sale.get.useQuery(
     { sale_idno: logId },
     { enabled: Number.isFinite(logId) }
   );
-
-  // #endregion
-
-
-  // #region Mutations
 
   const analyze = trpc.crm.sale.analyze.useMutation();
   const del = trpc.crm.sale.delete.useMutation();
   const update = trpc.crm.sale.update.useMutation();
 
+  // 공용 훅: AI 분석 후 고객사 연결 플로우
+  const aiLink = useSaleAiClientLinkFlow();
+
   // #endregion
 
-
-  // #region Local State
+  // #region State
 
   const [isEditing, setIsEditing] = useState(false);
   const [confirm, setConfirm] = useState<ConfirmState>(null);
-  const [postAnalyzeClientState, setPostAnalyzeClientState] = useState<PostAnalyzeClientState>(null);
 
-  const [editForm, setEditForm] = useState<SalesLogEditForm>({
+  const [editForm, setEditForm] = useState<SaleEditForm>({
     clie_name: "",
     clie_idno: undefined,
     cont_name: "",
+    cont_role: "",
+    cont_tele: "",
+    cont_mail: "",
     sale_loca: "",
     vist_date: "",
+    sale_pric: undefined,
     orig_memo: "",
   });
 
   // #endregion
 
+  // #region Derived (Base)
 
-  // #region Derived
+  const log = saleGet.data ?? null;
+  const isLoading = saleGet.isLoading;
 
   const title = useMemo(() => log?.sale.clie_name || "영업일지", [log?.sale.clie_name]);
+  const status: PageStatus = isLoading ? "loading" : !log ? "empty" : "ready";
 
   const visitedLabel = useMemo(() => {
     if (!log?.sale.vist_date) return "";
     return new Date(log.sale.vist_date).toLocaleString("ko-KR", {
+      timeZone: "UTC",
       month: "short",
       day: "numeric",
       hour: "2-digit",
@@ -94,9 +100,170 @@ export function useSaleDetailVM(logId: number) {
     });
   }, [log?.sale.vist_date]);
 
-  const status: PageStatus = isLoading ? "loading" : !log ? "empty" : "ready";
+  const invalidState = useMemo(() => {
+    if (isLoading || log) return null;
 
-  // 배너 (분석 mutation 상태로 표시)
+    return {
+      replacePage: true,
+      icon: <BookMarked size={24} />,
+      title: "영업일지",
+      actions: [
+        {
+          label: "목록으로",
+          icon: <List size={16} />,
+          onClick: goList,
+        },
+        {
+          label: "새로 작성",
+          icon: <Plus size={16} />,
+          href: "/sale-list/regi",
+        },
+      ],
+    } satisfies PageInvalidState;
+  }, [isLoading, log, goList]);
+
+  // #endregion
+
+  // #region Derived (AI summary/core)
+
+  const ai = useMemo(() => {
+    const core = (log?.sale.aiex_core ?? null) as AiCore | null;
+
+    return {
+      summary: log?.sale.aiex_summ ?? null,
+      core,
+
+      pricing: (core?.pricing ?? null) as AiCorePricing,
+      appointments: core?.appointments ?? [],
+      notes: core?.notes?.trim() ? core.notes.trim() : null,
+    };
+  }, [log?.sale.aiex_summ, log?.sale.aiex_core]);
+
+  // #endregion
+
+  // #region Derived (AI actions → schedule matching)
+
+  const aiActions: AiActionUI[] = useMemo(() => {
+    const core = log?.sale.aiex_core;
+    if (!core) return [];
+
+    const schedules = log?.schedules ?? [];
+
+    return core.appointments.map((a) => {
+      // key는 서버에서 내려오는 appointment.key 사용 (필수)
+      const key = a.key;
+
+      if (!a.date) {
+        return {
+          ...a,
+          key,
+          status: "no-date",
+        };
+      }
+
+      const matched = schedules.find((s) => s.aiex_keys === key);
+
+      if (matched) {
+        return {
+          ...a,
+          key,
+          status: "created",
+          sche_idno: matched.sche_idno,
+        };
+      }
+
+      return {
+        ...a,
+        key,
+        status: "pending",
+      };
+    });
+  }, [log]);
+
+  // #endregion
+
+  // #region Effects (server → edit form)
+
+  useEffect(() => {
+    if (!log) return;
+
+    setEditForm({
+      clie_name: log.sale.clie_name ?? "",
+      clie_idno: log.sale.clie_idno ?? undefined,
+      cont_name: log.sale.cont_name ?? "",
+      cont_role: log.sale.cont_role ?? "",
+      cont_tele: log.sale.cont_tele ?? "",
+      cont_mail: log.sale.cont_mail ?? "",
+      sale_loca: log.sale.sale_loca ?? "",
+      vist_date: log.sale.vist_date ? new Date(log.sale.vist_date).toISOString().slice(0, 16) : "",
+      sale_pric: log.sale.sale_pric != null ? Number(log.sale.sale_pric) : undefined,
+      orig_memo: log.sale.orig_memo ?? "",
+    });
+  }, [log]);
+
+  // #endregion
+
+  // #region UI Helpers
+
+  const resetAnalyze = () => analyze.reset();
+
+  const startEdit = () => setIsEditing(true);
+  const cancelEdit = () => setIsEditing(false);
+
+  // #endregion
+
+  // #region Actions (CRUD)
+
+  const save = async () => {
+    try {
+      await update.mutateAsync({
+        sale_idno: logId,
+        ...editForm,
+        sale_pric: editForm.sale_pric ?? undefined,
+        vist_date: editForm.vist_date ? new Date(editForm.vist_date).toISOString() : undefined,
+      });
+
+      await utils.crm.sale.get.invalidate({ sale_idno: logId });
+      await utils.crm.sale.list.invalidate();
+
+      setIsEditing(false);
+      toast.success("수정되었습니다.");
+    } catch {
+      toast.error("수정에 실패했습니다.");
+    }
+  };
+
+  const runAnalyze = async () => {
+    try {
+      const res = await analyze.mutateAsync({ sale_idno: logId });
+
+      await utils.crm.sale.get.invalidate({ sale_idno: logId });
+      await utils.crm.sale.list.invalidate();
+
+      if (res.schedule_idno) toast.success("AI 분석 완료. 일정이 자동 등록되었습니다.");
+      else toast.success("AI 분석이 완료되었습니다.");
+
+      const opened = aiLink.maybeOpenPostAnalyzeModal(logId, res, !!log?.sale.clie_idno);
+      if (opened) return;
+    } catch {
+      toast.error("AI 분석에 실패했습니다.");
+    }
+  };
+
+  const remove = async () => {
+    try {
+      await del.mutateAsync({ sale_idno: logId });
+      await utils.crm.sale.list.invalidate();
+      toast.success("삭제되었습니다.");
+    } catch {
+      toast.error("삭제에 실패했습니다.");
+    }
+  };
+
+  // #endregion
+
+  // #region Actions UI Model
+
   const bannerState: BannerState = useMemo(() => {
     if (analyze.isPending) return "pending";
     if (analyze.isSuccess) return "success";
@@ -111,171 +278,45 @@ export function useSaleDetailVM(logId: number) {
     return "AI 분석이 완료되었습니다.";
   }, [analyze.data]);
 
-  // #endregion
-
-
-  // #region Actions - Edit
-
-  const startEdit = () => {
-    if (!log) return;
-
-    setEditForm({
-      clie_name: log.sale.clie_name ?? "",
-      clie_idno: log.sale.clie_idno ?? undefined,
-      cont_name: log.sale.cont_name ?? "",
-      sale_loca: log.sale.sale_loca ?? "",
-      // TODO: 기존에 toLocalDatetimeInputValue 쓰던 로직이 있으면 여기로 복구 추천
-      vist_date: log.sale.vist_date ? new Date(log.sale.vist_date).toISOString().slice(0, 16) : "",
-      orig_memo: log.sale.orig_memo ?? "",
-    });
-
-    setIsEditing(true);
-  };
-
-  const cancelEdit = () => setIsEditing(false);
-
-  const save = async () => {
-    try {
-      await update.mutateAsync({
-        sale_idno: logId,
-        clie_idno: editForm.clie_idno ?? undefined,
-        clie_name: editForm.clie_name || undefined,
-        cont_name: editForm.cont_name || undefined,
-        sale_loca: editForm.sale_loca || undefined,
-        vist_date: editForm.vist_date ? new Date(editForm.vist_date).toISOString() : undefined,
-        orig_memo: editForm.orig_memo,
-      });
-
-      await utils.crm.sale.get.invalidate({ sale_idno: logId });
-      await utils.crm.sale.list.invalidate();
-
-      setIsEditing(false);
-      toast.success("수정되었습니다.");
-    } catch {
-      toast.error("수정에 실패했습니다.");
-    }
-  };
-
-  // #endregion
-
-
-  // #region Actions - Analyze
-
-  const resetAnalyze = () => analyze.reset();
-
-  const runAnalyze = async () => {
-    try {
-      const result = await analyze.mutateAsync({ sale_idno: logId });
-
-      await utils.crm.sale.get.invalidate({ sale_idno: logId });
-      await utils.crm.schedule.list.invalidate();
-      await utils.crm.dashboard.stats.invalidate();
-
-      // ✅ 여기서 postAnalyzeClientState까지 연결하려면
-      // 기존 로직(고객사 매칭/등록/담당자 sync)을 다시 붙여야 함.
-      // 일단은 배너/토스트는 analyze 상태로 처리되므로 최소 구현 OK.
-      if (result?.ai_client_name && !log?.sale.clie_idno) {
-        setPostAnalyzeClientState({
-          ai_client_name: result.ai_client_name,
-          matched_name: result.matched_client_name ?? null,
-        });
-      }
-
-      toast.success("AI 분석 완료");
-    } catch {
-      toast.error("AI 분석 실패");
-    }
-  };
-
-  // #endregion
-
-
-  // #region Actions - Delete
-
-  const remove = async () => {
-    try {
-      await del.mutateAsync({ sale_idno: logId });
-      await utils.crm.sale.list.invalidate();
-      await utils.crm.dashboard.stats.invalidate();
-      toast.success("삭제되었습니다.");
-    } catch {
-      toast.error("삭제에 실패했습니다.");
-      throw new Error("delete failed");
-    }
-  };
-
-  // #endregion
-
-
-  // #region Header Actions
-
   const primaryAction = isEditing
     ? {
-      label: "저장",
-      icon: update.isPending
-        ? <Loader2 size={16} className="animate-spin" />
-        : <Check size={16} />,
-      onClick: save,
-      disabled: update.isPending,
-      variant: "primary" as const,
-    }
-    : !log?.sale.aiex_done
-      ? {
-        label: "AI 분석",
-        icon: analyze.isPending
-          ? <Loader2 size={16} className="animate-spin" />
-          : <Sparkles size={16} />,
-        onClick: runAnalyze,
-        disabled: analyze.isPending,
+        label: "저장",
+        icon: update.isPending ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />,
+        onClick: save,
+        disabled: update.isPending,
         variant: "primary" as const,
       }
+    : !log?.sale.aiex_done
+      ? {
+          label: "AI 분석",
+          icon: analyze.isPending ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />,
+          onClick: runAnalyze,
+          disabled: analyze.isPending,
+          variant: "primary" as const,
+        }
       : undefined;
 
   const actions = isEditing
-    ? [
-      {
-        label: "취소",
-        icon: <XCircle size={16} />,
-        onClick: cancelEdit,
-        variant: "outline" as const,
-      },
-    ]
+    ? [{ label: "취소", icon: <XCircle size={16} />, onClick: cancelEdit, variant: "outline" as const }]
     : [
-      {
-        label: "수정",
-        icon: <Pencil size={16} />,
-        onClick: startEdit,
-        variant: "ghost" as const,
-      },
-      {
-        label: "삭제",
-        icon: del.isPending
-          ? <Loader2 size={16} className="animate-spin" />
-          : <Trash2 size={16} />,
-        onClick: () => {
-          if (!log) return;
-          setConfirm({ type: "delete", id: log.sale.sale_idno, title });
+        { label: "수정", icon: <Pencil size={16} />, onClick: startEdit, variant: "ghost" as const },
+        {
+          label: "삭제",
+          icon: del.isPending ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />,
+          onClick: () => {
+            if (!log) return;
+            setConfirm({ type: "delete", id: log.sale.sale_idno, title });
+          },
+          variant: "ghost" as const,
         },
-        disabled: del.isPending,
-        variant: "ghost" as const,
-      },
-    ];
+      ];
 
   // #endregion
-
 
   // #region Modals
 
   const Modals = () => (
     <>
-      <PostAnalyzeClientModal
-        open={!!postAnalyzeClientState}
-        ai_client_name={postAnalyzeClientState?.ai_client_name ?? ""}
-        matched_name={postAnalyzeClientState?.matched_name ?? null}
-        onConfirm={() => setPostAnalyzeClientState(null)}
-        onDeny={() => setPostAnalyzeClientState(null)}
-      />
-
       <ConfirmActionDialog
         confirm={confirm}
         setConfirm={setConfirm}
@@ -285,58 +326,74 @@ export function useSaleDetailVM(logId: number) {
           goList();
         }}
       />
+
+      <PostAnalyzeClientModal
+        open={!!aiLink.postAnalyzeClientState}
+        ai_client_name={aiLink.postAnalyzeClientState?.ai_client_name ?? ""}
+        matched_name={aiLink.postAnalyzeClientState?.matched_name ?? null}
+        onConfirm={async () => {
+          const saleId = await aiLink.confirmPostAnalyze();
+          if (!saleId) return;
+          await utils.crm.sale.get.invalidate({ sale_idno: saleId });
+        }}
+        onDeny={async () => {
+          const saleId = await aiLink.denyPostAnalyze();
+          if (!saleId) return;
+          await utils.crm.sale.get.invalidate({ sale_idno: saleId });
+        }}
+      />
     </>
   );
 
   // #endregion
 
-
-  // #region Public API
-
   return {
     // data
     log,
+    status,
     title,
     visitedLabel,
-    status,
+    invalidState,
 
-    // nav
+    // ai
+    ai,
+    aiActions,
+
+    // navigation
     goList,
     goKeywordSearch,
+    goScheduleDetail,
 
-    // ui state
+    // editing
     isEditing,
+    editForm,
+    setEditForm,
 
     // banner
     bannerState,
     bannerMessage,
     resetAnalyze,
 
-    // edit
-    editForm,
-    setEditForm,
-
+    // actions
     startEdit,
     cancelEdit,
     save,
+    runAnalyze,
+    remove,
 
-    // server ops (외부에서 pending 체크용)
+    // action models
+    primaryAction,
+    actions,
+
+    // mutations (for UI states)
     analyze,
     update,
     del,
 
-    runAnalyze,
-    remove,
-
-    // header actions
-    primaryAction,
-    actions,
-
-    // ui
+    // modals
     Modals,
+
+    // raw query (if needed)
+    saleGet,
   };
-
-  // #endregion
 }
-
-// #endregion

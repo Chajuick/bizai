@@ -11,7 +11,7 @@ export type SalesFilter = "all" | "thisWeek" | "ai";
 export type AnalyzeBannerState = "idle" | "pending" | "success" | "error";
 
 /** 영업일지 작성 폼 상태 */
-export type SalesLogFormState = {
+export type SaleFormState = {
   clie_name: string;
   clie_idno?: number;
   cont_name: string;
@@ -23,12 +23,16 @@ export type SalesLogFormState = {
 };
 
 /** 영업일지 수정 폼 상태 */
-export type SalesLogEditForm = {
+export type SaleEditForm = {
   clie_name: string;
   clie_idno?: number;
   cont_name: string;
+  cont_role: string;
+  cont_tele: string;
+  cont_mail: string;
   sale_loca: string;
   vist_date: string;
+  sale_pric?: number;
   orig_memo: string;
 };
 

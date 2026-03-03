@@ -1,4 +1,4 @@
-import { Banknote, Building2, Calendar, Mail, MapPin, Phone, User } from "lucide-react";
+import { Banknote, Building2, Mail, MapPin, Phone, User } from "lucide-react";
 import { Card } from "../../common/ui/card";
 import MetaItem from "@/components/focuswin/common/ui/meta-item";
 
@@ -18,17 +18,18 @@ type Props = {
   visitedLabel: string;
 };
 
-export default function SaleDetailMetaCard({ clientName, contactPerson, clientPhone, clientEmail, location, salePric, visitedLabel }: Props) {
+export default function SaleDetailMetaCard({ clientName, contactPerson, clientPhone, clientEmail, location, salePric }: Props) {
   return (
     <Card>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {clientName && <MetaItem icon={Building2} label="고객사" value={clientName} tone="blue" />}
         {contactPerson && <MetaItem icon={User} label="담당자" value={contactPerson} tone="sky" />}
-        <MetaItem icon={Calendar} label="방문일시" value={visitedLabel} tone="amber" />
+
+        {clientPhone && <MetaItem icon={Phone} label="연락처" value={clientPhone} tone="slate" href={`tel:${clientPhone}`} />}
+        {clientEmail && <MetaItem icon={Mail} label="이메일" value={clientEmail} tone="slate" href={`mailto:${clientEmail}`} />}
+
         {location && <MetaItem icon={MapPin} label="장소" value={location} tone="violet" />}
-        {salePric != null && <MetaItem icon={Banknote} label="금액" value={formatKRW(salePric)} tone="slate" />}
-        {clientPhone && <MetaItem icon={Phone} label="연락처" value={clientPhone} tone="slate" />}
-        {clientEmail && <MetaItem icon={Mail} label="이메일" value={clientEmail} tone="slate" />}
+        {salePric != null && <MetaItem icon={Banknote} label="금액" value={formatKRW(salePric)} tone="amber" />}
       </div>
     </Card>
   );

@@ -1,7 +1,7 @@
 // server/modules/crm/schedule/schedule.repo.ts
 
 // #region Imports
-import { and, asc, desc, eq, gte } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lt, or, sql } from "drizzle-orm";
 
 import { CRM_SCHEDULE } from "../../../../drizzle/schema";
 import { getInsertId } from "../../../core/db";
@@ -15,59 +15,106 @@ export type ScheduleRow = typeof CRM_SCHEDULE.$inferSelect;
 export type ScheduleInsert = typeof CRM_SCHEDULE.$inferInsert;
 
 export type ScheduleUpdate = Partial<
-  Omit<
-    ScheduleInsert,
-    | "comp_idno"
-    | "sche_idno"
-    | "crea_idno"
-    | "crea_date"
-  >
+  Omit<ScheduleInsert, "comp_idno" | "sche_idno" | "crea_idno" | "crea_date">
 >;
 
 type SortField = "modi_date" | "crea_date" | "sche_date";
 type SortDir = "asc" | "desc";
+
+/** 탭별 쿼리에 필요한 시간 경계값 (service에서 계산해서 전달) */
+export type TabFilter = {
+  type: "all" | "scheduled" | "overdue" | "imminent" | "completed" | "canceled";
+  now: Date;
+  kstMidnight: Date;
+  imminentEnd: Date;
+};
 // #endregion
 
 // #region Utils
-function orderByFor(sort?: { field: SortField; dir: SortDir }) {
-  if (!sort) return [desc(CRM_SCHEDULE.sche_date)] as const;
 
-  const dirFn = sort.dir === "asc" ? asc : desc;
-
-  switch (sort.field) {
-    case "modi_date":
-      return [dirFn(CRM_SCHEDULE.modi_date)] as const;
-    case "crea_date":
-      return [dirFn(CRM_SCHEDULE.crea_date)] as const;
-    case "sche_date":
-      return [dirFn(CRM_SCHEDULE.sche_date)] as const;
-    default:
-      return [desc(CRM_SCHEDULE.sche_date)] as const;
-  }
-}
-
-function buildWhere(params: {
-  comp_idno: number;
-  stat_code?: "scheduled" | "completed" | "canceled" | "overdue";
-  upcoming?: boolean;
-  onlyEnabled?: boolean;
-}) {
-  const conditions = [eq(CRM_SCHEDULE.comp_idno, params.comp_idno)];
-
-  if (params.onlyEnabled !== false) {
-    conditions.push(eq(CRM_SCHEDULE.enab_yesn, true));
-  }
-
-  if (params.stat_code) {
-    conditions.push(eq(CRM_SCHEDULE.stat_code, params.stat_code));
-  }
-
-  if (params.upcoming) {
-    conditions.push(gte(CRM_SCHEDULE.sche_date, new Date()));
-  }
-
+function baseEnabledWhere(comp_idno: number, onlyEnabled?: boolean) {
+  const conditions = [eq(CRM_SCHEDULE.comp_idno, comp_idno)];
+  if (onlyEnabled !== false) conditions.push(eq(CRM_SCHEDULE.enab_yesn, true));
   return and(...conditions);
 }
+
+function buildTabWhere(comp_idno: number, tab: TabFilter) {
+  const base = [eq(CRM_SCHEDULE.comp_idno, comp_idno), eq(CRM_SCHEDULE.enab_yesn, true)];
+
+  switch (tab.type) {
+    case "overdue":
+      // stat_code='scheduled' AND sche_date < KST 자정
+      return and(...base, eq(CRM_SCHEDULE.stat_code, "scheduled"), lt(CRM_SCHEDULE.sche_date, tab.kstMidnight));
+
+    case "imminent":
+      // stat_code='scheduled' AND now <= sche_date < now+48h
+      return and(
+        ...base,
+        eq(CRM_SCHEDULE.stat_code, "scheduled"),
+        gte(CRM_SCHEDULE.sche_date, tab.now),
+        lt(CRM_SCHEDULE.sche_date, tab.imminentEnd)
+      );
+
+    case "scheduled":
+      // stat_code='scheduled', overdue/imminent 제외
+      // = sche_date >= kstMidnight AND (sche_date < now OR sche_date >= imminentEnd)
+      return and(
+        ...base,
+        eq(CRM_SCHEDULE.stat_code, "scheduled"),
+        gte(CRM_SCHEDULE.sche_date, tab.kstMidnight),
+        or(lt(CRM_SCHEDULE.sche_date, tab.now), gte(CRM_SCHEDULE.sche_date, tab.imminentEnd))
+      );
+
+    case "completed":
+      return and(...base, eq(CRM_SCHEDULE.stat_code, "completed"));
+
+    case "canceled":
+      return and(...base, eq(CRM_SCHEDULE.stat_code, "canceled"));
+
+    case "all":
+    default:
+      return and(...base);
+  }
+}
+
+function buildTabOrderBy(tab: TabFilter, sort?: { field: SortField; dir: SortDir }) {
+  // 명시적 정렬 파라미터가 있으면 우선 적용
+  if (sort) {
+    const dirFn = sort.dir === "asc" ? asc : desc;
+    switch (sort.field) {
+      case "modi_date": return [dirFn(CRM_SCHEDULE.modi_date)];
+      case "crea_date": return [dirFn(CRM_SCHEDULE.crea_date)];
+      case "sche_date": return [dirFn(CRM_SCHEDULE.sche_date)];
+      default: return [desc(CRM_SCHEDULE.sche_date)];
+    }
+  }
+
+  switch (tab.type) {
+    case "overdue":
+    case "imminent":
+    case "scheduled":
+      // 날짜 오름차순: 가장 임박/지연된 항목 먼저
+      return [asc(CRM_SCHEDULE.sche_date)];
+
+    case "completed":
+    case "canceled":
+      // 최신순
+      return [desc(CRM_SCHEDULE.sche_date)];
+
+    case "all":
+    default:
+      // 우선순위: overdue(0) → imminent(1) → rest(2), 2차 날짜 오름차순
+      return [
+        sql`CASE
+          WHEN ${CRM_SCHEDULE.stat_code} = 'scheduled' AND ${CRM_SCHEDULE.sche_date} < ${tab.kstMidnight} THEN 0
+          WHEN ${CRM_SCHEDULE.stat_code} = 'scheduled' AND ${CRM_SCHEDULE.sche_date} >= ${tab.now} AND ${CRM_SCHEDULE.sche_date} < ${tab.imminentEnd} THEN 1
+          ELSE 2
+        END`,
+        asc(CRM_SCHEDULE.sche_date),
+      ];
+  }
+}
+
 // #endregion
 
 export const scheduleRepo = {
@@ -76,26 +123,109 @@ export const scheduleRepo = {
     { db }: RepoDeps,
     params: {
       comp_idno: number;
-      stat_code?: "scheduled" | "completed" | "canceled" | "overdue";
-      upcoming?: boolean;
-
+      tab: TabFilter;
       limit: number;
       offset: number;
-
       sort?: { field: SortField; dir: SortDir };
-      onlyEnabled?: boolean;
     }
   ): Promise<ScheduleRow[]> {
-    const where = buildWhere(params);
-    const orderBy = orderByFor(params.sort);
+    const where = buildTabWhere(params.comp_idno, params.tab);
+    const orderBy = buildTabOrderBy(params.tab, params.sort);
 
+    // ✅ service에서 limit+1을 넣어주므로 repo에서 +1 하지 않는다
     return db
       .select()
       .from(CRM_SCHEDULE)
       .where(where)
-      .orderBy(...orderBy)
-      .limit(params.limit + 1)
+      .orderBy(...(orderBy as any[]))
+      .limit(params.limit)
       .offset(params.offset);
+  },
+  // #endregion
+
+  // #region countByStatus
+  async countByStatus(
+    { db }: RepoDeps,
+    params: { comp_idno: number; onlyEnabled?: boolean }
+  ): Promise<Record<"scheduled" | "completed" | "canceled", number>> {
+    const where = baseEnabledWhere(params.comp_idno, params.onlyEnabled);
+
+    const rows = await db
+      .select({
+        stat_code: CRM_SCHEDULE.stat_code,
+        cnt: sql<number>`count(*)`.mapWith(Number),
+      })
+      .from(CRM_SCHEDULE)
+      .where(
+        and(
+          where,
+          // ✅ overdue는 DB status로 쓰지 않는다는 전제 (현재 정책상 scheduled/completed/canceled만 세면 됨)
+          sql`${CRM_SCHEDULE.stat_code} in ('scheduled','completed','canceled')`
+        )
+      )
+      .groupBy(CRM_SCHEDULE.stat_code);
+
+    const out: Record<"scheduled" | "completed" | "canceled", number> = {
+      scheduled: 0,
+      completed: 0,
+      canceled: 0,
+    };
+
+    for (const r of rows) {
+      if (r.stat_code === "scheduled") out.scheduled = r.cnt;
+      if (r.stat_code === "completed") out.completed = r.cnt;
+      if (r.stat_code === "canceled") out.canceled = r.cnt;
+    }
+
+    return out;
+  },
+  // #endregion
+
+  // #region countScheduledBefore (overdue)
+  async countScheduledBefore(
+    { db }: RepoDeps,
+    params: { comp_idno: number; before: Date; onlyEnabled?: boolean }
+  ): Promise<number> {
+    const where = baseEnabledWhere(params.comp_idno, params.onlyEnabled);
+
+    const [row] = await db
+      .select({ cnt: sql<number>`count(*)`.mapWith(Number) })
+      .from(CRM_SCHEDULE)
+      .where(
+        and(
+          where,
+          eq(CRM_SCHEDULE.stat_code, "scheduled"),
+          lt(CRM_SCHEDULE.sche_date, params.before)
+        )
+      )
+      .limit(1);
+
+    return row?.cnt ?? 0;
+  },
+  // #endregion
+
+  // #region countScheduledBetween (imminent)
+  async countScheduledBetween(
+    { db }: RepoDeps,
+    params: { comp_idno: number; from: Date; to: Date; onlyEnabled?: boolean }
+  ): Promise<number> {
+    const where = baseEnabledWhere(params.comp_idno, params.onlyEnabled);
+
+    const [row] = await db
+      .select({ cnt: sql<number>`count(*)`.mapWith(Number) })
+      .from(CRM_SCHEDULE)
+      .where(
+        and(
+          where,
+          eq(CRM_SCHEDULE.stat_code, "scheduled"),
+          gte(CRM_SCHEDULE.sche_date, params.from),
+          // to는 inclusive 처리를 원하면 lt 대신 <= 구현 필요
+          lt(CRM_SCHEDULE.sche_date, params.to)
+        )
+      )
+      .limit(1);
+
+    return row?.cnt ?? 0;
   },
   // #endregion
 
@@ -113,12 +243,7 @@ export const scheduleRepo = {
       conditions.push(eq(CRM_SCHEDULE.enab_yesn, true));
     }
 
-    const [row] = await db
-      .select()
-      .from(CRM_SCHEDULE)
-      .where(and(...conditions))
-      .limit(1);
-
+    const [row] = await db.select().from(CRM_SCHEDULE).where(and(...conditions)).limit(1);
     return row ?? null;
   },
   // #endregion
@@ -131,36 +256,20 @@ export const scheduleRepo = {
   // #endregion
 
   // #region update
-  async update(
-    { db }: RepoDeps,
-    params: { comp_idno: number; sche_idno: number; data: ScheduleUpdate }
-  ) {
+  async update({ db }: RepoDeps, params: { comp_idno: number; sche_idno: number; data: ScheduleUpdate }) {
     await db
       .update(CRM_SCHEDULE)
       .set(params.data)
-      .where(
-        and(
-          eq(CRM_SCHEDULE.comp_idno, params.comp_idno),
-          eq(CRM_SCHEDULE.sche_idno, params.sche_idno)
-        )
-      );
+      .where(and(eq(CRM_SCHEDULE.comp_idno, params.comp_idno), eq(CRM_SCHEDULE.sche_idno, params.sche_idno)));
   },
   // #endregion
 
   // #region disable (soft)
-  async disable(
-    { db }: RepoDeps,
-    params: { comp_idno: number; sche_idno: number; data: ScheduleUpdate }
-  ) {
+  async disable({ db }: RepoDeps, params: { comp_idno: number; sche_idno: number; data: ScheduleUpdate }) {
     await db
       .update(CRM_SCHEDULE)
       .set({ ...params.data, enab_yesn: false })
-      .where(
-        and(
-          eq(CRM_SCHEDULE.comp_idno, params.comp_idno),
-          eq(CRM_SCHEDULE.sche_idno, params.sche_idno)
-        )
-      );
+      .where(and(eq(CRM_SCHEDULE.comp_idno, params.comp_idno), eq(CRM_SCHEDULE.sche_idno, params.sche_idno)));
   },
   // #endregion
 } as const;

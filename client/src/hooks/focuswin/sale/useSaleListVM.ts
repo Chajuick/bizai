@@ -2,9 +2,11 @@ import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 
-import type { SalesFilter } from "@/types/salesLog";
+import type { SalesFilter } from "@/types/sale";
 import type { TabPill } from "@/components/focuswin/common/ui/tab-pills";
-import { PageStatus } from "@/components/focuswin/common/page-scaffold";
+import type { PageStatus } from "@/components/focuswin/common/page-scaffold";
+
+// #region Utils
 
 function startOfWeekMonday(d: Date) {
   const date = new Date(d);
@@ -20,6 +22,8 @@ function getSearchFromLocation(location: string) {
   const params = new URLSearchParams(qs);
   return params.get("search") ?? "";
 }
+
+// #endregion
 
 export function useSaleListVM() {
   // #region Router state (URL = source of truth)
@@ -47,45 +51,56 @@ export function useSaleListVM() {
 
   // #region Derived data
 
-  const weekStart = useMemo(
-    () => startOfWeekMonday(new Date()),
-    []
-  );
+  // NOTE: "이번주" 기준을 마운트 시점으로 고정 (추후 수정 검토)
+  const weekStart = useMemo(() => startOfWeekMonday(new Date()), []);
 
-  const normalized = useMemo(
+  type LogItem = (typeof logs)[number];
+  type SaleRow = LogItem & { visitedAtDate: Date };
+
+  const normalized: SaleRow[] = useMemo(
     () =>
       logs.map((l) => ({
         ...l,
         visitedAtDate: new Date(l.vist_date),
       })),
-    [logs]
+    [logs],
   );
 
-  const predicates = {
-    all: () => true,
-    thisWeek: (l: any) => l.visitedAtDate >= weekStart,
-    ai: (l: any) => !!l.aiex_done,
-  };
+  const predicates = useMemo(() => {
+    const all = (_l: SaleRow) => true;
+    const thisWeek = (l: SaleRow) => l.visitedAtDate >= weekStart;
+    const ai = (l: SaleRow) => !!l.aiex_done;
 
-  const filteredLogs = useMemo(
-    () => normalized.filter(predicates[filter]),
-    [normalized, filter, weekStart]
+    return { all, thisWeek, ai } satisfies Record<SalesFilter, (l: SaleRow) => boolean>;
+  }, [weekStart]);
+
+  const filteredLogs = useMemo(() => {
+    const predicate = predicates[filter];
+    return normalized.filter(predicate);
+  }, [normalized, filter, predicates]);
+
+  const counts = useMemo(() => {
+    let all = 0;
+    let thisWeek = 0;
+    let ai = 0;
+
+    for (const l of normalized) {
+      all++;
+      if (predicates.thisWeek(l)) thisWeek++;
+      if (predicates.ai(l)) ai++;
+    }
+
+    return { all, thisWeek, ai };
+  }, [normalized, predicates]);
+
+  const tabs: TabPill<SalesFilter>[] = useMemo(
+    () => [
+      { key: "all", label: "전체", count: counts.all },
+      { key: "thisWeek", label: "이번주", count: counts.thisWeek },
+      { key: "ai", label: "AI", count: counts.ai },
+    ],
+    [counts.all, counts.thisWeek, counts.ai],
   );
-
-  const counts = useMemo(
-    () => ({
-      all: normalized.length,
-      thisWeek: normalized.filter(predicates.thisWeek).length,
-      ai: normalized.filter(predicates.ai).length,
-    }),
-    [normalized, weekStart]
-  );
-
-  const tabs: TabPill<SalesFilter>[] = [
-    { key: "all", label: "전체", count: counts.all },
-    { key: "thisWeek", label: "이번주", count: counts.thisWeek },
-    { key: "ai", label: "AI", count: counts.ai },
-  ];
 
   // #endregion
 
@@ -109,20 +124,17 @@ export function useSaleListVM() {
 
   // #region Status
 
-  const status: PageStatus =
-    isLoading ? "loading" : hasData ? "ready" : "empty";
+  const status: PageStatus = isLoading ? "loading" : hasData ? "ready" : "empty";
+
   // #endregion
 
   // #region Actions
 
   const handleSearch = (value: string) => {
     const q = value.trim();
-    navigate(
-      q
-        ? `/sale-list?search=${encodeURIComponent(q)}`
-        : "/sale-list",
-      { replace: true }
-    );
+    navigate(q ? `/sale-list?search=${encodeURIComponent(q)}` : "/sale-list", {
+      replace: true,
+    });
   };
 
   const handleClear = () => {
