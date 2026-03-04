@@ -52,6 +52,7 @@ function buildWhere(params: {
   comp_idno: number;
   status?: "proposal" | "negotiation" | "confirmed" | "canceled";
   search?: string;
+  clie_idno?: number;
   onlyEnabled?: boolean;
 }) {
   const conditions = [eq(CRM_ORDER.comp_idno, params.comp_idno)];
@@ -64,13 +65,12 @@ function buildWhere(params: {
     conditions.push(eq(CRM_ORDER.stat_code, params.status));
   }
 
+  if (params.clie_idno) {
+    conditions.push(eq(CRM_ORDER.clie_idno, params.clie_idno));
+  }
+
   if (params.search) {
-    // 검색어는 화면 요구대로: 고객명/제품명 중심
-    conditions.push(
-      like(CRM_ORDER.clie_name, `%${escapeLike(params.search)}%`)
-    );
-    // NOTE: prod_serv까지 OR로 묶고 싶으면 sql/or 사용 필요
-    // 지금은 확실히 "한 개 조건"만 걸어도 되고, 추후 확장 가능
+    conditions.push(like(CRM_ORDER.clie_name, `%${escapeLike(params.search)}%`));
   }
 
   return and(...conditions);
@@ -85,6 +85,7 @@ export const orderRepo = {
       comp_idno: number;
       status?: "proposal" | "negotiation" | "confirmed" | "canceled";
       search?: string;
+      clie_idno?: number;
 
       limit: number;
       offset: number;
@@ -103,6 +104,18 @@ export const orderRepo = {
       .orderBy(...orderBy)
       .limit(params.limit + 1)
       .offset(params.offset);
+  },
+  // #endregion
+
+  // #region stats
+  async stats(
+    { db }: RepoDeps,
+    params: { comp_idno: number }
+  ): Promise<{ stat_code: string; orde_pric: string | number | null }[]> {
+    return db
+      .select({ stat_code: CRM_ORDER.stat_code, orde_pric: CRM_ORDER.orde_pric })
+      .from(CRM_ORDER)
+      .where(and(eq(CRM_ORDER.comp_idno, params.comp_idno), eq(CRM_ORDER.enab_yesn, true)));
   },
   // #endregion
 

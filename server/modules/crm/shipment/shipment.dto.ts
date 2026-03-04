@@ -32,6 +32,7 @@ export const ShipmentIdInput = z.object({
 
 export const ShipmentCreateInput = z.object({
   orde_idno: z.number().int().positive(),
+  clie_idno: z.number().int().positive().optional(),
   clie_name: z.string().min(1),
 
   ship_pric: z.number().positive(), // number로 받되 service에서 string/decimal로 변환
@@ -74,6 +75,7 @@ export const ShipmentItemOutput = z.object({
 
   owne_idno: z.number().int().positive(),
   orde_idno: z.number().int().positive(),
+  clie_idno: z.number().int().nullable().optional(),
   clie_name: z.string(),
 
   stat_code: z.enum(["pending", "delivered", "invoiced", "paid"]),
@@ -104,6 +106,17 @@ export const ShipmentListOutput = z.object({
   }),
 });
 export type ShipmentListOutput = z.infer<typeof ShipmentListOutput>;
+
+export const ShipmentStatsOutput = z.object({
+  all: z.number().int(),
+  pending: z.number().int(),
+  delivered: z.number().int(),
+  invoiced: z.number().int(),
+  paid: z.number().int(),
+  totalPaid: z.number(),
+  totalPending: z.number(),
+});
+export type ShipmentStatsOutput = z.infer<typeof ShipmentStatsOutput>;
 // #endregion
 
 // #region Service Contracts

@@ -10,6 +10,7 @@ import {
   ShipmentIdInput,
   ShipmentListInput,
   ShipmentListOutput,
+  ShipmentStatsOutput,
   ShipmentUpdateInput,
 } from "./shipment.dto";
 
@@ -23,6 +24,12 @@ export const shipmentRouter = router({
     .input(ShipmentListInput)
     .output(ShipmentListOutput)
     .query(({ ctx, input }) => shipmentService.listShipments(svcCtxFromTrpc(ctx), input ?? undefined)),
+  // #endregion
+
+  // #region stats
+  stats: protectedProcedure
+    .output(ShipmentStatsOutput)
+    .query(({ ctx }) => shipmentService.statsShipments(svcCtxFromTrpc(ctx))),
   // #endregion
 
   // #region get

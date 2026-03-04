@@ -3,7 +3,7 @@
 // #region Imports
 import { Card } from "../../common/ui/card";
 import ClientNameInput from "@/components/ClientNameInput";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/focuswin/common/ui/input";
 import type { SaleEditForm } from "@/types/sale";
 // #endregion
 
@@ -53,7 +53,7 @@ export default function SaleDetailEditFormCard({ form, setForm }: Props) {
           />
         </Field>
 
-        <Field label="직함">
+        <Field label="업무">
           <Input
             value={form.cont_role ?? ""}
             onChange={(e) =>

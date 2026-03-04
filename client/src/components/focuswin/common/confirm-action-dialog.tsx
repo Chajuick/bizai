@@ -1,9 +1,30 @@
+// #region Imports
 import React from "react";
 import ConfirmDialog from "@/components/focuswin/common/confirm-dialog";
-import type { ConfirmState } from "@/types";
+import type { ConfirmIntent, ConfirmState } from "@/types";
+// #endregion
 
 export type { ConfirmState };
 
+// #region Helpers
+function getTitle(intent: ConfirmIntent, targetTitle: string) {
+  if (intent === "delete") return `${targetTitle}을(를) 삭제할까요?`;
+  if (intent === "cancel") return `${targetTitle}을(를) 취소 처리할까요?`;
+  return `${targetTitle}을(를) 완료 처리할까요?`;
+}
+
+function getConfirmLabel(intent: ConfirmIntent) {
+  if (intent === "delete") return "삭제";
+  if (intent === "cancel") return "취소 처리";
+  return "완료";
+}
+
+function getTone(intent: ConfirmIntent) {
+  return intent === "delete" ? "danger" : "primary";
+}
+// #endregion
+
+// #region Component
 export default function ConfirmActionDialog({
   confirm,
   setConfirm,
@@ -22,36 +43,43 @@ export default function ConfirmActionDialog({
         onOpenChange={() => {}}
         title=""
         description=""
-        cancelLabel="아니요"
-        confirmLabel="확인"
-        confirmTone="primary"
         onConfirm={() => {}}
       />
     );
   }
 
-  const confirmType = confirm.type;
-  const confirmTitle = confirm.title?.trim() || "이 일정";
+  const intent = confirm.intent;
+  const target = confirm.target;
 
-  const title =
-    confirmType === "delete"
-      ? `${confirmTitle}을(를) 삭제할까요?`
-      : confirmType === "cancel"
-        ? `${confirmTitle}을(를) 취소 처리할까요?`
-        : `${confirmTitle}을(를) 완료 처리할까요?`;
+  const title = getTitle(intent, target.title);
+  const confirmLabel = getConfirmLabel(intent);
+  const confirmTone = getTone(intent);
 
-  const confirmLabel =
-    confirmType === "delete" ? "삭제" : confirmType === "cancel" ? "취소 처리" : "완료";
+  // ⭐ metas → UI 변환
+  const metaUI = (
+    <div className="grid grid-cols-[72px_1fr] gap-y-2 text-sm">
+      {target.metas.map((m) => (
+        <React.Fragment key={m.label}>
+          <span className="text-slate-500">{m.label}</span>
+          <span
+            className={
+              m.tone === "danger"
+                ? "font-semibold text-red-600"
+                : m.tone === "primary"
+                ? "font-semibold text-blue-600"
+                : "font-semibold text-slate-900"
+            }
+          >
+            {m.value}
+          </span>
+        </React.Fragment>
+      ))}
+    </div>
+  );
 
-  const confirmTone =
-    confirmType === "delete" ? "danger" : "primary";
-
-  const description =
-    confirmType === "delete"
-      ? "삭제하면 복구할 수 없어요."
-      : confirmType === "cancel"
-        ? "취소 상태로 변경한 뒤에는 수정할 수 없어요."
-        : "완료 상태로 변경한 뒤에는 수정할 수 없어요.";
+  const description = target.metas.length
+    ? metaUI
+    : confirm.description ?? "처리하면 되돌릴 수 없어요.";
 
   return (
     <ConfirmDialog
@@ -59,7 +87,6 @@ export default function ConfirmActionDialog({
       onOpenChange={(o) => !o && setConfirm(null)}
       title={title}
       description={description}
-      cancelLabel="아니요"
       confirmLabel={confirmLabel}
       confirmTone={confirmTone}
       onConfirm={async () => {
@@ -69,3 +96,4 @@ export default function ConfirmActionDialog({
     />
   );
 }
+// #endregion

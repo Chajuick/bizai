@@ -1,5 +1,5 @@
 import type { RouterOutputs } from "./router";
-import type { DeliveryStatus } from "./delivery";
+import type { ShipmentStatus } from "./shipment";
 
 /** tRPC 응답에서 추론한 수주 행 타입 */
 export type OrderRow = RouterOutputs["crm"]["order"]["list"]["items"][number];
@@ -19,9 +19,9 @@ export type OrderFormState = {
 };
 
 /** 수주에서 납품 생성 시 사용하는 폼 상태 */
-export type OrderDeliveryFormState = {
+export type OrderShipmentFormState = {
   ship_pric: string;
-  stat_code: DeliveryStatus;
+  stat_code: ShipmentStatus;
   ship_date: string;
   ship_memo: string;
 };

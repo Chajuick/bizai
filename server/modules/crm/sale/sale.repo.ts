@@ -220,6 +220,26 @@ export const saleRepo = {
       .orderBy(asc(CRM_SCHEDULE.sche_date), asc(CRM_SCHEDULE.sche_idno));
   },
 
+  /** ✅ sale에 연결된 고객사 확정 후 일정들의 clie_idno 일괄 보정 */
+  async patchSchedulesClientBySale(
+    deps: SaleRepoDeps,
+    args: { comp_idno: number; sale_idno: number; clie_idno: number; clie_name?: string | null }
+  ) {
+    await deps.db
+      .update(CRM_SCHEDULE)
+      .set({
+        clie_idno: args.clie_idno,
+        ...(args.clie_name != null ? { clie_name: args.clie_name } : {}),
+      })
+      .where(
+        and(
+          eq(CRM_SCHEDULE.comp_idno, args.comp_idno),
+          eq(CRM_SCHEDULE.sale_idno, args.sale_idno),
+          eq(CRM_SCHEDULE.enab_yesn, true)
+        )
+      );
+  },
+
   /** ✅ analyze에서 aiex_keys 중복 방지 */
   async findScheduleByAiKey(
     deps: SaleRepoDeps,

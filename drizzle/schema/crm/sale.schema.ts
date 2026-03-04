@@ -12,7 +12,7 @@ export const CRM_SALE = table(
     clie_idno: int("clie_idno"),                                   // 고객 ID(옵션)
     clie_name: varchar("clie_name", { length: 200 }),              // 고객명(자유입력 or CLIENT 연동)
     cont_name: varchar("cont_name", { length: 100 }),              // 담당자명(스냅샷)
-    cont_role: varchar("cont_role", { length: 100 }),              // 직함/직책
+    cont_role: varchar("cont_role", { length: 100 }),              // 업무/직책
     cont_tele: varchar("cont_tele", { length: 50 }),               // 연락처
     cont_mail: varchar("cont_mail", { length: 320 }),              // 이메일
     sale_loca: varchar("sale_loca", { length: 200 }),              // 방문/미팅 장소

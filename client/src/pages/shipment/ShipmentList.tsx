@@ -1,48 +1,47 @@
+// #region Imports
 import { Plus } from "lucide-react";
 
-import { useDeliveriesViewModel } from "@/hooks/focuswin/shipment/useShipmentViewModel";
 import PageScaffold from "@/components/focuswin/common/page-scaffold";
-import ShipListHeadContent from "@/components/focuswin/shipment/list/HeadContent";
-import ShipListEmptyCard from "@/components/focuswin/shipment/list/EmptyCard";
-import ShipListContent from "@/components/focuswin/shipment/list/Content";
-import DeliveryFormDialog from "@/components/focuswin/shipment/list/delivery-form-dialog";
-import DeleteDeliveryDialog from "@/components/focuswin/shipment/list/delete-delivery-dialog";
+import SkeletonCardList from "@/components/focuswin/common/skeleton-card-list";
 
-export default function ShipmentList() {
-  const vm = useDeliveriesViewModel();
-  const status = vm.isLoading ? "loading" : vm.hasData ? "ready" : "empty";
+import ShipmentListHeader from "@/components/focuswin/shipment/list/Header";
+import ShipmentListEmptyCard from "@/components/focuswin/shipment/list/EmptyCard";
+import ShipmentListContent from "@/components/focuswin/shipment/list/Content";
+
+import { ShipmentModals } from "@/components/focuswin/shipment/list/ShipmentModals";
+
+import { useShipmentListVM } from "@/hooks/focuswin/shipment/useShipmentListVM";
+// #endregion
+
+export default function ShipmentListPage() {
+  const vm = useShipmentListVM();
 
   return (
     <>
+      {/* 모달 조립: VM의 상태/핸들러를 받아 렌더 */}
+      <ShipmentModals {...vm.modalProps} />
+
       <PageScaffold
         kicker="SHIPMENTS"
         title="납품/매출"
         description="납품 상태를 한 번에 관리해요."
-        primaryAction={{ label: "납품 등록", icon: <Plus size={16} />, onClick: vm.openCreate }}
-        status={status}
-        headerChildren={<ShipListHeadContent vm={vm} />}
-        empty={<ShipListEmptyCard vm={vm} />}
-        fab={{ label: "납품 등록", onClick: vm.openCreate, icon: <Plus size={24} /> }}
+        status={vm.status}
+        headerChildren={<ShipmentListHeader vm={vm} />}
+        empty={<ShipmentListEmptyCard vm={vm} />}
+        loading={<SkeletonCardList count={6} variant="simple" />}
+        primaryAction={{
+          label: "납품 등록",
+          icon: <Plus size={16} />,
+          onClick: vm.primaryAction.onClick,
+        }}
+        fab={{
+          label: "납품 등록",
+          icon: <Plus size={24} />,
+          onClick: vm.fab.onClick,
+        }}
       >
-        <ShipListContent vm={vm} />
+        <ShipmentListContent vm={vm} />
       </PageScaffold>
-
-      <DeliveryFormDialog
-        open={vm.showForm}
-        onOpenChange={o => { vm.setShowForm(o); if (!o) vm.resetForm(); }}
-        editing={!!vm.editingId}
-        form={vm.form}
-        setForm={vm.setForm}
-        orders={vm.orders}
-        onSubmit={vm.handleCreateOrUpdate}
-        isSubmitting={vm.isSubmitting}
-      />
-
-      <DeleteDeliveryDialog
-        confirm={vm.confirmDelete}
-        setConfirm={vm.setConfirmDelete}
-        onConfirm={vm.handleDelete}
-      />
     </>
   );
 }

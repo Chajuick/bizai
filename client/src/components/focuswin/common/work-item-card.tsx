@@ -100,9 +100,14 @@ function Root({
   onDoubleClick,
   preventInteractiveClick = true,
 }: WorkItemCardRootProps) {
-  const clickable = !!onClick; // 실제 버튼 역할은 onClick 있을 때만
+  const clickable = !!onClick;
   const dblClickable = !!onDoubleClick;
-  const isInteractive = clickable || dblClickable || !!interactive;
+
+  // ✅ 스타일(hover/group)만 켜는 용도
+  const stylingInteractive = clickable || dblClickable || !!interactive;
+
+  // ✅ 커서/“진짜 클릭 느낌”은 실제 핸들러가 있을 때만
+  const pointerInteractive = clickable || dblClickable;
 
   return (
     <div
@@ -126,20 +131,22 @@ function Root({
         }
       }}
       className={cn(
-        isInteractive && "group",
-        // 토큰 기반: 배경/보더/텍스트
-        "rounded-3xl border bg-card text-card-foreground p-4 transition",
-        // border 색을 토큰으로 (없으면 border-border로 fallback)
-        "border-[color:var(--fowin-border,theme(colors.border))]",
+        // ✅ 그룹/hover 스타일은 interactive=true 여도 적용
+        stylingInteractive && "group",
 
-        // 기본 카드 shadow (토큰)
+        // base
+        "rounded-3xl border bg-card text-card-foreground p-4 transition",
+        "border-[color:var(--fowin-border,theme(colors.border))]",
         "[box-shadow:var(--fowin-shadow-card)]",
 
-        // hover (토큰) - 인터랙티브한 카드만
-        isInteractive &&
-          "cursor-pointer hover:border-[color:var(--fowin-border-hover)] hover:[box-shadow:var(--fowin-shadow-card-hover)] hover:-translate-y-[1px]",
+        // ✅ hover 효과는 스타일 인터랙티브면 적용
+        stylingInteractive &&
+          "hover:border-[color:var(--fowin-border-hover)] hover:[box-shadow:var(--fowin-shadow-card-hover)] hover:-translate-y-[1px]",
 
-        // focus (토큰): 카드 기본 그림자 + 링을 동시에
+        // ✅ 커서 포인터는 “진짜 클릭 가능”할 때만
+        pointerInteractive && "cursor-pointer",
+
+        // focus ring은 클릭 가능할 때만
         clickable &&
           "focus-visible:outline-none focus-visible:[box-shadow:var(--fowin-shadow-card),var(--fowin-ring)]",
 

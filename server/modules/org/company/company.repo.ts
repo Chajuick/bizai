@@ -126,6 +126,20 @@ export const companyRepo = {
       .where(and(eq(CORE_COMPANY_USER.comp_idno, comp_idno), eq(CORE_COMPANY_USER.user_idno, user_idno)));
   },
 
+  // ───── Company ─────
+
+  async updateCompanyName(
+    { db }: RepoDeps,
+    { comp_idno, comp_name }: { comp_idno: number; comp_name: string }
+  ) {
+    await db
+      .update(CORE_COMPANY)
+      .set({
+        comp_name,
+      })
+      .where(eq(CORE_COMPANY.comp_idno, comp_idno));
+  },
+
   // ───── Invite ─────
 
   async findInviteByTokenHash({ db }: RepoDeps, tokenHash: string) {

@@ -96,7 +96,7 @@ const buttonVariants = cva(
         "icon-lg": "h-12 w-12 rounded-2xl p-0",
       },
       fullWidth: {
-        true: "w-full",
+        true: "flex-1",
         false: "",
       },
     },

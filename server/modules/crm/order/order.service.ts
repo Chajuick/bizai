@@ -50,6 +50,7 @@ export const orderService = {
         comp_idno: ctx.comp_idno,
         status: input?.status,
         search: input?.search,
+        clie_idno: input?.clie_idno,
         limit: page.limit,
         offset: page.offset,
         sort,
@@ -63,6 +64,32 @@ export const orderService = {
       items: hasMore ? rows.slice(0, page.limit) : rows,
       page: { ...page, hasMore },
     };
+  },
+  // #endregion
+
+  // #region statsOrders
+  async statsOrders(ctx: ServiceCtx) {
+    const db = getDb();
+    const rows = await orderRepo.stats({ db }, { comp_idno: ctx.comp_idno });
+
+    const counts = { all: 0, proposal: 0, negotiation: 0, confirmed: 0, canceled: 0 };
+    let totalPipeline = 0;
+    let confirmedAmount = 0;
+
+    for (const row of rows) {
+      counts.all++;
+      switch (row.stat_code) {
+        case "proposal":    counts.proposal++;    break;
+        case "negotiation": counts.negotiation++; break;
+        case "confirmed":   counts.confirmed++;   break;
+        case "canceled":    counts.canceled++;    break;
+      }
+      const price = Number(row.orde_pric || 0);
+      if (row.stat_code !== "canceled") totalPipeline += price;
+      if (row.stat_code === "confirmed") confirmedAmount += price;
+    }
+
+    return { ...counts, totalPipeline, confirmedAmount };
   },
   // #endregion
 

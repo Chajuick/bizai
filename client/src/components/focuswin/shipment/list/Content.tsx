@@ -1,17 +1,30 @@
-import DeliveryCard from "./delivery-card";
-import { useDeliveriesViewModel } from "@/hooks/focuswin/shipment/useShipmentViewModel";
+// components/focuswin/shipment/list/Content.tsx
 
-type Props = { vm: ReturnType<typeof useDeliveriesViewModel> };
+import { PaginatedList } from "@/components/focuswin/common/paginated-list";
+import { useShipmentListVM } from "@/hooks/focuswin/shipment/useShipmentListVM";
+import ShipmentListItemCard from "./ItemCard";
+
+type Props = { vm: ReturnType<typeof useShipmentListVM> };
 
 export default function ShipListContent({ vm }: Props) {
   return (
-    <DeliveryCard
-      deliveries={vm.deliveries!}
-      formatKRW={vm.formatKRW}
-      onEdit={vm.handleEdit}
-      onAskDelete={d => vm.setConfirmDelete({ id: (d as any).id, title: (d as any).clientName })}
-      onStatusUpdate={vm.handleStatusUpdate}
-      statusUpdatePending={vm.updateMutation.isPending}
+    <PaginatedList
+      items={vm.shipments}
+      renderItem={(d) => (
+        <ShipmentListItemCard
+          key={d.ship_idno}
+          delivery={d}
+          formatKRW={vm.formatKRW}
+          onEdit={vm.handleEdit}
+          onAskDelete={vm.requestDelete}
+          onStatusUpdate={vm.handleStatusUpdate}
+          statusUpdatePending={vm.statusChanging}
+        />
+      )}
+      hasMore={vm.hasMore}
+      isLoadingMore={vm.isLoadingMore}
+      onLoadMore={vm.loadMore}
+      mode="button"
     />
   );
 }

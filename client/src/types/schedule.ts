@@ -18,4 +18,5 @@ export type ScheduleFormState = {
   sche_name: string;
   sche_desc: string;
   sche_date: string;
+  stat_code?: "scheduled" | "completed" | "canceled";
 };

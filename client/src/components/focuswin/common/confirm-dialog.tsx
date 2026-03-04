@@ -1,8 +1,10 @@
-// components/focuswin/common/confirm-dialog.tsx
+// #region Imports
 import * as React from "react";
 import Modal from "./ui/modal";
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/focuswin/common/ui/button";
+// #endregion
 
+// #region Types
 type ConfirmDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -14,17 +16,15 @@ type ConfirmDialogProps = {
   confirmLabel?: React.ReactNode;
 
   confirmTone?: "primary" | "danger";
-  confirmStyle?: React.CSSProperties;
 
   onConfirm: () => Promise<void> | void;
 
-  /** confirm 중 로딩 처리 */
   pendingText?: React.ReactNode;
 
-  /** 배경/ESC로 닫히게 할지 */
   closeOnBackdrop?: boolean;
   closeOnEsc?: boolean;
 };
+// #endregion
 
 export default function ConfirmDialog({
   open,
@@ -34,56 +34,78 @@ export default function ConfirmDialog({
   cancelLabel = "취소",
   confirmLabel = "확인",
   confirmTone = "primary",
-  confirmStyle,
   onConfirm,
   pendingText = "처리 중…",
   closeOnBackdrop = true,
   closeOnEsc = true,
 }: ConfirmDialogProps) {
+
   const [pending, setPending] = React.useState(false);
 
   return (
     <Modal
       open={open}
       onOpenChange={(o) => {
-        if (pending) return; // 처리 중엔 닫힘 방지(선택)
+        if (pending) return;
         onOpenChange(o);
       }}
       closeOnBackdrop={closeOnBackdrop}
       closeOnEsc={closeOnEsc}
-      maxWidthClassName="max-w-sm"
+      maxWidthClassName="max-w-md"
     >
-      <div className="space-y-4">
-        <div>
-          <p className="text-base font-black text-slate-900">{title}</p>
-          {description ? (
-            <div className="mt-2 text-sm text-slate-600">{description}</div>
-          ) : null}
+      <div className="px-3 py-4 space-y-6">
+
+        {/* Title */}
+        <div className="space-y-3">
+          <h2 className="text-[17px] font-semibold text-slate-900">
+            {title}
+          </h2>
+
+          {/* Info Card */}
+          {description && (
+            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 space-y-3">
+
+              <div className="text-sm text-slate-700 leading-relaxed whitespace-pre-line">
+                {description}
+              </div>
+
+              {confirmTone === "danger" && (
+                <div className="text-sm font-medium text-red-500">
+                  ⚠ 삭제한 항목은 복구할 수 없습니다.
+                </div>
+              )}
+
+            </div>
+          )}
         </div>
 
-        <div className="flex items-center justify-end gap-2">
-          <button
+        {/* Buttons */}
+        <div className="flex gap-3 w-full">
+
+          {/* Cancel */}
+          <Button
             type="button"
-            className="rounded-2xl px-4 py-2 text-sm font-bold border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-60"
+            tone="neutral"
+            variant="outline"
+            fullWidth
             disabled={pending}
             onClick={() => onOpenChange(false)}
           >
             {cancelLabel}
-          </button>
+          </Button>
 
-          <button
+          {/* Confirm */}
+          <Button
             type="button"
-            className={cn(
-              "rounded-2xl px-4 py-2 text-sm font-bold text-white disabled:opacity-70",
-              pending && "opacity-80"
-            )}
-            style={{
-              background: confirmTone === "danger" ? "rgb(239,68,68)" : "rgb(37,99,235)",
-              ...confirmStyle,
-            }}
+            tone={confirmTone === "danger" ? "danger" : "primary"}
+            variant="solid"
+            fullWidth
+            autoFocus
             disabled={pending}
             onClick={async () => {
+
               if (pending) return;
+
               try {
                 setPending(true);
                 await onConfirm();
@@ -91,11 +113,14 @@ export default function ConfirmDialog({
               } finally {
                 setPending(false);
               }
+
             }}
           >
             {pending ? pendingText : confirmLabel}
-          </button>
+          </Button>
+
         </div>
+
       </div>
     </Modal>
   );

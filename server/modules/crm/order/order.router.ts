@@ -10,6 +10,7 @@ import {
   OrderIdInput,
   OrderListInput,
   OrderListOutput,
+  OrderStatsOutput,
   OrderUpdateInput,
 } from "./order.dto";
 
@@ -23,6 +24,12 @@ export const orderRouter = router({
     .input(OrderListInput)
     .output(OrderListOutput)
     .query(({ ctx, input }) => orderService.listOrders(svcCtxFromTrpc(ctx), input ?? undefined)),
+  // #endregion
+
+  // #region stats
+  stats: protectedProcedure
+    .output(OrderStatsOutput)
+    .query(({ ctx }) => orderService.statsOrders(svcCtxFromTrpc(ctx))),
   // #endregion
 
   // #region get

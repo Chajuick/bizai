@@ -24,6 +24,7 @@ import {
   MemberItemOutput,
   RemoveMemberInput,
   ResendInviteInput,
+  UpdateCompanyNameInput,
   UpdateMemberRoleInput,
 } from "./company.dto";
 import { companyService } from "./company.service";
@@ -42,6 +43,12 @@ export const companyRouter = router({
     .output(z.array(CompanyItemOutput))
     .query(({ ctx }) => companyService.getMyCompanies(ctx.user.user_idno)),
 
+
+  updateCompanyName: companyAdminProcedure
+    .input(UpdateCompanyNameInput)
+    .mutation(({ ctx, input }) =>
+      companyService.updateCompanyName(svcCtxFromTrpc(ctx), input.comp_name)
+    ),
   // ─────── Member management ───────
   getMembers: protectedProcedure
     .output(z.array(MemberItemOutput))

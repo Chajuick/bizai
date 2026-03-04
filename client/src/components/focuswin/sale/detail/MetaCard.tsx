@@ -19,6 +19,10 @@ type Props = {
 };
 
 export default function SaleDetailMetaCard({ clientName, contactPerson, clientPhone, clientEmail, location, salePric }: Props) {
+  const hasMeta = clientName || contactPerson || clientPhone || clientEmail || location || salePric != null;
+
+  if (!hasMeta) return null;
+  
   return (
     <Card>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

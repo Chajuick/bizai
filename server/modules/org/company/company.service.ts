@@ -73,6 +73,39 @@ export const companyService = {
     }));
   },
 
+  // ───── updateCompanyName ─────
+  async updateCompanyName(ctx: ServiceCtx, comp_name: string) {
+    requireAdmin(ctx);
+
+    const name = comp_name.trim();
+
+    if (name.length < 2) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "팀 이름은 최소 2자 이상이어야 합니다.",
+      });
+    }
+
+    if (name.length > 120) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "팀 이름이 너무 깁니다.",
+      });
+    }
+
+    const db = getDb();
+
+    await companyRepo.updateCompanyName(
+      { db },
+      {
+        comp_idno: ctx.comp_idno,
+        comp_name: name,
+      },
+    );
+
+    return { success: true as const };
+  },
+
   // ───── listInvites ─────
   async listInvites(ctx: ServiceCtx) {
     requireAdmin(ctx);

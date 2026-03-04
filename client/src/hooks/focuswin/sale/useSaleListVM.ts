@@ -157,8 +157,19 @@ export function useSaleListVM() {
     setFilter,
 
     // data
-    logs: filteredLogs,
+    /**
+     * 필터링된 아이템 목록.
+     * PaginatedList 공용 인터페이스와 맞추기 위해 `items` 로 노출.
+     * 현재는 전체 로드 후 클라이언트 필터링. 추후 서버 페이지네이션으로 교체 가능.
+     */
+    items: filteredLogs,
     tabs,
+
+    // ─── 통일 페이지네이션 인터페이스 ───────────────────────────
+    // 현재: 전체 로드 (no pagination). 서버 pagination 추가 시 여기만 교체.
+    hasMore: false as boolean,
+    isLoadingMore: false as boolean,
+    loadMore: () => {},
 
     // status
     isLoading,

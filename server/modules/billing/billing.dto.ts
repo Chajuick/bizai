@@ -3,6 +3,10 @@
 import { z } from "zod";
 import { PLAN_CODES } from "../../../drizzle/schema";
 
+// #region Enums
+export const SubStatusZ = z.enum(["active", "trialing", "canceled", "past_due", "inactive"]);
+// #endregion
+
 // #region Inputs
 export const ChangePlanInput = z.object({
   plan_code: z.enum(PLAN_CODES),
@@ -21,13 +25,20 @@ export const PlanItemOutput = z.object({
 export const BillingSummaryOutput = z.object({
   plan_code: z.enum(PLAN_CODES),
   plan_name: z.string(),
-  subs_stat: z.string(),
-  seat_limit: z.number().int(),   // seat_ovrr ?? plan.seat_limt
-  token_month: z.number().int(),  // tokn_ovrr ?? plan.tokn_mont
+  subs_stat: SubStatusZ,
+
+  // plan 기본값 + override
+  seat_limit: z.number().int(),
+  token_month: z.number().int(),
+
   star_date: z.date(),
   ends_date: z.date(),
+
   member_count: z.number().int(),
   remaining_seats: z.number().int(),
+
+  // ✅ 프론트 UX용
+  cancel_at_period_end: z.boolean(),
 });
 
 export const UsageSummaryOutput = z.object({

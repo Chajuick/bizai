@@ -33,7 +33,7 @@ export default function ScheduleListCard({
   const iconVariant = p.overdue ? "danger" : p.imminent ? "warning" : "primary";
 
   return (
-    <WorkItemCard interactive className="pr-3" onDoubleClick={() => onEdit(p)}>
+    <WorkItemCard interactive className="pr-3">
       {/* LEFT ICON */}
       <WorkItemCard.Icon variant={iconVariant}>
         <Calendar size={18} />

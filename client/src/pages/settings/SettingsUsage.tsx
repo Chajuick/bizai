@@ -1,28 +1,56 @@
-import { BarChart3, Loader2, Zap } from "lucide-react";
+import { BarChart3, Loader2, Zap, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PageShell from "@/components/focuswin/common/page-shell";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 
+// #region Helpers
 function formatTokens(n: number): string {
   if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return String(n);
 }
 
-function UsageBar({ value, max, color = "bg-blue-500" }: { value: number; max: number; color?: string }) {
+function toKRDate(d: Date | string | number): string {
+  const dt = d instanceof Date ? d : new Date(d);
+  if (Number.isNaN(dt.getTime())) return "-";
+  return dt.toLocaleDateString("ko-KR");
+}
+
+// 임시 환산(너 Billing이랑 맞추려면 TOKENS_PER_ANALYSIS를 공통 상수로 빼는 게 베스트)
+const TOKENS_PER_ANALYSIS = 5_000;
+function approxAnalyses(tokens: number): number {
+  if (!tokens || tokens <= 0) return 0;
+  return Math.max(0, Math.floor(tokens / TOKENS_PER_ANALYSIS));
+}
+// #endregion
+
+// #region UI Parts
+function UsageBar({
+  value,
+  max,
+  color = "bg-blue-500",
+  ariaLabel,
+}: {
+  value: number;
+  max: number;
+  color?: string;
+  ariaLabel?: string;
+}) {
   const pct = max > 0 ? Math.min(100, (value / max) * 100) : 0;
   return (
-    <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden">
+    <div className="h-2 w-full rounded-full bg-slate-100 overflow-hidden" aria-label={ariaLabel} title={`${pct.toFixed(1)}%`}>
       <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${pct}%` }} />
     </div>
   );
 }
+// #endregion
 
 export default function SettingsUsage() {
   const { data, isLoading, error } = trpc.billing.getUsageSummary.useQuery();
   const [, navigate] = useLocation();
 
+  // #region Loading / Error
   if (isLoading) {
     return (
       <PageShell size="sm">
@@ -48,20 +76,25 @@ export default function SettingsUsage() {
       </PageShell>
     );
   }
+  // #endregion
 
   const { total_limit, total_used, remaining, usage_by_feat, reset_date, warning_level, plan_name } = data;
-  const pct = total_limit > 0 ? Math.min(100, (total_used / total_limit) * 100) : 0;
 
+  const pct = total_limit > 0 ? Math.min(100, (total_used / total_limit) * 100) : 0;
   const barColor =
     warning_level === "exceeded" ? "bg-red-500"
     : warning_level === "warning" ? "bg-amber-500"
     : "bg-blue-500";
 
+  const remainingAnalyses = approxAnalyses(remaining);
+
   const feats = [
-    { label: "STT (음성 변환)", value: usage_by_feat.stt, color: "bg-purple-400" },
-    { label: "LLM (AI 분석)", value: usage_by_feat.llm, color: "bg-blue-400" },
-    { label: "Chat", value: usage_by_feat.chat, color: "bg-teal-400" },
+    { label: "음성 → 텍스트", desc: "녹음 전사(STT)", value: usage_by_feat.stt, color: "bg-purple-400" },
+    { label: "AI 분석", desc: "요약/추출/추천", value: usage_by_feat.llm, color: "bg-blue-400" },
+    { label: "채팅", desc: "대화형 도움", value: usage_by_feat.chat, color: "bg-teal-400" },
   ];
+
+  const featMax = Math.max(1, total_used); // ✅ 기능별은 전체 사용량 대비 비중이 직관적
 
   return (
     <PageShell size="sm">
@@ -71,26 +104,31 @@ export default function SettingsUsage() {
       </div>
 
       <div className="space-y-6">
-        {/* 전체 요약 */}
-        <div className="rounded-2xl border border-slate-100 bg-white p-5 space-y-4">
+        {/* #region 전체 요약 */}
+        <div className="rounded-2xl border border-slate-100 bg-white p-5 space-y-4 shadow-sm">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">현재 플랜</p>
               <p className="text-base font-bold text-slate-900 mt-0.5">{plan_name}</p>
-            </div>
-            <div className="text-right">
-              <p className="text-xs text-slate-400">리셋</p>
-              <p className="text-xs font-medium text-slate-600">
-                {new Date(reset_date).toLocaleDateString("ko-KR")}
+              <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                <Info size={12} className="text-slate-400" />
+                남은 사용량: <span className="font-semibold text-slate-700">AI 분석 약 {remainingAnalyses}회</span> (대략)
               </p>
+            </div>
+
+            <div className="text-right">
+              <p className="text-xs text-slate-400">다음 초기화</p>
+              <p className="text-xs font-medium text-slate-600">{toKRDate(reset_date)}</p>
             </div>
           </div>
 
           <div>
             <div className="flex items-end justify-between mb-1.5">
               <p className="text-sm font-medium text-slate-700">
-                {formatTokens(total_used)} <span className="text-slate-400 font-normal">/ {formatTokens(total_limit)} 토큰</span>
+                {formatTokens(total_used)}{" "}
+                <span className="text-slate-400 font-normal">/ {formatTokens(total_limit)} 토큰</span>
               </p>
+
               <p className={`text-xs font-bold ${
                 warning_level === "exceeded" ? "text-red-600"
                 : warning_level === "warning" ? "text-amber-600"
@@ -99,13 +137,21 @@ export default function SettingsUsage() {
                 {pct.toFixed(1)}%
               </p>
             </div>
-            <UsageBar value={total_used} max={total_limit} color={barColor} />
+
+            <UsageBar value={total_used} max={total_limit} color={barColor} ariaLabel="전체 사용량" />
+
             {warning_level !== "ok" && (
-              <p className={`text-xs mt-1.5 ${warning_level === "exceeded" ? "text-red-600" : "text-amber-600"}`}>
-                {warning_level === "exceeded"
-                  ? "AI 사용량이 소진되었습니다. 플랜을 업그레이드하세요."
-                  : "AI 사용량의 80%를 초과했습니다."}
-              </p>
+              <div className={`mt-2 text-xs ${warning_level === "exceeded" ? "text-red-600" : "text-amber-600"} flex items-center justify-between gap-3`}>
+                <span>
+                  {warning_level === "exceeded" ? "사용량이 소진되었습니다." : "사용량이 80%를 초과했습니다."}
+                </span>
+                <button
+                  className="underline underline-offset-2 font-semibold"
+                  onClick={() => navigate("/settings/billing")}
+                >
+                  플랜 보기
+                </button>
+              </div>
             )}
           </div>
 
@@ -114,47 +160,57 @@ export default function SettingsUsage() {
               <p className="text-xs text-slate-400">사용</p>
               <p className="text-base font-bold text-slate-900">{formatTokens(total_used)}</p>
             </div>
+
             <div className="text-center border-x border-slate-100">
+              <p className="text-xs text-slate-400">남음</p>
+              <p className="text-base font-black text-slate-900">{formatTokens(remaining)}</p>
+            </div>
+
+            <div className="text-center">
               <p className="text-xs text-slate-400">한도</p>
               <p className="text-base font-bold text-slate-900">{formatTokens(total_limit)}</p>
             </div>
-            <div className="text-center">
-              <p className="text-xs text-slate-400">남은 토큰</p>
-              <p className="text-base font-bold text-slate-900">{formatTokens(remaining)}</p>
-            </div>
           </div>
         </div>
+        {/* #endregion */}
 
-        {/* 기능별 사용량 */}
+        {/* #region 기능별 사용량 */}
         <section className="space-y-3">
           <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">기능별 사용량</p>
+
           <div className="rounded-2xl border border-slate-100 bg-white divide-y divide-slate-50">
             {feats.map((f) => (
               <div key={f.label} className="px-4 py-3 space-y-1.5">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-slate-700">{f.label}</span>
-                  <span className="font-medium text-slate-900">{formatTokens(f.value)}</span>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="text-sm text-slate-800">{f.label}</div>
+                    <div className="text-[11px] text-slate-400">{f.desc}</div>
+                  </div>
+                  <div className="text-sm font-semibold text-slate-900">{formatTokens(f.value)}</div>
                 </div>
-                <UsageBar value={f.value} max={total_limit} color={f.color} />
+
+                {/* ✅ 기능별은 "전체 사용량 대비 비중"으로 표시 */}
+                <UsageBar value={f.value} max={featMax} color={f.color} ariaLabel={`${f.label} 사용량`} />
               </div>
             ))}
           </div>
-        </section>
 
-        {/* 업그레이드 버튼 (warning/exceeded) */}
-        {warning_level !== "ok" && (
-          <Button
-            className="w-full"
-            onClick={() => navigate("/settings/billing")}
-          >
-            <Zap size={14} className="mr-1.5" />
-            플랜 업그레이드
-          </Button>
-        )}
+          <p className="text-[11px] text-slate-400">
+            기능별 막대는 “이번 기간 전체 사용량” 대비 비중입니다.
+          </p>
+        </section>
+        {/* #endregion */}
+
+        {/* #region CTA */}
+        <Button className="w-full" variant={warning_level === "ok" ? "outline" : "default"} onClick={() => navigate("/settings/billing")}>
+          <Zap size={14} className="mr-1.5" />
+          {warning_level === "ok" ? "플랜 보기" : "플랜 업그레이드"}
+        </Button>
 
         <p className="text-xs text-slate-400 text-center">
-          사용량은 매월 결제 기간 시작 시 초기화됩니다.
+          사용량은 결제 기간 기준으로 초기화됩니다.
         </p>
+        {/* #endregion */}
       </div>
     </PageShell>
   );

@@ -1,6 +1,6 @@
 // src/hooks/focuswin/sale/useSaleDetailVM.tsx
 
-import React, { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -10,9 +10,8 @@ import type { PageInvalidState, PageStatus } from "@/components/focuswin/common/
 import type { ConfirmState } from "@/components/focuswin/common/confirm-action-dialog";
 import type { SaleEditForm } from "@/types/sale";
 
-import ConfirmActionDialog from "@/components/focuswin/common/confirm-action-dialog";
-import PostAnalyzeClientModal from "@/components/focuswin/sale/common/PostAnalyzeClientModal";
 import { useSaleAiClientLinkFlow } from "./useSaleAiClientLinkFlow";
+import { buildDeleteConfirm } from "@/lib/confirm";
 
 import { BookMarked, Check, List, Loader2, Pencil, Plus, Sparkles, Trash2, XCircle } from "lucide-react";
 
@@ -305,7 +304,17 @@ export function useSaleDetailVM(logId: number) {
           icon: del.isPending ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />,
           onClick: () => {
             if (!log) return;
-            setConfirm({ type: "delete", id: log.sale.sale_idno, title });
+            setConfirm(
+              buildDeleteConfirm({
+                kind: "sale",
+                id: log.sale.sale_idno,
+                title: "해당 일지",
+                metas: [
+                  { label: "고객사", value: log.sale.clie_name || "-" },
+                  { label: "방문일", value: log.sale.vist_date ? new Date(log.sale.vist_date).toLocaleDateString("ko-KR") : "-" },
+                ],
+              })
+            );
           },
           variant: "ghost" as const,
         },
@@ -313,38 +322,37 @@ export function useSaleDetailVM(logId: number) {
 
   // #endregion
 
-  // #region Modals
+  // #region Modal handlers (래핑하여 안정적인 인터페이스 노출)
 
-  const Modals = () => (
-    <>
-      <ConfirmActionDialog
-        confirm={confirm}
-        setConfirm={setConfirm}
-        onConfirm={async (c) => {
-          if (c.type !== "delete") return;
-          await remove();
-          goList();
-        }}
-      />
+  const handleConfirmAction = async (c: NonNullable<ConfirmState>) => {
+    if (c.intent !== "delete") return;
+    await remove();
+    goList();
+  };
 
-      <PostAnalyzeClientModal
-        open={!!aiLink.postAnalyzeClientState}
-        ai_client_name={aiLink.postAnalyzeClientState?.ai_client_name ?? ""}
-        matched_name={aiLink.postAnalyzeClientState?.matched_name ?? null}
-        onConfirm={async () => {
-          const saleId = await aiLink.confirmPostAnalyze();
-          if (!saleId) return;
-          await utils.crm.sale.get.invalidate({ sale_idno: saleId });
-        }}
-        onDeny={async () => {
-          const saleId = await aiLink.denyPostAnalyze();
-          if (!saleId) return;
-          await utils.crm.sale.get.invalidate({ sale_idno: saleId });
-        }}
-      />
-    </>
-  );
+  const handlePostAnalyzeConfirm = async () => {
+    const saleId = await aiLink.confirmPostAnalyze();
+    if (!saleId) return;
+    await utils.crm.sale.get.invalidate({ sale_idno: saleId });
+  };
 
+  const handlePostAnalyzeDeny = async () => {
+    const saleId = await aiLink.denyPostAnalyze();
+    if (!saleId) return;
+    await utils.crm.sale.get.invalidate({ sale_idno: saleId });
+  };
+
+  // #endregion
+
+  // #region Modal props (SaleDetailModals 컴포넌트에 전달)
+  const modalProps = {
+    confirm,
+    setConfirm,
+    onConfirm: handleConfirmAction,
+    postAnalyzeClientState: aiLink.postAnalyzeClientState,
+    onPostAnalyzeConfirm: handlePostAnalyzeConfirm,
+    onPostAnalyzeDeny: handlePostAnalyzeDeny,
+  };
   // #endregion
 
   return {
@@ -390,8 +398,8 @@ export function useSaleDetailVM(logId: number) {
     update,
     del,
 
-    // modals
-    Modals,
+    // modal props → SaleDetailModals 컴포넌트에 spread
+    modalProps,
 
     // raw query (if needed)
     saleGet,

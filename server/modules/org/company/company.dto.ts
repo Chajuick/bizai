@@ -38,6 +38,10 @@ export const UpdateMemberRoleInput = z.object({
   user_idno: z.number().int().positive(),
   role: InviteRoleSchema, // owner 변경 불가
 });
+
+export const UpdateCompanyNameInput = z.object({
+  comp_name: z.string().min(2).max(120),
+});
 // #endregion
 
 // #region Outputs

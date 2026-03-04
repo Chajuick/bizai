@@ -7,10 +7,11 @@ import SaleListPage from "@/pages/sale/SaleListPage";
 import SaleDetailPage from "@/pages/sale/SaleDetailPage";
 import SaleRegistPage from "@/pages/sale/SaleRegistPage";
 import ScheduleListPage from "@/pages/schedule/ScheduleListPage";
-import OrderList from "@/pages/order/OrderList";
+import OrderListPage from "@/pages/order/OrderListPage";
 import ShipmentList from "@/pages/shipment/ShipmentList";
-import ClientList from "@/pages/client/ClientList";
-import ClientDetail from "@/pages/client/ClientDetail";
+import ClientListPage from "@/pages/client/ClientListPage";
+import ClientDetailPage from "@/pages/client/ClientDetailPage";
+import ClientRegistPage from "@/pages/client/ClientRegistPage";
 import SettingsHub from "@/pages/settings/SettingsHub";
 import SettingsTeam from "@/pages/settings/SettingsTeam";
 import SettingsUsage from "@/pages/settings/SettingsUsage";
@@ -30,10 +31,11 @@ export function AppGuard() {
         <Route path="/sale-list/regi" component={SaleRegistPage} />
         <Route path="/sale-list/:id" component={SaleDetailPage} />
         <Route path="/sche-list" component={ScheduleListPage} />
-        <Route path="/orde-list" component={OrderList} />
+        <Route path="/orde-list" component={OrderListPage} />
         <Route path="/ship-list" component={ShipmentList} />
-        <Route path="/clie-list" component={ClientList} />
-        <Route path="/clie-list/:id" component={ClientDetail} />
+        <Route path="/clie-list" component={ClientListPage} />
+        <Route path="/clie-list/regi" component={ClientRegistPage} />
+        <Route path="/clie-list/:id" component={ClientDetailPage} />
 
         <Route path="/settings" component={SettingsHub} />
         <Route path="/settings/team" component={SettingsTeam} />

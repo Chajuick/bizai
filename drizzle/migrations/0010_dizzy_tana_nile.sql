@@ -1,0 +1,1 @@
+ALTER TABLE `COAPP_CRM_SHIPMENT` ADD `clie_idno` int;

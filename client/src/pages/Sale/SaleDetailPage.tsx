@@ -1,9 +1,12 @@
+// src/pages/sale/SaleDetailPage.tsx
+
 import { useParams } from "wouter";
 import { useSaleDetailVM } from "@/hooks/focuswin/sale/useSaleDetailVM";
 
 import PageScaffold from "@/components/focuswin/common/page-scaffold";
 import SaleDetailContent from "@/components/focuswin/sale/detail/Content";
 import { SaleDetailHeaderTitle } from "@/components/focuswin/sale/detail/HeaderTitle";
+import { SaleDetailModals } from "@/components/focuswin/sale/detail/SaleDetailModals";
 
 export default function SaleDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -11,11 +14,10 @@ export default function SaleDetailPage() {
   const saleId = Number(id);
   const vm = useSaleDetailVM(saleId);
 
-  const Modals = vm.Modals;
-
   return (
     <>
-      <Modals />
+      {/* 모달 조립: VM의 상태/핸들러를 받아 렌더 */}
+      <SaleDetailModals {...vm.modalProps} />
 
       <PageScaffold
         kicker="LOG DETAIL"

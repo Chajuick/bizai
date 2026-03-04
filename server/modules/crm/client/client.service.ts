@@ -10,7 +10,10 @@ import { normalizePage } from "../shared/pagination";
 import { withCreateAudit, withUpdateAudit } from "../shared/audit";
 
 import type { AiContactItem, ClientContactCreatePayload, ClientContactUpdatePayload, ClientCreatePayload, ClientListInputType, ClientSort, ClientUpdatePayload } from "./client.dto";
+import { ClientCreateWithContactsInput, ClientSaveWithContactsInput } from "./client.dto";
 import { clientRepo } from "./client.repo";
+import { tx } from "../../../core/db/tx";
+import { z } from "zod";
 // #endregion
 
 // #region Helpers
@@ -377,6 +380,128 @@ export const clientService = {
     const db = getDb();
     await clientRepo.disableContact({ db }, { comp_idno: ctx.comp_idno, cont_idno, modi_idno: ctx.user_idno });
     return { success: true as const };
+  },
+  // #endregion
+
+  // #region createWithContacts — 고객사 + 담당자 트랜잭션 생성
+  async createWithContacts(
+    ctx: ServiceCtx,
+    payload: z.infer<typeof ClientCreateWithContactsInput>
+  ): Promise<{ clie_idno: number }> {
+    return tx(async (trx) => {
+      const { clie_idno } = await clientRepo.create(
+        { db: trx },
+        withCreateAudit(ctx, {
+          comp_idno: ctx.comp_idno,
+          enab_yesn: true,
+          ...payload.client,
+        })
+      );
+
+      const contacts = payload.contacts ?? [];
+      const hasMain = contacts.some((c) => c.main_yesn);
+      const normalized = hasMain
+        ? contacts
+        : contacts.map((c, i) => ({ ...c, main_yesn: i === 0 }));
+
+      for (const c of normalized) {
+        await clientRepo.createContact(
+          { db: trx },
+          withCreateAudit(ctx, {
+            comp_idno: ctx.comp_idno,
+            clie_idno,
+            cont_name: c.cont_name,
+            cont_role: c.cont_role ?? null,
+            cont_tele: c.cont_tele ?? null,
+            cont_mail: c.cont_mail || null,
+            cont_memo: c.cont_memo ?? null,
+            main_yesn: c.main_yesn,
+            enab_yesn: true,
+          })
+        );
+      }
+
+      return { clie_idno };
+    });
+  },
+  // #endregion
+
+  // #region saveWithContacts — 고객사 + 담당자 트랜잭션 저장 (diff 기반)
+  async saveWithContacts(
+    ctx: ServiceCtx,
+    payload: z.infer<typeof ClientSaveWithContactsInput>
+  ): Promise<void> {
+    const { client, contacts = [] } = payload;
+    await tx(async (trx) => {
+      const { clie_idno, ...patch } = client;
+
+      await clientRepo.update(
+        { db: trx },
+        { comp_idno: ctx.comp_idno, clie_idno, data: withUpdateAudit(ctx, patch) }
+      );
+
+      // 대표 담당자 변경 시 먼저 전체 해제
+      const hasMainChange = contacts.some((c) => c.main_yesn && c._state !== "delete");
+      if (hasMainChange) {
+        await clientRepo.clearMainContact({ db: trx }, { comp_idno: ctx.comp_idno, clie_idno });
+      }
+
+      for (const c of contacts) {
+        if (c._state === "new") {
+          await clientRepo.createContact(
+            { db: trx },
+            withCreateAudit(ctx, {
+              comp_idno: ctx.comp_idno,
+              clie_idno,
+              cont_name: c.cont_name,
+              cont_role: c.cont_role ?? null,
+              cont_tele: c.cont_tele ?? null,
+              cont_mail: c.cont_mail || null,
+              cont_memo: c.cont_memo ?? null,
+              main_yesn: c.main_yesn ?? false,
+              enab_yesn: true,
+            })
+          );
+        } else if (c._state === "update" && c.cont_idno) {
+          await clientRepo.updateContact(
+            { db: trx },
+            {
+              comp_idno: ctx.comp_idno,
+              cont_idno: c.cont_idno,
+              data: withUpdateAudit(ctx, {
+                cont_name: c.cont_name,
+                cont_role: c.cont_role ?? null,
+                cont_tele: c.cont_tele ?? null,
+                cont_mail: c.cont_mail || null,
+                cont_memo: c.cont_memo ?? null,
+                main_yesn: c.main_yesn,
+              }),
+            }
+          );
+        } else if (c._state === "delete" && c.cont_idno) {
+          await clientRepo.disableContact(
+            { db: trx },
+            { comp_idno: ctx.comp_idno, cont_idno: c.cont_idno, modi_idno: ctx.user_idno }
+          );
+        }
+      }
+
+      // 살아있는 담당자 중 대표가 없으면 첫 번째를 대표로 보정
+      const aliveAfter = contacts.filter((c) => c._state !== "delete");
+      if (aliveAfter.length > 0 && !aliveAfter.some((c) => c.main_yesn)) {
+        const first = aliveAfter[0];
+        if (first?.cont_idno) {
+          await clientRepo.updateContact(
+            { db: trx },
+            {
+              comp_idno: ctx.comp_idno,
+              cont_idno: first.cont_idno,
+              data: { main_yesn: true, modi_idno: ctx.user_idno },
+            }
+          );
+        }
+      }
+    });
   },
   // #endregion
 

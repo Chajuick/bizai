@@ -92,6 +92,12 @@ export const SaleTranscribeInput = z.object({
   language: z.string().optional(),
 });
 
+export const SalePatchScheduleClientInput = z.object({
+  sale_idno: z.number().int().positive(),
+  clie_idno: z.number().int().positive(),
+  clie_name: z.string().optional(),
+});
+
 // #endregion
 
 // #region Outputs: AI Core

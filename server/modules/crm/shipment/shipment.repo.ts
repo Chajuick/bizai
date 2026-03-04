@@ -60,6 +60,18 @@ export const shipmentRepo = {
   },
   // #endregion
 
+  // #region stats
+  async stats(
+    { db }: RepoDeps,
+    params: { comp_idno: number }
+  ): Promise<{ stat_code: string; ship_pric: unknown }[]> {
+    return db
+      .select({ stat_code: CRM_SHIPMENT.stat_code, ship_pric: CRM_SHIPMENT.ship_pric })
+      .from(CRM_SHIPMENT)
+      .where(and(eq(CRM_SHIPMENT.comp_idno, params.comp_idno), eq(CRM_SHIPMENT.enab_yesn, true)));
+  },
+  // #endregion
+
   // #region get
   async getById(
     { db }: RepoDeps,

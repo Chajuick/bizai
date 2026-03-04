@@ -116,9 +116,8 @@ export default function LandingPage() {
             <div className="lg:justify-self-end w-full">
               <div
                 className={[
-                  "rounded-3xl border border-slate-200/70 bg-white",
+                  "rounded-3xl",
                   "shadow-[0_18px_60px_rgba(15,23,42,0.10)]",
-                  "p-5 sm:p-6",
                   //  히어로 균형: 너무 길어지지 않게 상한을 걸고 내부는 딱 보이는 만큼만
                   "max-h-[520px] sm:max-h-[560px]",
                   "overflow-hidden",

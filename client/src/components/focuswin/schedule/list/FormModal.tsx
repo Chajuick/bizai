@@ -5,6 +5,7 @@ import { Input } from "@/components/focuswin/common/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/focuswin/common/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/focuswin/common/ui/select";
 import ClientNameInput from "@/components/ClientNameInput";
 import type { ScheduleFormState } from "@/types/schedule";
 
@@ -85,6 +86,32 @@ export default function ScheduleListFormModal({
               className="rounded-2xl border-slate-200 resize-none"
             />
           </div>
+
+          {editing && (
+            <div>
+              <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">
+                상태
+              </Label>
+              <Select
+                value={form.stat_code ?? "scheduled"}
+                onValueChange={(v) =>
+                  setForm((f) => ({
+                    ...f,
+                    stat_code: v as "scheduled" | "completed" | "canceled",
+                  }))
+                }
+              >
+                <SelectTrigger className="rounded-2xl border-slate-200">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="scheduled">예정</SelectItem>
+                  <SelectItem value="completed">완료</SelectItem>
+                  <SelectItem value="canceled">취소</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           <Button
             type="submit"

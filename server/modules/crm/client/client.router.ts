@@ -14,6 +14,7 @@ import {
   ClientContactUpdateInput,
   ClientCreateInput,
   ClientCreateOutput,
+  ClientCreateWithContactsInput,
   ClientDeleteInput,
   ClientFindNameInput,
   ClientIdInput,
@@ -21,6 +22,7 @@ import {
   ClientListOutput,
   ClientMatchOutput,
   ClientItemOutput,
+  ClientSaveWithContactsInput,
   ClientSyncContactInput,
   ClientSyncContactsInput,
   ClientUpdateInput,
@@ -88,6 +90,23 @@ export const clientRouter = router({
     .input(ClientDeleteInput)
     .mutation(({ ctx, input }) =>
       clientService.disableClient(svcCtxFromTrpc(ctx), input.clie_idno)
+    ),
+  // #endregion
+
+  // #region createWithContacts — 고객사 + 담당자 트랜잭션 생성
+  createWithContacts: protectedProcedure
+    .input(ClientCreateWithContactsInput)
+    .output(ClientCreateOutput)
+    .mutation(({ ctx, input }) =>
+      clientService.createWithContacts(svcCtxFromTrpc(ctx), input)
+    ),
+  // #endregion
+
+  // #region saveWithContacts — 고객사 + 담당자 트랜잭션 저장
+  saveWithContacts: protectedProcedure
+    .input(ClientSaveWithContactsInput)
+    .mutation(({ ctx, input }) =>
+      clientService.saveWithContacts(svcCtxFromTrpc(ctx), input)
     ),
   // #endregion
 

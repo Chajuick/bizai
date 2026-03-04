@@ -6,7 +6,7 @@ export const companyCols = () =>
     comp_idno: int("comp_idno").notNull()                     // 회사 ID (테넌트 키)
   } as const);
 
-/** 생성/수정 감사 컬럼(레거시 스타일) */
+/** 생성/수정 감사 컬럼 */
 export const auditCols = () =>
   ({
     crea_idno: int("crea_idno").notNull(),                    // 생성자 사용자 ID

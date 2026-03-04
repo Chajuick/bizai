@@ -641,6 +641,19 @@ export const saleService = {
   },
 
   // #endregion
+
+  // #region patchScheduleClient
+  async patchScheduleClient(
+    ctx: ServiceCtx,
+    sale_idno: number,
+    clie_idno: number,
+    clie_name?: string | null
+  ) {
+    const db = getDb();
+    await saleRepo.patchSchedulesClientBySale({ db }, { comp_idno: ctx.comp_idno, sale_idno, clie_idno, clie_name });
+    return { success: true as const };
+  },
+  // #endregion
 } as const;
 
 // #endregion

@@ -182,6 +182,38 @@ export type ClientContactItem = z.infer<typeof ClientContactItemOutput>;
 export const ClientContactListOutput = z.array(ClientContactItemOutput);
 // #endregion
 
+// #region Aggregate Inputs
+export const ContactCreateItemInput = z.object({
+  cont_name: z.string().min(1),
+  cont_role: z.string().optional(),
+  cont_tele: z.string().optional(),
+  cont_mail: z.string().email().optional().or(z.literal("")),
+  cont_memo: z.string().optional(),
+  main_yesn: z.boolean().default(false),
+});
+
+export const ContactSaveItemInput = z.object({
+  cont_idno: z.number().int().positive().optional(),
+  cont_name: z.string().min(1),
+  cont_role: z.string().optional(),
+  cont_tele: z.string().optional(),
+  cont_mail: z.string().email().optional().or(z.literal("")),
+  cont_memo: z.string().optional(),
+  main_yesn: z.boolean().default(false),
+  _state: z.enum(["keep", "new", "update", "delete"]),
+});
+
+export const ClientCreateWithContactsInput = z.object({
+  client: ClientCreateInput,
+  contacts: z.array(ContactCreateItemInput).optional(),
+});
+
+export const ClientSaveWithContactsInput = z.object({
+  client: ClientUpdateInput,
+  contacts: z.array(ContactSaveItemInput).optional(),
+});
+// #endregion
+
 // #region Service Contracts (Type Helpers)
 export type ClientCreatePayload = z.infer<typeof ClientCreateInput>;
 export type ClientUpdatePayload = Omit<z.infer<typeof ClientUpdateInput>, "clie_idno">;

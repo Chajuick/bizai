@@ -71,6 +71,13 @@
       "when": 1772513986998,
       "tag": "0009_shiny_iron_monger",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1772609908013,
+      "tag": "0010_dizzy_tana_nile",
+      "breakpoints": true
     }
   ]
 }

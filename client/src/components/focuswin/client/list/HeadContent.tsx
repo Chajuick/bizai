@@ -1,15 +1,15 @@
 import SearchInput from "@/components/focuswin/common/search-input";
-import { useClientsViewModel } from "@/hooks/focuswin/client/useClientViewModel";
+import { useClientListVM } from "@/hooks/focuswin/client/useClientListVM";
 
-type Props = { vm: ReturnType<typeof useClientsViewModel> };
+type Props = { vm: ReturnType<typeof useClientListVM> };
 
 export default function ClientListHeadContent({ vm }: Props) {
   return (
     <SearchInput
       value={vm.search}
       debounceMs={200}
-      onChange={vm.setSearch}
-      onClear={() => vm.setSearch("")}
+      onChange={vm.handleSearch}
+      onClear={vm.handleClear}
       placeholder="고객사명, 담당자로 검색…"
     />
   );

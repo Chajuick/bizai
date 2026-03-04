@@ -14,6 +14,7 @@ import {
   SaleIdInput,
   SaleListInput,
   SaleListOutput,
+  SalePatchScheduleClientInput,
   SaleTranscribeInput,
   SaleTranscribeOutput,
   SaleUpdateInput,
@@ -60,6 +61,12 @@ export const saleRouter = router({
     .input(SaleTranscribeInput)
     .output(SaleTranscribeOutput)
     .mutation(({ ctx, input }) => saleService.transcribe(svcCtxFromTrpc(ctx), input)),
+
+  patchScheduleClient: protectedProcedure
+    .input(SalePatchScheduleClientInput)
+    .mutation(({ ctx, input }) =>
+      saleService.patchScheduleClient(svcCtxFromTrpc(ctx), input.sale_idno, input.clie_idno, input.clie_name)
+    ),
 });
 
 // #endregion

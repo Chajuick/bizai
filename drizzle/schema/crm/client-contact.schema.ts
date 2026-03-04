@@ -11,7 +11,7 @@ export const CRM_CLIENT_CONT = table(
     clie_idno: int("clie_idno").notNull(), // 고객사 PK(FK 논리키)
 
     cont_name: varchar("cont_name", { length: 100 }).notNull(), // 담당자명
-    cont_role: varchar("cont_role", { length: 100 }),           // 직함/직책
+    cont_role: varchar("cont_role", { length: 100 }),           // 업무/직책
     cont_tele: varchar("cont_tele", { length: 50 }),            // 연락처
     cont_mail: varchar("cont_mail", { length: 320 }),           // 이메일
     cont_memo: text("cont_memo"),                               // 담당자 메모

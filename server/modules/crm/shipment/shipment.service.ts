@@ -96,6 +96,32 @@ export const shipmentService = {
   },
   // #endregion
 
+  // #region stats
+  async statsShipments(ctx: ServiceCtx) {
+    const db = getDb();
+    const rows = await shipmentRepo.stats({ db }, { comp_idno: ctx.comp_idno });
+
+    const counts = { all: 0, pending: 0, delivered: 0, invoiced: 0, paid: 0 };
+    let totalPaid = 0;
+    let totalPending = 0;
+
+    for (const row of rows) {
+      counts.all++;
+      switch (row.stat_code) {
+        case "pending":   counts.pending++;   break;
+        case "delivered": counts.delivered++; break;
+        case "invoiced":  counts.invoiced++;  break;
+        case "paid":      counts.paid++;      break;
+      }
+      const price = Number(row.ship_pric || 0);
+      if (row.stat_code === "paid") totalPaid += price;
+      else totalPending += price;
+    }
+
+    return { ...counts, totalPaid, totalPending };
+  },
+  // #endregion
+
   // #region get
   async getShipment(ctx: ServiceCtx, ship_idno: number) {
     const db = getDb();
@@ -113,6 +139,7 @@ export const shipmentService = {
       owne_idno: ctx.user_idno,
 
       orde_idno: input.orde_idno,
+      clie_idno: input.clie_idno,
       clie_name: input.clie_name,
 
       stat_code: input.stat_code,

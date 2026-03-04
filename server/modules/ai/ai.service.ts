@@ -1,5 +1,6 @@
 // server/modules/ai/ai.service.ts
 
+// #region Imports
 import { TRPCError } from "@trpc/server";
 
 import { getDb } from "../../core/db";
@@ -7,12 +8,10 @@ import type { DbOrTx } from "../../core/db/tx";
 import { billingRepo } from "../billing/billing.repo";
 import { aiRepo } from "./ai.repo";
 import type { AI_FEATURES } from "../../../drizzle/schema";
+// #endregion
 
+// #region Types
 type AiFeatCode = (typeof AI_FEATURES)[number];
-
-// ─────────────────────────────────────────────────────────
-// Public types
-// ─────────────────────────────────────────────────────────
 
 export type UsageSummaryData = {
   plan_code: string;
@@ -34,26 +33,83 @@ type RecordUsageArgs = {
   tokn_outs: number;
   meta_json?: object;
 };
+// #endregion
 
-// ─────────────────────────────────────────────────────────
-// Service
-// ─────────────────────────────────────────────────────────
+// #region Helpers
+function getWarningLevel(used: number, limit: number): "ok" | "warning" | "exceeded" {
+  const ratio = limit > 0 ? used / limit : 0;
+  return ratio >= 1 ? "exceeded" : ratio >= 0.8 ? "warning" : "ok";
+}
 
+/**
+ * ✅ 정석: "현재 유효한 플랜"을 구한다.
+ * - active: 그대로 사용
+ * - canceled: ends_date(기간 종료) 전까지는 기존 플랜 유지
+ * - canceled + 기간 종료: (정석은 billing sweep job이 free로 바꿔줘야 함)
+ *   그래도 혹시 스윕이 아직 안 돌았을 수 있으니, 여기서는 보수적으로 free로 취급
+ */
+function resolveEffectivePlan(sub: {
+  subs_stat: string;
+  ends_date: Date;
+  plan_code: string;
+  plan_name: string;
+  tokn_ovrr: number | null;
+  tokn_mont: number;
+}) {
+  const now = new Date();
+
+  // 해지 예약이지만 기간 남아있으면 그대로 유지
+  if (sub.subs_stat === "canceled" && sub.ends_date > now) {
+    return {
+      plan_code: sub.plan_code,
+      plan_name: sub.plan_name,
+      limit: sub.tokn_ovrr ?? sub.tokn_mont,
+      reset_date: sub.ends_date,
+    };
+  }
+
+  // active/trialing/past_due 등: 일단 구독 row 기준
+  if (sub.subs_stat !== "canceled") {
+    return {
+      plan_code: sub.plan_code,
+      plan_name: sub.plan_name,
+      limit: sub.tokn_ovrr ?? sub.tokn_mont,
+      reset_date: sub.ends_date,
+    };
+  }
+
+  // canceled + 기간 종료(스윕 미적용 가능) → 보수적으로 free
+  return {
+    plan_code: "free",
+    plan_name: "Free",
+    limit: 10_000,
+    reset_date: sub.ends_date,
+  };
+}
+// #endregion
+
+// #region Service
 export const aiService = {
+  // #region checkQuota
   /**
-   * 쿼터 초과 시 FORBIDDEN 에러를 throw.
-   * billingRepo.findActiveSubWithPlan 은 active 구독만 반환하지만
-   * canceled(유예기간) 구독도 허용하기 위해 직접 쿼리를 extend하지 않고
-   * 여기서 null인 경우 제한 없음으로 처리한다.
+   * ✅ 쿼터 초과 시 FORBIDDEN throw.
+   * 정석: active만 보지 말고 "current 구독"(active/canceled 포함)을 기준으로 계산해야 함.
    */
   async checkQuota(comp_idno: number, estimatedTokens: number): Promise<void> {
     const db = getDb();
-    const sub = await billingRepo.findActiveSubWithPlan({ db }, comp_idno);
 
-    // 구독 없음(테스트/개발) → 제한 없음
-    if (!sub) return;
+    const sub = await billingRepo.findCurrentSubWithPlan({ db }, comp_idno);
 
-    const limit = sub.tokn_ovrr ?? sub.tokn_mont;
+    // 정석 모델: comp는 항상 구독 row가 있어야 함
+    if (!sub) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "구독 정보를 찾을 수 없습니다. (초기 구독 생성 누락)",
+      });
+    }
+
+    const { limit } = resolveEffectivePlan(sub);
+
     const now = new Date();
     const { total: used } = await aiRepo.getMonthlyUsage(
       { db },
@@ -69,7 +125,9 @@ export const aiService = {
       });
     }
   },
+  // #endregion
 
+  // #region recordUsage
   async recordUsage(db: DbOrTx, args: RecordUsageArgs): Promise<void> {
     await aiRepo.recordUsageEvent(
       { db },
@@ -85,26 +143,24 @@ export const aiService = {
       },
     );
   },
+  // #endregion
 
+  // #region getUsageSummary
   async getUsageSummary(comp_idno: number): Promise<UsageSummaryData> {
     const db = getDb();
-    const sub = await billingRepo.findActiveSubWithPlan({ db }, comp_idno);
 
-    // 구독 없을 때 기본값
+    // ✅ active-only 금지: canceled(유예기간)도 현재 플랜로 보여줘야 함
+    const sub = await billingRepo.findCurrentSubWithPlan({ db }, comp_idno);
+
     if (!sub) {
-      return {
-        plan_code: "free",
-        plan_name: "Free",
-        total_limit: 10_000,
-        total_used: 0,
-        remaining: 10_000,
-        usage_by_feat: { chat: 0, stt: 0, llm: 0 },
-        reset_date: new Date(),
-        warning_level: "ok",
-      };
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "구독 정보를 찾을 수 없습니다. (초기 구독 생성 누락)",
+      });
     }
 
-    const limit = sub.tokn_ovrr ?? sub.tokn_mont;
+    const { plan_code, plan_name, limit, reset_date } = resolveEffectivePlan(sub);
+
     const now = new Date();
     const usage = await aiRepo.getMonthlyUsage(
       { db },
@@ -115,19 +171,19 @@ export const aiService = {
 
     const used = usage.total;
     const remaining = Math.max(0, limit - used);
-    const ratio = limit > 0 ? used / limit : 0;
-    const warning_level: "ok" | "warning" | "exceeded" =
-      ratio >= 1 ? "exceeded" : ratio >= 0.8 ? "warning" : "ok";
+    const warning_level = getWarningLevel(used, limit);
 
     return {
-      plan_code: sub.plan_code,
-      plan_name: sub.plan_name,
+      plan_code,
+      plan_name,
       total_limit: limit,
       total_used: used,
       remaining,
       usage_by_feat: { chat: usage.chat, stt: usage.stt, llm: usage.llm },
-      reset_date: sub.ends_date,
+      reset_date,
       warning_level,
     };
   },
+  // #endregion
 };
+// #endregion

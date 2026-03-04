@@ -18,6 +18,7 @@ export const OrderListInput = z
     search: z.string().optional(),
 
     status: z.enum(ORDER_STATUSES).optional(),
+    clie_idno: z.number().int().positive().optional(),
 
     page: PaginationInput.optional(),
     sort: OrderSortInput.optional(),
@@ -110,6 +111,17 @@ export const OrderListOutput = z.object({
   }),
 });
 export type OrderListOutput = z.infer<typeof OrderListOutput>;
+
+export const OrderStatsOutput = z.object({
+  all: z.number().int(),
+  proposal: z.number().int(),
+  negotiation: z.number().int(),
+  confirmed: z.number().int(),
+  canceled: z.number().int(),
+  totalPipeline: z.number(),
+  confirmedAmount: z.number(),
+});
+export type OrderStatsOutput = z.infer<typeof OrderStatsOutput>;
 // #endregion
 
 // #region Service Contracts
