@@ -1,10 +1,17 @@
-// client/src/components/focuswin/deliveries/delivery-form-dialog.tsx
+// client/src/components/focuswin/page/shipment/list/FormModal.tsx
+import * as React from "react";
 import { Loader2 } from "lucide-react";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Label } from "@/components/focuswin/common/ui/label";
-import { Input } from "@/components/focuswin/common/ui/input";
-import { Textarea } from "@/components/focuswin/common/ui/textarea";
 import { Button } from "@/components/focuswin/common/ui/button";
+
+import {
+  TextField,
+  TextAreaField,
+  MoneyField,
+  SelectField,
+  DateField,
+} from "@/components/focuswin/common/form";
 
 import type { ShipmentFormState, ShipmentStatus } from "@/types/shipment";
 
@@ -27,98 +34,117 @@ export default function ShipmentListFormModal({
   onSubmit: (e: React.FormEvent) => void;
   isSubmitting: boolean;
 }) {
+  const orderOptions =
+    orders?.map((o) => ({
+      value: String(o.orde_idno),
+      label: (
+        <span className="flex items-center gap-2 min-w-0">
+          <span className="truncate">{o.clie_name}</span>
+          <span className="text-slate-400 shrink-0">-</span>
+          <span className="truncate text-slate-600">{o.prod_serv}</span>
+        </span>
+      ),
+    })) ?? [];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="rounded-3xl border border-slate-100 bg-white">
         <DialogHeader>
-          <DialogTitle className="text-slate-900 font-black">{editing ? "납품 수정" : "납품 등록"}</DialogTitle>
+          <DialogTitle className="text-slate-900 font-black">
+            {editing ? "납품 수정" : "납품 등록"}
+          </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={onSubmit} className="space-y-4">
-          {!!orders?.length && (
-            <div>
-              <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">연결 수주(선택)</Label>
-              <select
-                value={form.orde_idno}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  const order = orders.find((o) => String(o.orde_idno) === v);
-                  setForm((f) => ({
-                    ...f,
-                    orde_idno: v,
-                    clie_name: order?.clie_name || f.clie_name,
-                    ship_pric: order ? String(order.orde_pric) : f.ship_pric,
-                  }));
-                }}
-                className="w-full px-3 py-2 rounded-2xl border border-slate-200 bg-white text-slate-900"
-              >
-                <option value="">선택 안함</option>
-                {orders.map((o) => (
-                  <option key={o.orde_idno} value={String(o.orde_idno)}>
-                    {o.clie_name} - {o.prod_serv}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+          {/* 연결 수주(선택) */}
+          {!!orders?.length ? (
+            <SelectField
+              label="연결 수주"
+              value={form.orde_idno ? String(form.orde_idno) : ""}
+              onChange={(v) => {
+                const order = orders.find((o) => String(o.orde_idno) === v);
 
-          <div>
-            <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">고객사 *</Label>
-            <Input
-              value={form.clie_name}
-              onChange={(e) => setForm((f) => ({ ...f, clie_name: e.target.value }))}
-              required
-              className="rounded-2xl border-slate-200"
-              placeholder="(주)OOO"
+                setForm((f) => ({
+                  ...f,
+                  // 기존 로직 유지: 값은 string으로 넣고 있었음
+                  orde_idno: v,
+                  clie_name: order?.clie_name || f.clie_name,
+                  ship_pric: order ? String(order.orde_pric) : f.ship_pric,
+                }));
+              }}
+              placeholder="선택 안함"
+              options={orderOptions}
+              triggerClassName="border-slate-200 px-3 w-full"
             />
-          </div>
+          ) : null}
 
-          <div>
-            <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">매출 금액(원) *</Label>
-            <Input
-              type="number"
-              value={form.ship_pric}
-              onChange={(e) => setForm((f) => ({ ...f, ship_pric: e.target.value }))}
-              required
-              className="rounded-2xl border-slate-200"
-              placeholder="5000000"
-            />
-          </div>
+          {/* 고객사 */}
+          <TextField
+            label="고객사"
+            required
+            value={form.clie_name}
+            onChange={(v) => setForm((f) => ({ ...f, clie_name: v }))}
+            inputProps={{
+              required: true,
+              placeholder: "(주)OOO",
+              maxLength: 200,
+            }}
+          />
 
-          <div>
-            <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">납품 상태</Label>
-            <select
-              value={form.stat_code}
-              onChange={(e) => setForm((f) => ({ ...f, stat_code: e.target.value as ShipmentStatus }))}
-              className="w-full px-3 py-2 rounded-2xl border border-slate-200 bg-white text-slate-900"
-            >
-              <option value="pending">대기</option>
-              <option value="delivered">납품완료</option>
-              <option value="invoiced">청구완료</option>
-              <option value="paid">수금완료</option>
-            </select>
-          </div>
+          {/* 매출 금액 */}
+          <MoneyField
+            label="매출 금액(원)"
+            required
+            value={form.ship_pric ?? ""}
+            onChange={(v) =>
+              setForm((f) => ({
+                ...f,
+                ship_pric: v ? v.replace(/,/g, "") : "",
+              }))
+            }
+            inputProps={{
+              required: true,
+              placeholder: "5000000",
+              maxLength: 13,
+            }}
+          />
 
-          <div>
-            <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">납품일</Label>
-            <Input
-              type="date"
-              value={form.ship_date}
-              onChange={(e) => setForm((f) => ({ ...f, ship_date: e.target.value }))}
-              className="rounded-2xl border-slate-200"
-            />
-          </div>
+          {/* 납품 상태 */}
+          <SelectField
+            label="납품 상태"
+            value={form.stat_code}
+            onChange={(v) =>
+              setForm((f) => ({
+                ...f,
+                stat_code: v as ShipmentStatus,
+              }))
+            }
+            options={[
+              { value: "pending", label: "대기" },
+              { value: "delivered", label: "납품완료" },
+              { value: "invoiced", label: "청구완료" },
+              { value: "paid", label: "수금완료" },
+            ]}
+            triggerClassName="border-slate-200 px-3 w-full"
+          />
 
-          <div>
-            <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">메모</Label>
-            <Textarea
-              value={form.ship_memo}
-              onChange={(e) => setForm((f) => ({ ...f, ship_memo: e.target.value }))}
-              rows={3}
-              className="rounded-2xl border-slate-200 resize-none"
-              placeholder="선택 입력"
-            />
-          </div>
+          {/* 납품일 */}
+          <DateField
+            label="납품일"
+            value={form.ship_date}
+            onChange={(v) => setForm((f) => ({ ...f, ship_date: v }))}
+          />
+
+          {/* 메모 */}
+          <TextAreaField
+            label="메모"
+            value={form.ship_memo ?? ""}
+            onChange={(v) => setForm((f) => ({ ...f, ship_memo: v }))}
+            textareaProps={{
+              rows: 3,
+              placeholder: "선택 입력",
+            }}
+          />
 
           <Button
             type="submit"

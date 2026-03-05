@@ -1,9 +1,15 @@
+import * as React from "react";
 import { Loader2 } from "lucide-react";
+
 import { Button } from "@/components/focuswin/common/ui/button";
-import { Input } from "@/components/focuswin/common/ui/input";
-import { Label } from "@/components/focuswin/common/ui/label";
-import { Textarea } from "@/components/focuswin/common/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+import {
+  MoneyField,
+  SelectField,
+  DateField,
+  TextAreaField,
+} from "@/components/focuswin/common/form";
 
 import type { OrderShipmentFormState, OrderRow } from "@/types/order";
 import type { ShipmentStatus } from "@/types/shipment";
@@ -30,59 +36,70 @@ export default function CreateShipmetModal({
       <DialogContent className="rounded-3xl border border-slate-100 bg-white">
         <DialogHeader>
           <DialogTitle className="text-slate-900 font-black">납품 생성</DialogTitle>
-          {selectedOrder && (
+
+          {selectedOrder ? (
             <p className="mt-2 text-sm text-slate-600">
               고객사: <span className="font-bold text-slate-900">{selectedOrder.clie_name}</span>
             </p>
-          )}
+          ) : null}
         </DialogHeader>
 
         <form onSubmit={onSubmit} className="space-y-4">
-          <div>
-            <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">수익 금액(원) *</Label>
-            <Input
-              type="number"
-              value={deliveryForm.ship_pric}
-              onChange={(e) => setDeliveryForm((f) => ({ ...f, ship_pric: e.target.value }))}
-              required
-              className="rounded-2xl border-slate-200"
-            />
-          </div>
+          {/* 수익 금액 */}
+          <MoneyField
+            label="수익 금액(원)"
+            required
+            value={deliveryForm.ship_pric ?? ""}
+            onChange={(v) =>
+              setDeliveryForm((f) => ({
+                ...f,
+                // MoneyField는 콤마가 포함될 수 있어 저장 시 제거 (string 유지)
+                ship_pric: v ? v.replace(/,/g, "") : "",
+              }))
+            }
+            inputProps={{
+              required: true,
+              placeholder: "1000000",
+              maxLength: 13,
+            }}
+          />
 
-          <div>
-            <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">납품 상태</Label>
-            <select
-              value={deliveryForm.stat_code}
-              onChange={(e) => setDeliveryForm((f) => ({ ...f, stat_code: e.target.value as ShipmentStatus }))}
-              className="w-full px-3 py-2 rounded-2xl border border-slate-200 bg-white text-slate-900"
-            >
-              <option value="pending">대기</option>
-              <option value="delivered">납품완료</option>
-              <option value="invoiced">청구완료</option>
-              <option value="paid">수금완료</option>
-            </select>
-          </div>
+          {/* 납품 상태 */}
+          <SelectField
+            label="납품 상태"
+            value={deliveryForm.stat_code}
+            onChange={(v) =>
+              setDeliveryForm((f) => ({
+                ...f,
+                stat_code: v as ShipmentStatus,
+              }))
+            }
+            options={[
+              { value: "pending", label: "대기" },
+              { value: "delivered", label: "납품완료" },
+              { value: "invoiced", label: "청구완료" },
+              { value: "paid", label: "수금완료" },
+            ]}
+            triggerClassName="border-slate-200 px-3 w-full"
+          />
 
-          <div>
-            <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">납품일</Label>
-            <Input
-              type="date"
-              value={deliveryForm.ship_date}
-              onChange={(e) => setDeliveryForm((f) => ({ ...f, ship_date: e.target.value }))}
-              className="rounded-2xl border-slate-200"
-            />
-          </div>
+          {/* 납품일 */}
+          <DateField
+            label="납품일"
+            value={deliveryForm.ship_date}
+            onChange={(v) => setDeliveryForm((f) => ({ ...f, ship_date: v }))}
+          />
 
-          <div>
-            <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">메모</Label>
-            <Textarea
-              value={deliveryForm.ship_memo}
-              onChange={(e) => setDeliveryForm((f) => ({ ...f, ship_memo: e.target.value }))}
-              rows={3}
-              className="rounded-2xl border-slate-200 resize-none"
-              placeholder="선택 입력"
-            />
-          </div>
+          {/* 메모 */}
+          <TextAreaField
+            label="메모"
+            value={deliveryForm.ship_memo ?? ""}
+            onChange={(v) => setDeliveryForm((f) => ({ ...f, ship_memo: v }))}
+            textareaProps={{
+              rows: 3,
+              placeholder: "선택 입력",
+            }}
+          />
 
           <Button
             type="submit"

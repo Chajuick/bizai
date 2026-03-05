@@ -1,14 +1,19 @@
 import React from "react";
 import { Sparkles, FileText, Building2, CalendarClock } from "lucide-react";
 
-import { Input } from "@/components/focuswin/common/ui/input";
-import { Label } from "@/components/focuswin/common/ui/label";
-import { Textarea } from "@/components/focuswin/common/ui/textarea";
 import FormDialog from "@/components/focuswin/common/overlays/form-dialog";
+import Chip from "@/components/focuswin/common/ui/chip";
 
 import type { OrderQuickFormState } from "@/types/order";
 import type { EnhancedSchedule } from "@/types/schedule";
-import Chip from "@/components/focuswin/common/ui/chip";
+
+import {
+  TextField,
+  TextAreaField,
+  SelectField,
+  MoneyField,
+  DateField,
+} from "@/components/focuswin/common/form";
 
 export type { OrderQuickFormState };
 
@@ -36,31 +41,17 @@ function PreviewCard({
         {/* 🔹 제목 + 칩 한 줄 */}
         <div className="flex items-start gap-2 min-w-0">
           <div className="flex-1 min-w-0">
-            <div className="text-sm font-black text-slate-900 truncate">
-              {title}
-            </div>
+            <div className="text-sm font-black text-slate-900 truncate">{title}</div>
           </div>
 
-          {chips ? (
-            <div className="flex items-center gap-1.5 shrink-0">
-              {chips}
-            </div>
-          ) : null}
+          {chips ? <div className="flex items-center gap-1.5 shrink-0">{chips}</div> : null}
         </div>
 
         {/* 🔹 설명 */}
-        {desc ? (
-          <div className="text-xs text-slate-600 line-clamp-2">
-            {desc}
-          </div>
-        ) : null}
+        {desc ? <div className="text-xs text-slate-600 line-clamp-2">{desc}</div> : null}
 
         {/* 🔹 고객사 등 아이템 */}
-        {items ? (
-          <div className="space-y-1">
-            {items}
-          </div>
-        ) : null}
+        {items ? <div className="space-y-1">{items}</div> : null}
       </div>
     </div>
   );
@@ -90,7 +81,6 @@ export default function CreateOrderModal({
   const clieName = selectedPromise?.clie_name ?? "";
   const isAi = !!selectedPromise?.auto_gene;
 
-  // 일정 일시도 같이 보여주고 싶으면 아래를 켜면 됨(없으면 제거)
   const scheDateLabel = selectedPromise?.sche_date
     ? new Date(selectedPromise.sche_date as any).toLocaleString("ko-KR", {
         year: "numeric",
@@ -110,7 +100,6 @@ export default function CreateOrderModal({
       subtitle={
         selectedPromise ? (
           <div className="space-y-2">
-            {/* Toss-style: 위에 미리보기 카드 */}
             <PreviewCard
               title={
                 <span className="flex items-center gap-2 min-w-0">
@@ -126,9 +115,7 @@ export default function CreateOrderModal({
                   ) : (
                     <Chip tone="slate" icon={Sparkles} label="수동" />
                   )}
-                  {scheDateLabel ? (
-                    <Chip tone="blue" icon={CalendarClock} label={scheDateLabel} />
-                  ) : null}
+                  {scheDateLabel ? <Chip tone="blue" icon={CalendarClock} label={scheDateLabel} /> : null}
                 </>
               }
             />
@@ -149,71 +136,76 @@ export default function CreateOrderModal({
       isSubmitting={isSubmitting}
       onSubmit={onSubmit}
     >
-      {/* #region Form Fields */}
-      <div>
-        <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">상품/서비스 *</Label>
-        <Input
+      <div className="space-y-4">
+        {/* 상품/서비스 */}
+        <TextField
+          label="상품/서비스"
+          required
           value={orderForm.prod_serv}
-          onChange={(e) => setOrderForm((f) => ({ ...f, prod_serv: e.target.value }))}
-          required
-          placeholder="예: 소프트웨어 개발"
-          className="rounded-2xl border-slate-200"
+          onChange={(v) => setOrderForm((f) => ({ ...f, prod_serv: v }))}
+          inputProps={{
+            required: true,
+            placeholder: "예: 소프트웨어 개발",
+            maxLength: 200,
+          }}
         />
-      </div>
 
-      <div>
-        <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">예상 금액 (원) *</Label>
-        <Input
-          type="number"
-          value={orderForm.orde_pric}
-          onChange={(e) => setOrderForm((f) => ({ ...f, orde_pric: e.target.value }))}
-          required
-          placeholder="5000000"
-          className="rounded-2xl border-slate-200"
+        {/* 예상 금액 */}
+        <MoneyField
+          label="예상 금액 (원)"
+          value={orderForm.orde_pric ?? ""}
+          onChange={(v) =>
+            setOrderForm((f) => ({
+              ...f,
+              // MoneyField는 "1,000,000" 같은 포맷이 올 수 있으니 저장은 콤마 제거한 string으로 통일
+              orde_pric: v ? v.replace(/,/g, "") : "",
+            }))
+          }
+          inputProps={{
+            placeholder: "5000000",
+            maxLength: 13,
+            required: true,
+          }}
         />
-      </div>
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">초기 상태</Label>
-          <select
+        <div className="grid grid-cols-2 gap-3">
+          {/* 초기 상태 */}
+          <SelectField
+            label="초기 상태"
             value={orderForm.stat_code}
-            onChange={(e) =>
+            onChange={(v) =>
               setOrderForm((f) => ({
                 ...f,
-                stat_code: e.target.value as OrderQuickFormState["stat_code"],
+                stat_code: v as OrderQuickFormState["stat_code"],
               }))
             }
-            className="w-full px-3 py-2 rounded-2xl border border-slate-200 bg-white text-slate-900"
-          >
-            <option value="proposal">제안</option>
-            <option value="negotiation">협상</option>
-            <option value="confirmed">확정</option>
-          </select>
-        </div>
+            options={[
+              { value: "proposal", label: "제안" },
+              { value: "negotiation", label: "협상" },
+              { value: "confirmed", label: "확정" },
+            ]}
+            triggerClassName="border-slate-200 px-3 w-full"
+          />
 
-        <div>
-          <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">계약일</Label>
-          <Input
-            type="date"
+          {/* 계약일 */}
+          <DateField
+            label="계약일"
             value={orderForm.ctrt_date}
-            onChange={(e) => setOrderForm((f) => ({ ...f, ctrt_date: e.target.value }))}
-            className="rounded-2xl border-slate-200"
+            onChange={(v) => setOrderForm((f) => ({ ...f, ctrt_date: v }))}
           />
         </div>
-      </div>
 
-      <div>
-        <Label className="text-xs font-semibold text-slate-600 mb-1.5 block">메모</Label>
-        <Textarea
+        {/* 메모 */}
+        <TextAreaField
+          label="메모"
           value={orderForm.orde_memo}
-          onChange={(e) => setOrderForm((f) => ({ ...f, orde_memo: e.target.value }))}
-          rows={2}
-          className="rounded-2xl border-slate-200 resize-none"
-          placeholder="일정 메모에서 자동 입력"
+          onChange={(v) => setOrderForm((f) => ({ ...f, orde_memo: v }))}
+          textareaProps={{
+            rows: 2,
+            placeholder: "일정 메모에서 자동 입력",
+          }}
         />
       </div>
-      {/* #endregion */}
     </FormDialog>
   );
 }

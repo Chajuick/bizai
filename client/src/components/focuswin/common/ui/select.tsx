@@ -82,9 +82,9 @@ function SelectTrigger({
           // 토스: ring 없이 underline만 포인트
           "outline-none",
           // focus 상태
-          "focus:border-b-2 focus:border-primary",
+          "focus:border-b-1 focus:border-primary",
           // open 상태도 focus처럼
-          "data-[state=open]:border-b-2 data-[state=open]:border-primary",
+          "data-[state=open]:border-b-1 data-[state=open]:border-primary",
           // #endregion
 
           // #region Motion

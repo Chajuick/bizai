@@ -57,7 +57,7 @@ async function main() {
     // #endregion
 
     // #region Listen
-    const port = Number(process.env.PORT ?? 3000);
+    const port = Number(process.env.PORT ?? 9000);
     server.listen(port, () => {
         logger.info({ port }, "server listening");
     });

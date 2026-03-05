@@ -24,6 +24,7 @@ export type SelectFieldProps = BaseFieldProps & {
   size?: "sm" | "default";
   triggerClassName?: string;
   contentClassName?: string;
+  disabled?: boolean,
 };
 
 export default function SelectField({
@@ -39,12 +40,13 @@ export default function SelectField({
   size = "default",
   triggerClassName,
   contentClassName,
+  disabled = false,
 }: SelectFieldProps) {
   return (
     <div className={className}>
       <UiField label={typeof label === "string" && required ? `${label} *` : (label as any)} hint={error ?? hint}>
         <Select value={value} onValueChange={onChange}>
-          <SelectTrigger size={size} className={triggerClassName} aria-invalid={!!error}>
+          <SelectTrigger size={size} className={triggerClassName} aria-invalid={!!error} disabled={disabled}>
             <SelectValue placeholder={placeholder} />
           </SelectTrigger>
 
