@@ -1,7 +1,7 @@
 // server/modules/crm/file/file.repo.ts
 
 // #region Imports
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
 
 import { CORE_FILE, CORE_FILE_LINK, FILE_REF_TYPES } from "../../../../drizzle/schema";
 import type { DbClient } from "../../../core/db";
@@ -180,6 +180,24 @@ export const fileRepo = {
       purp_type: r.purp_type ?? null,
       sort_orde: Number(r.sort_orde ?? 0),
     }));
+  },
+  // #endregion
+
+
+  // #region softDeleteById
+  async softDeleteById(
+    deps: FileRepoDeps,
+    args: { comp_idno: number; file_idno: number }
+  ): Promise<void> {
+    await deps.db
+      .update(CORE_FILE)
+      .set({
+        dele_yesn: 1,
+        dele_date: sql`NOW()`,
+        // drop_date도 쓰고 싶으면 정책에 맞춰 설정
+        // drop_date: sql`NOW()`,
+      })
+      .where(and(eq(CORE_FILE.comp_idno, args.comp_idno), eq(CORE_FILE.file_idno, args.file_idno)));
   },
   // #endregion
 } as const;
