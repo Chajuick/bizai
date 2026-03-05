@@ -48,20 +48,20 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const distPath =
-    process.env.NODE_ENV === "development"
-      ? path.resolve(import.meta.dirname, "../..", "dist", "public")
-      : path.resolve(import.meta.dirname, "public");
-  if (!fs.existsSync(distPath)) {
+  // 프로젝트 루트 기준으로 항상 동일하게 잡기 (PM2/빌드 위치 흔들림 방지)
+  const root = process.cwd();
+  const clientDist = path.resolve(root, "client", "dist");
+
+  if (!fs.existsSync(clientDist)) {
     console.error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`
+      `Could not find client dist: ${clientDist}. Run "pnpm build" first.`
     );
   }
 
-  app.use(express.static(distPath));
+  app.use(express.static(clientDist));
 
-  // fall through to index.html if the file doesn't exist
+  // SPA fallback
   app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+    res.sendFile(path.resolve(clientDist, "index.html"));
   });
 }
