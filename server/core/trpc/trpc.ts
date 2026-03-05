@@ -32,6 +32,17 @@ export type ProtectedContext = AuthedContext & {
 const t = initTRPC.context<TrpcContext>().create({
   transformer: superjson,
   errorFormatter({ shape, error, ctx }) {
+    // Output validation 실패는 INTERNAL_SERVER_ERROR — 서버 로그로 상세 출력
+    if (error.code === "INTERNAL_SERVER_ERROR") {
+      const cause = error.cause;
+      console.error("[tRPC] INTERNAL_SERVER_ERROR", {
+        path: shape.data?.path,
+        message: error.message,
+        cause: cause instanceof Error ? cause.message : cause,
+        issues: (cause as { issues?: unknown })?.issues ?? null,
+      });
+    }
+
     return {
       ...shape,
       data: {

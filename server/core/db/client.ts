@@ -42,6 +42,8 @@ export function getDb(): DbClient {
     connectionLimit: 10,
     waitForConnections: true,
     queueLimit: 0,
+    // 서버 환경에 관계없이 UTC 기준으로 날짜 처리 (Invalid Date / zero-date 방지)
+    timezone: "+00:00",
   });
 
   _db = drizzle(_pool, {
