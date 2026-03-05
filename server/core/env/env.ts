@@ -56,6 +56,14 @@ function csv(key: string): string[] {
     .map((s) => s.trim())
     .filter(Boolean);
 }
+
+function int(key: string, fallback: number): number {
+  const v = read(key);
+  if (!v) return fallback;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
 // #endregion
 
 // #region ENV (단일 진실원천)
@@ -97,5 +105,6 @@ export const ENV = {
   // --- security
   allowedAudioHosts: optional("ALLOWED_AUDIO_HOSTS"),
   allowedAudioHostsList: csv("ALLOWED_AUDIO_HOSTS"),
+  port: int("PORT", 9000),
 } as const;
 // #endregion

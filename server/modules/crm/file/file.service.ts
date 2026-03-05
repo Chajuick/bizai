@@ -186,13 +186,6 @@ export const fileService = {
       console.error("[transcribeFile] storageDelete failed:", e);
     }
 
-    // 2) DB soft delete (원하면 켜기)
-    try {
-      await fileRepo.softDeleteById({ db }, { comp_idno: ctx.comp_idno, file_idno: input.file_idno });
-    } catch (e) {
-      console.error("[transcribeFile] softDeleteById failed:", e);
-    }
-
     return { text };
   },
   // #endregion
