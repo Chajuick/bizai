@@ -1,9 +1,11 @@
 // server/modules/org/company/company.dto.ts
 
 import { z } from "zod";
+import { IsoDateTime } from "../../crm/shared/dto";
 
 // #region Shared
-const InviteRoleSchema = z.enum(["admin", "member"]);
+const InviteRoleSchema = z.enum(["admin", "member"]); // Input 전용: 초대 생성 시 허용 역할
+const InviteRoleOutputSchema = z.enum(["owner", "admin", "member"]); // Output: DB 실제 값 허용
 const CompanyRoleSchema = z.enum(["owner", "admin", "member"]);
 const InviteStatSchema = z.enum(["active", "used", "revoked", "expired"]);
 const MemberStatSchema = z.enum(["active", "pending", "removed"]);
@@ -51,7 +53,7 @@ export const MemberItemOutput = z.object({
   mail_idno: z.string().nullable(),
   role_code: CompanyRoleSchema,
   status_code: MemberStatSchema,
-  crea_date: z.date(),
+  crea_date: IsoDateTime,
 });
 
 export const CompanyItemOutput = z.object({
@@ -64,16 +66,16 @@ export const CompanyItemOutput = z.object({
 export const InviteItemOutput = z.object({
   invt_idno: z.number().int(),
   mail_idno: z.string().nullable(),
-  role_code: InviteRoleSchema,
+  role_code: InviteRoleOutputSchema, // DB는 owner|admin|member 허용
   stat_code: InviteStatSchema,
-  expi_date: z.date(),
-  crea_date: z.date(),
+  expi_date: IsoDateTime,
+  crea_date: IsoDateTime,
 });
 
 export const InviteInfoOutput = z.object({
   comp_name: z.string(),
-  role_code: InviteRoleSchema,
-  expi_date: z.date(),
+  role_code: InviteRoleOutputSchema,
+  expi_date: IsoDateTime,
   stat_code: InviteStatSchema,
 });
 

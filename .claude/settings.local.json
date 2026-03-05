@@ -31,7 +31,9 @@
       "Skill(bkit:pdca)",
       "Bash(npx tsx:*)",
       "Bash(mv:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(xargs cat:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

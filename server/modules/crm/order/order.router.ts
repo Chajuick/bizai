@@ -8,6 +8,7 @@ import {
   OrderCreateInput,
   OrderDeleteInput,
   OrderIdInput,
+  OrderItemOutput,
   OrderListInput,
   OrderListOutput,
   OrderStatsOutput,
@@ -35,6 +36,7 @@ export const orderRouter = router({
   // #region get
   get: protectedProcedure
     .input(OrderIdInput)
+    .output(OrderItemOutput.nullable())
     .query(({ ctx, input }) => orderService.getOrder(svcCtxFromTrpc(ctx), input.orde_idno)),
   // #endregion
 

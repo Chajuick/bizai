@@ -2,6 +2,7 @@
 
 import { z } from "zod";
 import { PLAN_CODES } from "../../../drizzle/schema";
+import { IsoDateTime } from "../crm/shared/dto";
 
 // #region Enums
 export const SubStatusZ = z.enum(["active", "trialing", "canceled", "past_due", "inactive"]);
@@ -31,8 +32,8 @@ export const BillingSummaryOutput = z.object({
   seat_limit: z.number().int(),
   token_month: z.number().int(),
 
-  star_date: z.date(),
-  ends_date: z.date(),
+  star_date: IsoDateTime,
+  ends_date: IsoDateTime,
 
   member_count: z.number().int(),
   remaining_seats: z.number().int(),
@@ -52,13 +53,13 @@ export const UsageSummaryOutput = z.object({
     stt: z.number().int(),
     llm: z.number().int(),
   }),
-  reset_date: z.date(),
+  reset_date: IsoDateTime,
   warning_level: z.enum(["ok", "warning", "exceeded"]),
 });
 
 export const CancelSubscriptionOutput = z.object({
   success: z.literal(true),
-  ends_date: z.date(),
+  ends_date: IsoDateTime,
   message: z.string(),
 });
 // #endregion

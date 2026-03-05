@@ -117,7 +117,17 @@ export const scheduleService = {
   // #region getSchedule
   async getSchedule(ctx: ServiceCtx, sche_idno: number) {
     const db = getDb();
-    return scheduleRepo.getById({ db }, { comp_idno: ctx.comp_idno, sche_idno });
+    const row = await scheduleRepo.getById({ db }, { comp_idno: ctx.comp_idno, sche_idno });
+    if (!row) return null;
+    const nowMs = Date.now();
+    const now = new Date(nowMs);
+    const kstMidnight = computeKstTodayMidnightDate(nowMs);
+    const imminentEnd = new Date(nowMs + 48 * 60 * 60 * 1000);
+    return {
+      ...row,
+      overdue: row.stat_code === "scheduled" && row.sche_date < kstMidnight,
+      imminent: row.stat_code === "scheduled" && row.sche_date >= now && row.sche_date < imminentEnd,
+    };
   },
   // #endregion
 

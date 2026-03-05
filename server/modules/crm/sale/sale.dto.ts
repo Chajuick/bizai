@@ -146,7 +146,8 @@ export const SaleItemOutput = z.object({
   cont_name: z.string().nullable(),
   sale_loca: z.string().nullable(),
 
-  vist_date: z.string(), // ISO
+  vist_date: IsoDateTime, // Date (superjson) or ISO string
+  sale_pric: DecimalLikeNullable, // decimal → string|null from Drizzle
   orig_memo: z.string(),
 
   aiex_done: z.boolean(),

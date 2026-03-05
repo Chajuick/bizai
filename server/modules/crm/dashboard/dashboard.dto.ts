@@ -2,6 +2,7 @@
 
 // #region Imports
 import { z } from "zod";
+import { IsoDateTime } from "../shared/dto";
 // #endregion
 
 // #region Outputs
@@ -18,8 +19,21 @@ export const DashboardStatsOutput = z.object({
   overdueCount: z.number().int().nonnegative(),
   imminentCount: z.number().int().nonnegative(),
 
-  recentSales: z.array(z.any()),
-  upcomingSchedules: z.array(z.any()),
+  // 최근 영업일지 (클라이언트 표시용 최소 필드)
+  recentSales: z.array(z.object({
+    sale_idno: z.number().int(),
+    clie_name: z.string().nullable(),
+    orig_memo: z.string(),
+    vist_date: IsoDateTime,
+  })),
+
+  // 예정 일정 (클라이언트 표시용 최소 필드)
+  upcomingSchedules: z.array(z.object({
+    sche_idno: z.number().int(),
+    sche_name: z.string(),
+    sche_date: IsoDateTime,
+    clie_name: z.string().nullable(),
+  })),
 });
 
 export type DashboardStatsOutput = z.infer<typeof DashboardStatsOutput>;

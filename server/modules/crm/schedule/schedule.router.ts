@@ -8,6 +8,7 @@ import {
   ScheduleCreateInput,
   ScheduleDeleteInput,
   ScheduleIdInput,
+  ScheduleItemOutput,
   ScheduleListInput,
   ScheduleListOutput,
   ScheduleStatsOutput,
@@ -35,6 +36,7 @@ export const scheduleRouter = router({
   // #region get
   get: protectedProcedure
     .input(ScheduleIdInput)
+    .output(ScheduleItemOutput.nullable())
     .query(({ ctx, input }) => scheduleService.getSchedule(svcCtxFromTrpc(ctx), input.sche_idno)),
   // #endregion
 
