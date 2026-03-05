@@ -25,7 +25,12 @@ export async function setupVite(app: Express, server: Server) {
     const url = req.originalUrl;
 
     try {
-      const clientTemplate = path.resolve(process.cwd(), "client", "index.html");
+      const clientTemplate = path.resolve(
+        import.meta.dirname,
+        "../..",
+        "client",
+        "index.html"
+      );
 
       // always reload the index.html file from disk incase it changes
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
@@ -43,26 +48,18 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  const root = process.cwd();
+  // dist/index.js 기준 -> dist/public
+  const distPath = path.resolve(import.meta.dirname, "public");
 
-  // 프론트 빌드가 떨어지는 위치 자동 감지
-  const candidates = [
-    path.resolve(root, "dist", "public"),
-    path.resolve(root, "dist"),
-  ];
-
-  const distPath = candidates.find((p) => fs.existsSync(path.resolve(p, "index.html")));
-
-  if (!distPath) {
+  if (!fs.existsSync(distPath)) {
     console.error(
-      `Could not find built index.html. Tried:\n- ${candidates.join("\n- ")}`
+      `Could not find client dist: ${distPath}. Build output should be dist/public.`
     );
-    // 그래도 서버는 떠 있게 두고, 요청 들어오면 에러가 나게 됨
-    return;
   }
 
   app.use(express.static(distPath));
+
   app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(distPath, "index.html"));
+    res.sendFile(path.join(distPath, "index.html"));
   });
 }
