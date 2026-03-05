@@ -21,8 +21,6 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import StatusBadge from "@/components/StatusBadge";
-
 function ClickableCard({
   children,
   className = "",

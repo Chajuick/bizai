@@ -132,13 +132,12 @@ export const scheduleRepo = {
     const where = buildTabWhere(params.comp_idno, params.tab);
     const orderBy = buildTabOrderBy(params.tab, params.sort);
 
-    // ✅ service에서 limit+1을 넣어주므로 repo에서 +1 하지 않는다
     return db
       .select()
       .from(CRM_SCHEDULE)
       .where(where)
       .orderBy(...(orderBy as any[]))
-      .limit(params.limit)
+      .limit(params.limit + 1)
       .offset(params.offset);
   },
   // #endregion

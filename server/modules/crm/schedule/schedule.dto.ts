@@ -5,6 +5,7 @@ import { z } from "zod";
 import { ACTION_OWNERS, SCHEDULE_STATUSES } from "../../../../drizzle/schema/common/enums";
 import { PaginationInput } from "../shared/pagination";
 import { makeSortInput } from "../shared/sort";
+import { IsoDateTime, IsoDateTimeNullable, DecimalLikeNullable } from "../shared/dto";
 // #endregion
 
 // #region Sort
@@ -76,8 +77,8 @@ export const ScheduleItemOutput = z.object({
   sche_name: z.string(),
   sche_desc: z.string().nullable().optional(),
 
-  sche_pric: z.union([z.string(), z.number()]).nullable().optional(),
-  sche_date: z.date(),
+  sche_pric: DecimalLikeNullable.optional(), // ✅ 기존 union/string/number를 공용으로
+  sche_date: IsoDateTime,                   // ✅ z.date() → ISO string
 
   stat_code: z.enum(SCHEDULE_STATUSES),
   actn_ownr: z.enum(ACTION_OWNERS).nullable().optional(),
@@ -86,9 +87,9 @@ export const ScheduleItemOutput = z.object({
   enab_yesn: z.boolean().optional(),
 
   crea_idno: z.number().int().optional(),
-  crea_date: z.date().optional(),
+  crea_date: IsoDateTime.optional(),        // ✅ z.date() → ISO string
   modi_idno: z.number().int().nullable().optional(),
-  modi_date: z.date().nullable().optional(),
+  modi_date: IsoDateTimeNullable.optional(), // ✅ z.date() → ISO string
 
   // ✅ 서버 계산 파생 플래그
   overdue: z.boolean(),
@@ -120,6 +121,7 @@ export type ScheduleStatsOutput = z.infer<typeof ScheduleStatsOutput>;
 // #endregion
 
 // #region Service Contracts
+export type ScheduleListInputType = z.infer<typeof ScheduleListInput>;
 export type ScheduleCreatePayload = z.infer<typeof ScheduleCreateInput>;
 export type ScheduleUpdatePayload = Omit<z.infer<typeof ScheduleUpdateInput>, "sche_idno">;
 export type ScheduleSort = { field: ScheduleSortField; dir: "asc" | "desc" };

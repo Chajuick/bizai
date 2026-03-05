@@ -1,10 +1,10 @@
 import * as React from "react";
 import { getLoginUrl } from "@/const";
-import { ArrowRight, BadgeCheck, Brain, Calendar, CheckCircle2, Mic, Shield, Smartphone, Sparkles, TrendingUp, Workflow, ShoppingCart, BookOpen } from "lucide-react";
+import { ArrowRight, BadgeCheck, Brain, Calendar, CheckCircle2, Mic, Shield, Smartphone, TrendingUp, Workflow, ShoppingCart, BookOpen } from "lucide-react";
 
 import LogoAvatar from "@/components/focuswin/common/ui/avatar";
-import AppFooter from "@/components/focuswin/common/app-footer";
-import HeroDemo from "@/components/focuswin/landing/hero-demo";
+import AppFooter from "@/components/focuswin/app/layout/app-footer";
+import HeroDemo from "@/components/focuswin/page/landing/hero-demo";
 
 import { COMPANY } from "@/config/company";
 
@@ -13,8 +13,8 @@ export default function LandingPage() {
   const features = [
     { icon: Mic, title: "음성 기록", desc: "현장에서 바로 녹음으로 입력" },
     { icon: Brain, title: "AI 자동 분석", desc: "고객·금액·다음 액션 추출" },
-    { icon: Calendar, title: "일정 자동 생성", desc: "누락 없이 일정으로 자동 등록" },
     { icon: BookOpen, title: "영업일지", desc: "기록이 보고서처럼 정리됩니다" },
+    { icon: Calendar, title: "일정 자동 생성", desc: "영업일지를 일정으로 자동 등록" },
     { icon: ShoppingCart, title: "수주 상태 추적", desc: "제안→협상→확정 흐름 관리" },
     { icon: TrendingUp, title: "납품/매출 관리", desc: "청구→수금까지 한 번에" },
   ];
@@ -184,21 +184,6 @@ export default function LandingPage() {
                   </div>
                 );
               })}
-            </div>
-          </div>
-
-          {/* CTA strip */}
-          <div className="mt-10 rounded-3xl border border-slate-200/70 bg-white p-6 shadow-sm">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <p className="text-sm font-black text-slate-900">현장 기록을 ‘보고 가능한 데이터’로 바꾸세요</p>
-                <p className="mt-1 text-sm text-slate-600">기록 누락을 줄이고, 다음 액션이 남는 영업 루틴을 만듭니다.</p>
-              </div>
-
-              <a href={getLoginUrl()} className="inline-flex items-center justify-center gap-2 rounded-2xl px-6 py-3 font-bold bg-blue-600 text-white hover:bg-blue-700 transition">
-                무료로 시작하기
-                <ArrowRight size={18} />
-              </a>
             </div>
           </div>
         </section>

@@ -1,14 +1,14 @@
 // #region Imports
 import { Plus } from "lucide-react";
 
-import PageScaffold from "@/components/focuswin/common/page-scaffold";
-import SkeletonCardList from "@/components/focuswin/common/skeleton-card-list";
+import PageScaffold from "@/components/focuswin/common/page/scaffold/page-scaffold";
+import SkeletonCardList from "@/components/focuswin/common/skeletons/skeleton-card-list";
 
-import ShipmentListHeader from "@/components/focuswin/shipment/list/Header";
-import ShipmentListEmptyCard from "@/components/focuswin/shipment/list/EmptyCard";
-import ShipmentListContent from "@/components/focuswin/shipment/list/Content";
+import ShipmentListHeader from "@/components/focuswin/page/shipment/list/Header";
+import ShipmentListEmptyCard from "@/components/focuswin/page/shipment/list/EmptyCard";
+import ShipmentListContent from "@/components/focuswin/page/shipment/list/Content";
 
-import { ShipmentModals } from "@/components/focuswin/shipment/list/ShipmentModals";
+import { ShipmentModals } from "@/components/focuswin/page/shipment/list/ShipmentModals";
 
 import { useShipmentListVM } from "@/hooks/focuswin/shipment/useShipmentListVM";
 // #endregion

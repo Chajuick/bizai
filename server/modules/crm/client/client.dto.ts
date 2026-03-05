@@ -4,6 +4,7 @@
 import { z } from "zod";
 import { PaginationInput } from "../shared/pagination";
 import { makeSortInput } from "../shared/sort";
+import { IsoDateTime, IsoDateTimeNullable } from "../shared/dto";
 // #endregion
 
 // #region List Sort (Standard)
@@ -53,12 +54,12 @@ export const ClientUpdateInput = z.object({
   clie_idno: z.number().int().positive(),
 
   clie_name: z.string().min(1).optional(),
-  indu_type: z.string().optional(),
-  cont_name: z.string().optional(),
-  cont_tele: z.string().optional(),
-  cont_mail: z.string().optional(),
-  clie_addr: z.string().optional(),
-  clie_memo: z.string().optional(),
+  indu_type: z.string().nullable().optional(),
+  cont_name: z.string().nullable().optional(),
+  cont_tele: z.string().nullable().optional(),
+  cont_mail: z.string().nullable().optional(),
+  clie_addr: z.string().nullable().optional(),
+  clie_memo: z.string().nullable().optional(),
 
   enab_yesn: z.boolean().optional(),
 });
@@ -136,8 +137,8 @@ export const ClientItemOutput = z.object({
 
   enab_yesn: z.boolean().optional(),
 
-  crea_date: z.date().optional(),
-  modi_date: z.date().nullable().optional(),
+  crea_date: IsoDateTime.optional(),
+  modi_date: IsoDateTimeNullable.optional(),
 });
 
 export type ClientItem = z.infer<typeof ClientItemOutput>;
@@ -174,8 +175,8 @@ export const ClientContactItemOutput = z.object({
   cont_memo: z.string().nullable(),
   main_yesn: z.boolean(),
   enab_yesn: z.boolean(),
-  crea_date: z.date(),
-  modi_date: z.date().nullable(),
+  crea_date: IsoDateTime,
+  modi_date: IsoDateTimeNullable,
 });
 export type ClientContactItem = z.infer<typeof ClientContactItemOutput>;
 

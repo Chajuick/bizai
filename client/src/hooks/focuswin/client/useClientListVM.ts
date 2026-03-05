@@ -6,7 +6,7 @@ import { useLocation } from "wouter";
 
 import { trpc } from "@/lib/trpc";
 
-import type { PageStatus } from "@/components/focuswin/common/page-scaffold";
+import type { PageStatus } from "@/components/focuswin/common/page/scaffold/page-scaffold";
 // import type { TabPill } from "@/components/focuswin/common/ui/tab-pills"; // 필요해지면 추가
 // #endregion
 

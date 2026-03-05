@@ -1,0 +1,12 @@
+import { Card } from "@/components/focuswin/common/ui/card";
+
+export default function SaleDetailRawCard({ rawContent }: { rawContent: string }) {
+  return (
+    <Card>
+      <p className="text-sm font-black text-slate-900 mb-2">원문</p>
+      <p className="text-sm leading-relaxed whitespace-pre-wrap text-slate-600">
+        {rawContent}
+      </p>
+    </Card>
+  );
+}

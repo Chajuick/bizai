@@ -6,8 +6,8 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
 import type { AiCore, AiCorePricing } from "@/types/ai";
-import type { PageInvalidState, PageStatus } from "@/components/focuswin/common/page-scaffold";
-import type { ConfirmState } from "@/components/focuswin/common/confirm-action-dialog";
+import type { PageInvalidState, PageStatus } from "@/components/focuswin/common/page/scaffold/page-scaffold";
+import type { ConfirmState } from "@/components/focuswin/common/overlays/confirm-action-dialog";
 import type { SaleEditForm } from "@/types/sale";
 
 import { useSaleAiClientLinkFlow } from "./useSaleAiClientLinkFlow";
@@ -235,7 +235,6 @@ export function useSaleDetailVM(logId: number) {
   const runAnalyze = async () => {
     try {
       const res = await analyze.mutateAsync({ sale_idno: logId });
-
       await utils.crm.sale.get.invalidate({ sale_idno: logId });
       await utils.crm.sale.list.invalidate();
 

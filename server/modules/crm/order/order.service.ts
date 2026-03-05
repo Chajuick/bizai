@@ -13,23 +13,8 @@ import type {
   OrderSort,
 } from "./order.dto";
 import { orderRepo, type OrderUpdate } from "./order.repo";
-// #endregion
-
-// #region Helpers
-function parseDateOrNull(v: string | null | undefined): Date | null | undefined {
-  if (v === undefined) return undefined;
-  if (v === null) return null;
-
-  const d = new Date(v);
-  if (!Number.isFinite(d.getTime())) throw new Error("[order] Invalid date string.");
-  return d;
-}
-
-function moneyToDecimalString(v: number): string {
-  // 정석: decimal 컬럼은 string으로 넣는다.
-  // (부동소수 오차 방지)
-  return v.toFixed(2);
-}
+import { parseDateOrNull } from "../shared/date";
+import { toDecimalStr } from "../shared/decimal";
 // #endregion
 
 export const orderService = {
@@ -116,7 +101,7 @@ export const orderService = {
       clie_name: input.clie_name,
       prod_serv: input.prod_serv,
 
-      orde_pric: moneyToDecimalString(input.orde_pric),
+      orde_pric: toDecimalStr(input.orde_pric),
       stat_code: input.stat_code,
 
       ctrt_date: parseDateOrNull(input.ctrt_date),
@@ -143,7 +128,7 @@ export const orderService = {
     if (patch.clie_name !== undefined) data.clie_name = patch.clie_name;
     if (patch.prod_serv !== undefined) data.prod_serv = patch.prod_serv;
 
-    if (patch.orde_pric !== undefined) data.orde_pric = moneyToDecimalString(patch.orde_pric);
+    if (patch.orde_pric !== undefined) data.orde_pric = toDecimalStr(patch.orde_pric);
 
     if (patch.stat_code !== undefined) data.stat_code = patch.stat_code as any;
 

@@ -36,9 +36,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { Input } from "@/components/focuswin/common/ui/input";
-import { Label } from "@/components/ui/label";
+import { Label } from "@/components/focuswin/common/ui/label";
 
-import PageShell from "@/components/focuswin/common/page-shell";
+import PageShell from "@/components/focuswin/common/page/scaffold/page-shell";
 
 import { useCompanyMembersViewModel } from "@/hooks/focuswin/company/useCompanyMembersViewModel";
 import { useWorkspaceSwitcher } from "@/hooks/focuswin/company/useWorkspaceSwitcher";

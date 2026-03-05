@@ -14,7 +14,7 @@ import { useScheduleAlerts } from "@/hooks/focuswin/schedule/useScheduleAlerts";
 
 import type { ScheduleFormState, EnhancedSchedule, ConfirmState, OrderQuickFormState } from "@/types/";
 import type { TabPill } from "@/components/focuswin/common/ui/tab-pills";
-import { PageStatus } from "@/components/focuswin/common/page-scaffold";
+import { PageStatus } from "@/components/focuswin/common/page/scaffold/page-scaffold";
 import { buildDeleteConfirm, buildConfirm } from "@/lib/confirm";
 // #endregion
 

@@ -2,10 +2,10 @@
 
 import { useSaleRegistVM } from "@/hooks/focuswin/sale/useSaleRegistVM";
 
-import PageScaffold from "@/components/focuswin/common/page-scaffold";
-import SaleRegistContent from "@/components/focuswin/sale/regist/Content";
-import SaleRegistAnalysisBanner from "@/components/focuswin/sale/regist/AnalysisBanner";
-import { SaleRegistModals } from "@/components/focuswin/sale/regist/SaleRegistModals";
+import PageScaffold from "@/components/focuswin/common/page/scaffold/page-scaffold";
+import SaleRegistContent from "@/components/focuswin/page/sale/regist/Content";
+import SaleRegistAnalysisBanner from "@/components/focuswin/page/sale/regist/AnalysisBanner";
+import { SaleRegistModals } from "@/components/focuswin/page/sale/regist/SaleRegistModals";
 
 export default function SaleRegistPage() {
   const vm = useSaleRegistVM();

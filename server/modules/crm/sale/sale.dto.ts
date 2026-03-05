@@ -6,6 +6,7 @@ import { z } from "zod";
 import { PaginationInput } from "../shared/pagination";
 import { makeSortInput } from "../shared/sort";
 import { FILE_PURP_TYPES } from "../../../../drizzle/schema";
+import { IsoDateTime, DecimalLikeNullable } from "../shared/dto";
 
 // #endregion
 
@@ -186,8 +187,8 @@ export const SaleGetOutput = z.object({
 
     sale_loca: z.string().nullable(),
 
-    vist_date: z.string(),
-    sale_pric: z.union([z.string(), z.number()]).nullable(),
+    vist_date: IsoDateTime,
+    sale_pric: DecimalLikeNullable,
     orig_memo: z.string(),
 
     sttx_text: z.string().nullable(),

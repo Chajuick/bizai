@@ -1,15 +1,13 @@
+// components/focuswin/common/ui/textarea.tsx
+
 import { useDialogComposition } from "@/components/ui/dialog";
 import { useComposition } from "@/hooks/useComposition";
 import { cn } from "@/lib/utils";
 import * as React from "react";
 
-function Textarea({
-  className,
-  onKeyDown,
-  onCompositionStart,
-  onCompositionEnd,
-  ...props
-}: React.ComponentProps<"textarea">) {
+type TextareaProps = React.ComponentProps<"textarea">;
+
+function Textarea({ className, onKeyDown, onCompositionStart, onCompositionEnd, ...props }: TextareaProps) {
   const dialogComposition = useDialogComposition();
 
   const {
@@ -17,24 +15,27 @@ function Textarea({
     onCompositionEnd: handleCompositionEnd,
     onKeyDown: handleKeyDown,
   } = useComposition<HTMLTextAreaElement>({
-    onKeyDown: (e) => {
-      const isComposing =
-        (e.nativeEvent as any).isComposing || dialogComposition.justEndedComposing();
+    onKeyDown: e => {
+      const isComposing = (e.nativeEvent as any).isComposing || dialogComposition.justEndedComposing();
 
-      // textarea는 Shift+Enter는 줄바꿈 유지
+      // textarea는 Shift+Enter 줄바꿈 유지
       if (e.key === "Enter" && !e.shiftKey && isComposing) return;
 
       onKeyDown?.(e);
     },
-    onCompositionStart: (e) => {
+
+    onCompositionStart: e => {
       dialogComposition.setComposing(true);
       onCompositionStart?.(e);
     },
-    onCompositionEnd: (e) => {
+
+    onCompositionEnd: e => {
       dialogComposition.markCompositionEnd();
+
       setTimeout(() => {
         dialogComposition.setComposing(false);
       }, 100);
+
       onCompositionEnd?.(e);
     },
   });
@@ -44,26 +45,37 @@ function Textarea({
       data-slot="textarea"
       className={cn(
         [
-          // size / layout
-          "w-full min-w-0 min-h-28 px-4 py-3",
-          // shape
-          "rounded-xl",
-          // surface (fowin-like)
-          "bg-background border border-border",
+          "w-full min-w-0 min-h-28 px-3 py-3",
+
+          // surface
+          "bg-transparent",
+          "border border-border/70",
+
           // text
-          "text-sm text-foreground placeholder:text-muted-foreground",
-          // allow comfy resize (토스는 보통 세로만)
+          "text-sm text-foreground",
+          "placeholder:text-muted-foreground/60",
+
+          // resize
           "resize-y",
-          // motion
-          "transition-[border-color,box-shadow,background-color] duration-150 ease-out",
+
+          // hover
+          "hover:border-foreground/30",
+
           // focus
-          "outline-none focus-visible:border-primary/30 focus-visible:border-primary/40 focus-visible:bg-background focus-visible:shadow-[0_0_0_1px_rgba(37,99,235,0.15)] focus-visible:ring-0",
+          "outline-none",
+          "focus:border-primary",
+
+          // motion
+          "transition-colors duration-150",
+
           // selection
           "selection:bg-primary selection:text-primary-foreground",
+
           // disabled
           "disabled:cursor-not-allowed disabled:opacity-50",
+
           // invalid
-          "aria-invalid:border-destructive aria-invalid:ring-4 aria-invalid:ring-destructive/15",
+          "aria-invalid:border-destructive",
         ].join(" "),
         className
       )}

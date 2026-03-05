@@ -5,6 +5,7 @@ import { z } from "zod";
 import { ORDER_STATUSES } from "../../../../drizzle/schema/common/enums";
 import { PaginationInput } from "../shared/pagination";
 import { makeSortInput } from "../shared/sort";
+import { IsoDateTime, IsoDateTimeNullable, DecimalLike } from "../shared/dto";
 // #endregion
 
 // #region Sort
@@ -85,19 +86,19 @@ export const OrderItemOutput = z.object({
   prod_serv: z.string(),
 
   // drizzle decimal은 보통 string으로 내려옴(정석)
-  orde_pric: z.union([z.string(), z.number()]),
+  orde_pric: DecimalLike,
   stat_code: z.enum(ORDER_STATUSES),
 
-  ctrt_date: z.date().nullable().optional(),
-  expd_date: z.date().nullable().optional(),
+  ctrt_date: IsoDateTimeNullable.optional(), // ✅ z.date() → ISO
+  expd_date: IsoDateTimeNullable.optional(),
   orde_memo: z.string().nullable().optional(),
 
   enab_yesn: z.boolean().optional(),
 
   crea_idno: z.number().int().optional(),
-  crea_date: z.date().optional(),
+  crea_date: IsoDateTime.optional(),
   modi_idno: z.number().int().nullable().optional(),
-  modi_date: z.date().nullable().optional(),
+  modi_date: IsoDateTimeNullable.optional(),
 });
 
 export type OrderItem = z.infer<typeof OrderItemOutput>;

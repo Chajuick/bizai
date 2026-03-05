@@ -6,7 +6,7 @@ import { trpc } from "@/lib/trpc";
 import { toLocalDatetimeInputValue } from "@/lib/utils";
 import { toast } from "sonner";
 
-import type { PageStatus } from "@/components/focuswin/common/page-scaffold";
+import type { PageStatus } from "@/components/focuswin/common/page/scaffold/page-scaffold";
 import type { PreSaveState, SaleFormState } from "@/types/sale";
 
 import { useSaleAiClientLinkFlow } from "./useSaleAiClientLinkFlow";

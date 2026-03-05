@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Building2, Hash, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/focuswin/common/ui/input";
-import { Label } from "@/components/ui/label";
+import { Label } from "@/components/focuswin/common/ui/label";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";

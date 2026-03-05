@@ -6,7 +6,7 @@ import { AlertTriangle, BarChart3, Check, CreditCard, Loader2, Users, XCircle, I
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import PageShell from "@/components/focuswin/common/page-shell";
+import PageShell from "@/components/focuswin/common/page/scaffold/page-shell";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { useWorkspaceSwitcher } from "@/hooks/focuswin/company/useWorkspaceSwitcher";

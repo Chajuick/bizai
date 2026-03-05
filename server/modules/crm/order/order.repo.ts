@@ -153,18 +153,15 @@ export const orderRepo = {
   // #region update
   async update(
     { db }: RepoDeps,
-    params: { comp_idno: number; orde_idno: number; data: OrderUpdate }
+    params: { comp_idno: number; orde_idno: number; data: OrderUpdate; includeDisabled?: boolean }
   ) {
-    await db
-      .update(CRM_ORDER)
-      .set(params.data)
-      .where(
-        and(
-          eq(CRM_ORDER.comp_idno, params.comp_idno),
-          eq(CRM_ORDER.orde_idno, params.orde_idno),
-          eq(CRM_ORDER.enab_yesn, true),
-        )
-      );
+    const conditions = [
+      eq(CRM_ORDER.comp_idno, params.comp_idno),
+      eq(CRM_ORDER.orde_idno, params.orde_idno),
+    ];
+    if (!params.includeDisabled) conditions.push(eq(CRM_ORDER.enab_yesn, true));
+
+    await db.update(CRM_ORDER).set(params.data).where(and(...conditions));
   },
   // #endregion
 

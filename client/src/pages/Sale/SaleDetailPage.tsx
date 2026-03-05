@@ -3,10 +3,10 @@
 import { useParams } from "wouter";
 import { useSaleDetailVM } from "@/hooks/focuswin/sale/useSaleDetailVM";
 
-import PageScaffold from "@/components/focuswin/common/page-scaffold";
-import SaleDetailContent from "@/components/focuswin/sale/detail/Content";
-import { SaleDetailHeaderTitle } from "@/components/focuswin/sale/detail/HeaderTitle";
-import { SaleDetailModals } from "@/components/focuswin/sale/detail/SaleDetailModals";
+import PageScaffold from "@/components/focuswin/common/page/scaffold/page-scaffold";
+import SaleDetailContent from "@/components/focuswin/page/sale/detail/Content";
+import { SaleDetailHeaderTitle } from "@/components/focuswin/page/sale/detail/HeaderTitle";
+import { SaleDetailModals } from "@/components/focuswin/page/sale/detail/SaleDetailModals";
 
 export default function SaleDetailPage() {
   const { id } = useParams<{ id: string }>();

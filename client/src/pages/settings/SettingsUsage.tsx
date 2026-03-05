@@ -1,6 +1,6 @@
 import { BarChart3, Loader2, Zap, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import PageShell from "@/components/focuswin/common/page-shell";
+import PageShell from "@/components/focuswin/common/page/scaffold/page-shell";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 

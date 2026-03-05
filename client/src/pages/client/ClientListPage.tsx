@@ -1,10 +1,10 @@
 import { Plus } from "lucide-react";
 
 import { useClientListVM } from "@/hooks/focuswin/client/useClientListVM";
-import PageScaffold from "@/components/focuswin/common/page-scaffold";
-import ClientListHeadContent from "@/components/focuswin/client/list/HeadContent";
-import ClientListEmptyCard from "@/components/focuswin/client/list/EmptyCard";
-import ClientListContent from "@/components/focuswin/client/list/Content";
+import PageScaffold from "@/components/focuswin/common/page/scaffold/page-scaffold";
+import ClientListHeadContent from "@/components/focuswin/page/client/list/HeadContent";
+import ClientListEmptyCard from "@/components/focuswin/page/client/list/EmptyCard";
+import ClientListContent from "@/components/focuswin/page/client/list/Content";
 
 export default function ClientListPage() {
   const vm = useClientListVM();

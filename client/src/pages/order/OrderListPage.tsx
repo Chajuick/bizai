@@ -5,13 +5,13 @@ import { Plus } from "lucide-react";
 
 import { useOrderListVM } from "@/hooks/focuswin/order/useOrderListVM";
 
-import PageScaffold from "@/components/focuswin/common/page-scaffold";
-import SkeletonCardList from "@/components/focuswin/common/skeleton-card-list";
+import PageScaffold from "@/components/focuswin/common/page/scaffold/page-scaffold";
+import SkeletonCardList from "@/components/focuswin/common/skeletons/skeleton-card-list";
 
-import OrderListHeader from "@/components/focuswin/order/list/Header";
-import OrderListEmptyCard from "@/components/focuswin/order/list/EmptyCard";
-import OrderListContent from "@/components/focuswin/order/list/Content";
-import { OrderModals } from "@/components/focuswin/order/list/OrderModals";
+import OrderListHeader from "@/components/focuswin/page/order//list/Header";
+import OrderListEmptyCard from "@/components/focuswin/page/order//list/EmptyCard";
+import OrderListContent from "@/components/focuswin/page/order//list/Content";
+import { OrderModals } from "@/components/focuswin/page/order//list/OrderModals";
 // #endregion
 
 export default function OrderListPage() {

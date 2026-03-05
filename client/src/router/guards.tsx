@@ -1,6 +1,6 @@
 // src/router/guards.tsx
 import { Switch, Route } from "wouter";
-import AppLayout from "@/components/AppLayout";
+import AppLayout from "@/components/focuswin/app/layout/app-layout";
 
 import DashboardHome from "@/pages/dashboard/DashboardHome";
 import SaleListPage from "@/pages/sale/SaleListPage";
@@ -18,7 +18,7 @@ import SettingsUsage from "@/pages/settings/SettingsUsage";
 import SettingsBilling from "@/pages/settings/SettingsBilling";
 import InviteEnterPage from "@/pages/invite/InviteEnterPage";
 import ErrorPage from "@/pages/public/ErrorPage";
-import DevsShow from "@/pages/devs/DevsShow";
+import UIKitPage from "@/pages/ui-kit/UIKitPage";
 
 const DEV = import.meta.env.DEV;
 
@@ -46,7 +46,7 @@ export function AppGuard() {
         <Route path="/invite/enter" component={InviteEnterPage} />
         <Route path="/404" component={ErrorPage} />
 
-        {DEV ? <Route path="/__dev/components" component={DevsShow} /> : null}
+        {DEV ? <Route path="/__dev/ui-kit" component={UIKitPage} /> : null}
 
         <Route component={ErrorPage} />
       </Switch>

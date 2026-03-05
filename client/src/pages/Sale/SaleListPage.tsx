@@ -2,10 +2,10 @@ import { Plus } from "lucide-react";
 
 import { useSaleListVM } from "@/hooks/focuswin/sale/useSaleListVM";
 
-import PageScaffold from "@/components/focuswin/common/page-scaffold";
-import SaleListHeader from "@/components/focuswin/sale/list/Header";
-import SaleListContent from "@/components/focuswin/sale/list/Content";
-import SaleListEmpty from "@/components/focuswin/sale/list/Empty";
+import PageScaffold from "@/components/focuswin/common/page/scaffold/page-scaffold";
+import SaleListHeader from "@/components/focuswin/page/sale/list/Header";
+import SaleListContent from "@/components/focuswin/page/sale/list/Content";
+import SaleListEmpty from "@/components/focuswin/page/sale/list/Empty";
 
 export default function SaleListPage() {
   const vm = useSaleListVM();

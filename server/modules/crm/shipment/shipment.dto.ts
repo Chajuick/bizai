@@ -4,6 +4,7 @@
 import { z } from "zod";
 import { PaginationInput } from "../shared/pagination";
 import { makeSortInput } from "../shared/sort";
+import { IsoDateTimeNullable, IsoDateTime, DecimalLike } from "../shared/dto";
 // #endregion
 
 // #region Sort
@@ -48,17 +49,15 @@ export const ShipmentCreateInput = z.object({
 export const ShipmentUpdateInput = z.object({
   ship_idno: z.number().int().positive(),
 
-  clie_name: z.string().optional(),
-  ship_pric: z.number().positive().optional(),
-  ship_memo: z.string().optional(),
+  clie_name: z.string().nullable().optional(),
+  ship_pric: z.number().positive().nullable().optional(),
+  ship_memo: z.string().nullable().optional(),
 
-  // 상태 변경
   stat_code: z.enum(["pending", "delivered", "invoiced", "paid"]).optional(),
 
-  // 날짜 직접 입력 옵션
-  ship_date: z.string().optional(),
-  invc_date: z.string().optional(),
-  paid_date: z.string().optional(),
+  ship_date: z.string().nullable().optional(),
+  invc_date: z.string().nullable().optional(),
+  paid_date: z.string().nullable().optional(),
 
   enab_yesn: z.boolean().optional(),
 });
@@ -80,19 +79,19 @@ export const ShipmentItemOutput = z.object({
 
   stat_code: z.enum(["pending", "delivered", "invoiced", "paid"]),
 
-  ship_date: z.date().nullable().optional(),
-  invc_date: z.date().nullable().optional(),
-  paid_date: z.date().nullable().optional(),
+  ship_date: IsoDateTimeNullable.optional(),
+  invc_date: IsoDateTimeNullable.optional(),
+  paid_date: IsoDateTimeNullable.optional(),
 
-  ship_pric: z.any(), // decimal은 드라이버 반환 타입이 프로젝트마다 달라서 any (추측 금지)
+  ship_pric: DecimalLike,
   ship_memo: z.string().nullable().optional(),
 
   enab_yesn: z.boolean().optional(),
 
   crea_idno: z.number().int().positive().optional(),
-  crea_date: z.date().optional(),
+  crea_date: IsoDateTime.optional(),
   modi_idno: z.number().int().positive().nullable().optional(),
-  modi_date: z.date().nullable().optional(),
+  modi_date: IsoDateTimeNullable.optional(),
 });
 
 export type ShipmentItem = z.infer<typeof ShipmentItemOutput>;

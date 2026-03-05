@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import type { ClientDraft, ContactDraft } from "@/types/client";
 
-import type { PageStatus } from "@/components/focuswin/common/page-scaffold";
+import type { PageStatus } from "@/components/focuswin/common/page/scaffold/page-scaffold";
 // #endregion
 
 // #region Helpers

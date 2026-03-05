@@ -1,11 +1,11 @@
 // src/pages/focuswin/client/ClientDetailPage.tsx
 
-import PageScaffold from "@/components/focuswin/common/page-scaffold";
+import PageScaffold from "@/components/focuswin/common/page/scaffold/page-scaffold";
 
 import { useClientDetailVM } from "@/hooks/focuswin/client/useClientDetailVM";
 
-import ClientDetailContent from "@/components/focuswin/client/detail/Content";
-import { ClientDetailModals } from "@/components/focuswin/client/detail/ClientDetailModals";
+import ClientDetailContent from "@/components/focuswin/page/client/detail/Content";
+import { ClientDetailModals } from "@/components/focuswin/page/client/detail/ClientDetailModals";
 
 export default function ClientDetailPage() {
   const vm = useClientDetailVM(); // 내부에서 params 사용 중이므로 그대로

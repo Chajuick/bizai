@@ -1,8 +1,8 @@
 // src/pages/client/ClientRegistPage.tsx
 
 import { useClientRegistVM } from "@/hooks/focuswin/client/useClientRegistVM";
-import PageScaffold from "@/components/focuswin/common/page-scaffold";
-import ClientRegistContent from "@/components/focuswin/client/regist/Content";
+import PageScaffold from "@/components/focuswin/common/page/scaffold/page-scaffold";
+import ClientRegistContent from "@/components/focuswin/page/client/regist/Content";
 
 export default function ClientRegistPage() {
   const vm = useClientRegistVM();

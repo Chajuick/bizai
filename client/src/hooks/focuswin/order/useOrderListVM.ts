@@ -6,7 +6,7 @@ import { toast } from "sonner";
 
 import { formatKRW } from "@/lib/format";
 
-import type { PageStatus } from "@/components/focuswin/common/page-scaffold";
+import type { PageStatus } from "@/components/focuswin/common/page/scaffold/page-scaffold";
 import type { TabPill } from "@/components/focuswin/common/ui/tab-pills";
 import type { ConfirmState } from "@/types";
 
@@ -116,14 +116,22 @@ export function useOrderListVM() {
     [resetDeliveryForm]
   );
 
+  const today = new Date().toISOString().slice(0, 10);
+
   const openDeliveryForm = useCallback((order: OrderRow) => {
     setSelectedOrder(order);
+
+    const defaultDate = order.expd_date
+      ? new Date(order.expd_date).toISOString().slice(0, 10)
+      : today;
+
     setDeliveryForm({
       ship_pric: order.orde_pric ? String(Math.round(Number(order.orde_pric))) : "",
-      stat_code: "pending",
-      ship_date: order.expd_date ? new Date(order.expd_date).toISOString().split("T")[0] : "",
+      stat_code: "delivered",
+      ship_date: defaultDate,
       ship_memo: "",
     });
+
     setShowDeliveryForm(true);
   }, []);
   // #endregion

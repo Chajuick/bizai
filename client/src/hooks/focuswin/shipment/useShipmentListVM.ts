@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { formatKRW } from "@/lib/format";
 
-import type { PageStatus } from "@/components/focuswin/common/page-scaffold";
+import type { PageStatus } from "@/components/focuswin/common/page/scaffold/page-scaffold";
 import type { TabPill } from "@/components/focuswin/common/ui/tab-pills";
 import type { ConfirmState } from "@/types";
 import type { ShipmentFormState, ShipmentRow, ShipmentStatus } from "@/types/shipment";

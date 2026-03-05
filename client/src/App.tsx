@@ -1,7 +1,7 @@
 // src/App.tsx
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import ErrorBoundary from "@/components/ErrorBoundary";
+import ErrorBoundary from "@/components/focuswin/app/feedback/error-boundary";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 
 import Router from "@/router";

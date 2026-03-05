@@ -2,9 +2,9 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Eye, EyeOff } from "lucide-react";
-import AuthCard from "@/components/focuswin/auth/AuthCard";
-import AuthProviderButton from "@/components/focuswin/auth/AuthProviderButton";
-import AuthDivider from "@/components/focuswin/auth/AuthDivider";
+import AuthCard from "@/components/focuswin/page/auth/auth-card";
+import AuthProviderButton from "@/components/focuswin/page/auth/uth-provider-button";
+import AuthDivider from "@/components/focuswin/page/auth/auth-divider";
 import { Button } from "@/components/focuswin/common/ui/button";
 import { Input } from "@/components/focuswin/common/ui/input";
 import { trpc } from "@/lib/trpc";
@@ -16,8 +16,7 @@ export default function LoginPage() {
   const utils = trpc.useUtils();
 
   // ?redirect= 파라미터 읽기 (없으면 "/")
-  const redirectTo =
-    new URLSearchParams(window.location.search).get("redirect") ?? "/";
+  const redirectTo = new URLSearchParams(window.location.search).get("redirect") ?? "/";
 
   // OAuth/폼 로그인 모두를 위해 redirect 경로 보관
   // - redirect.ts가 "/" 및 "/auth/*" 저장을 막고,
@@ -81,10 +80,7 @@ export default function LoginPage() {
       footer={
         <p className="text-center text-xs text-slate-500">
           계정이 없으신가요?{" "}
-          <a
-            href="/auth/register"
-            className="font-semibold text-blue-600 hover:underline"
-          >
+          <a href="/auth/register" className="font-semibold text-blue-600 hover:underline">
             회원가입
           </a>
         </p>
@@ -99,14 +95,7 @@ export default function LoginPage() {
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="flex flex-col gap-1.5">
           <label className="text-xs font-semibold text-slate-700">이메일</label>
-          <Input
-            type="email"
-            placeholder="you@example.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            autoComplete="email"
-            aria-invalid={emailInvalid}
-          />
+          <Input type="email" placeholder="you@example.com" value={email} onChange={e => setEmail(e.target.value)} autoComplete="email" aria-invalid={emailInvalid} />
         </div>
 
         <div className="flex flex-col gap-1.5">
@@ -116,14 +105,14 @@ export default function LoginPage() {
               type={showPassword ? "text" : "password"}
               placeholder="비밀번호 입력"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)}
               autoComplete="current-password"
               aria-invalid={passwordInvalid}
               className="pr-11"
             />
             <button
               type="button"
-              onClick={() => setShowPassword((v) => !v)}
+              onClick={() => setShowPassword(v => !v)}
               className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
               aria-label={showPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
             >
@@ -139,13 +128,7 @@ export default function LoginPage() {
           </p>
         ) : null}
 
-        <Button
-          type="submit"
-          tone="primary"
-          variant="solid"
-          fullWidth
-          disabled={loading}
-        >
+        <Button type="submit" tone="primary" variant="solid" fullWidth disabled={loading} className="py-3 mt-4">
           {loading ? "로그인 중…" : "로그인"}
         </Button>
       </form>

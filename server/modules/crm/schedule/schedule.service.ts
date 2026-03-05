@@ -7,28 +7,13 @@ import { getDb } from "../../../core/db";
 import { normalizePage } from "../shared/pagination";
 import { withCreateAudit, withUpdateAudit } from "../shared/audit";
 
-import type { ScheduleCreatePayload, ScheduleSort, ScheduleTabKey, ScheduleUpdatePayload } from "./schedule.dto";
+import type { ScheduleCreatePayload, ScheduleSort, ScheduleTabKey, ScheduleUpdatePayload, ScheduleListInputType } from "./schedule.dto";
 import { scheduleRepo, type ScheduleUpdate, type TabFilter } from "./schedule.repo";
+import { parseDateOrThrow, parseDateOrNull } from "../shared/date";
+import { toDecimalStr, toDecimalStrOrNull } from "../shared/decimal";
 // #endregion
 
 // #region Helpers
-function parseDateOrThrow(v: string): Date {
-  const d = new Date(v);
-  if (!Number.isFinite(d.getTime())) throw new Error("[schedule] Invalid date string.");
-  return d;
-}
-
-function parseDateOrNull(v: string | null | undefined): Date | null | undefined {
-  if (v === undefined) return undefined;
-  if (v === null) return null;
-  return parseDateOrThrow(v);
-}
-
-function moneyToDecimalStringOrNull(v: number | null | undefined): string | null | undefined {
-  if (v === undefined) return undefined;
-  if (v === null) return null;
-  return v.toFixed(2);
-}
 
 function computeKstTodayMidnightDate(nowMs: number) {
   const kstNow = new Date(nowMs + 9 * 60 * 60 * 1000);
@@ -43,7 +28,7 @@ function computeKstTodayMidnightDate(nowMs: number) {
 
 export const scheduleService = {
   // #region listSchedules
-  async listSchedules(ctx: ServiceCtx, input?: any) {
+  async listSchedules(ctx: ServiceCtx, input?: ScheduleListInputType) {
     const db = getDb();
 
     const nowMs = Date.now();
@@ -66,7 +51,7 @@ export const scheduleService = {
       {
         comp_idno: ctx.comp_idno,
         tab,
-        limit: page.limit + 1,
+        limit: page.limit,
         offset: page.offset,
         sort,
       }
@@ -153,7 +138,7 @@ export const scheduleService = {
       sche_name: input.sche_name,
       sche_desc: input.sche_desc,
 
-      sche_pric: moneyToDecimalStringOrNull(input.sche_pric),
+      sche_pric: toDecimalStrOrNull(input.sche_pric),
       sche_date: parseDateOrThrow(input.sche_date),
 
       stat_code: "scheduled" as const,
@@ -180,7 +165,7 @@ export const scheduleService = {
     const scheDate = parseDateOrNull(patch.sche_date);
     if (scheDate !== undefined) data.sche_date = scheDate as any;
 
-    const schePric = moneyToDecimalStringOrNull(patch.sche_pric);
+    const schePric = toDecimalStrOrNull(patch.sche_pric);
     if (schePric !== undefined) data.sche_pric = schePric as any;
 
     if (patch.stat_code !== undefined) data.stat_code = patch.stat_code as any;

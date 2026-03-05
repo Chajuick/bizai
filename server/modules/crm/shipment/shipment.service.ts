@@ -177,14 +177,23 @@ export const shipmentService = {
     if (!prev) return { success: false as const, reason: "not_found" as const };
 
     // 1) 입력 patch를 DB 타입으로 변환 (string 날짜/number 금액 → DB 타입)
-    const { ship_pric: rawPric, ship_date: rawShipDate, invc_date: rawInvcDate, paid_date: rawPaidDate, ...restPatch } = patch;
-    const data: Partial<InsertShipment> = {
-      ...restPatch,
-      ...(rawPric !== undefined ? { ship_pric: String(rawPric) } : {}),
-      ...(rawShipDate !== undefined ? { ship_date: toDateOrUndefined(rawShipDate) } : {}),
-      ...(rawInvcDate !== undefined ? { invc_date: toDateOrUndefined(rawInvcDate) } : {}),
-      ...(rawPaidDate !== undefined ? { paid_date: toDateOrUndefined(rawPaidDate) } : {}),
-    };
+    // ✅ 정책 E: spread 금지 — 수동 field-by-field 빌드
+    const { ship_pric: rawPric, ship_date: rawShipDate, invc_date: rawInvcDate, paid_date: rawPaidDate } = patch;
+    const data: Partial<InsertShipment> = {};
+
+    // 필수 string (null 무시 — DB not-null 컬럼)
+    if (patch.clie_name != null) data.clie_name = patch.clie_name;
+    // nullable string
+    if (patch.ship_memo !== undefined) data.ship_memo = patch.ship_memo ?? null;
+    // enum / boolean
+    if (patch.stat_code !== undefined) data.stat_code = patch.stat_code;
+    if (patch.enab_yesn !== undefined) data.enab_yesn = patch.enab_yesn;
+    // decimal
+    if (rawPric !== undefined && rawPric !== null) data.ship_pric = String(rawPric);
+    // dates — null은 undefined로 처리(toDateOrUndefined 시그니처 유지)
+    if (rawShipDate !== undefined) data.ship_date = toDateOrUndefined(rawShipDate ?? undefined);
+    if (rawInvcDate !== undefined) data.invc_date = toDateOrUndefined(rawInvcDate ?? undefined);
+    if (rawPaidDate !== undefined) data.paid_date = toDateOrUndefined(rawPaidDate ?? undefined);
 
     // 2) 감사 컬럼(수정자/수정일)
     const audited = withUpdateAudit(ctx, data);

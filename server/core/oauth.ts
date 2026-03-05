@@ -341,13 +341,13 @@ export function registerOAuthRoutes(app: Express) {
     try {
       const user = await userRepo.findByEmail(email);
       if (!user || !user.passwd_hash) {
-        res.status(401).json({ error: "Invalid email or password" });
+        res.status(401).json({ error: "이메일 또는 패스워드가 옳바르지 않습니다." });
         return;
       }
 
       const valid = await bcrypt.compare(password, user.passwd_hash);
       if (!valid) {
-        res.status(401).json({ error: "Invalid email or password" });
+        res.status(401).json({ error: "이메일 또는 패스워드가 옳바르지 않습니다." });
         return;
       }
 

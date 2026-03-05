@@ -4,14 +4,14 @@ import { Plus } from "lucide-react";
 
 import { useScheduleListVM } from "@/hooks/focuswin/schedule/useScheduleListVM";
 
-import SkeletonCardList from "@/components/focuswin/common/skeleton-card-list";
-import PageScaffold from "@/components/focuswin/common/page-scaffold";
-import ListNotice from "@/components/focuswin/schedule/list/ListNotice";
-import { ScheduleModals } from "@/components/focuswin/schedule/list/ScheduleModals";
+import SkeletonCardList from "@/components/focuswin/common/skeletons/skeleton-card-list";
+import PageScaffold from "@/components/focuswin/common/page/scaffold/page-scaffold";
+import ListNotice from "@/components/focuswin/page/schedule/list/ListNotice";
+import { ScheduleModals } from "@/components/focuswin/page/schedule/list/ScheduleModals";
 
-import ScheduleListHeadContent from "@/components/focuswin/schedule/list/Header";
-import ScheduleListEmptyCard from "@/components/focuswin/schedule/list/Empty";
-import ScheduleListContent from "@/components/focuswin/schedule/list/Content";
+import ScheduleListHeadContent from "@/components/focuswin/page/schedule/list/Header";
+import ScheduleListEmptyCard from "@/components/focuswin/page/schedule/list/Empty";
+import ScheduleListContent from "@/components/focuswin/page/schedule/list/Content";
 
 export default function ScheduleList() {
   const vm = useScheduleListVM();

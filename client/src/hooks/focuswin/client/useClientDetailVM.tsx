@@ -8,8 +8,8 @@ import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import { buildDeleteConfirm } from "@/lib/confirm";
 
-import type { PageInvalidState, PageStatus } from "@/components/focuswin/common/page-scaffold";
-import type { ConfirmState } from "@/components/focuswin/common/confirm-action-dialog";
+import type { PageInvalidState, PageStatus } from "@/components/focuswin/common/page/scaffold/page-scaffold";
+import type { ConfirmState } from "@/components/focuswin/common/overlays/confirm-action-dialog";
 import type { ClientDraft, ContactDraft } from "@/types/client";
 import type { RouterOutputs } from "@/types";
 

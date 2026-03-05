@@ -4,7 +4,7 @@ import { trpc } from "@/lib/trpc";
 
 import type { SalesFilter } from "@/types/sale";
 import type { TabPill } from "@/components/focuswin/common/ui/tab-pills";
-import type { PageStatus } from "@/components/focuswin/common/page-scaffold";
+import type { PageStatus } from "@/components/focuswin/common/page/scaffold/page-scaffold";
 
 // #region Utils
 

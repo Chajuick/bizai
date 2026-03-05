@@ -16,7 +16,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 
-import PageShell from "@/components/focuswin/common/page-shell";
+import PageShell from "@/components/focuswin/common/page/scaffold/page-shell";
 import { Button } from "@/components/ui/button";
 
 import { useAuth } from "@/_core/hooks/useAuth";
