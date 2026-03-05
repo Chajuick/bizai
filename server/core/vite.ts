@@ -48,20 +48,15 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  // 프로젝트 루트 기준으로 항상 동일하게 잡기 (PM2/빌드 위치 흔들림 방지)
   const root = process.cwd();
-  const clientDist = path.resolve(root, "client", "dist");
+  const distPath = path.resolve(root, "dist", "public");
 
-  if (!fs.existsSync(clientDist)) {
-    console.error(
-      `Could not find client dist: ${clientDist}. Run "pnpm build" first.`
-    );
+  if (!fs.existsSync(distPath)) {
+    console.error(`Could not find dist public: ${distPath}. Run "pnpm build" first.`);
   }
 
-  app.use(express.static(clientDist));
-
-  // SPA fallback
+  app.use(express.static(distPath));
   app.use("*", (_req, res) => {
-    res.sendFile(path.resolve(clientDist, "index.html"));
+    res.sendFile(path.resolve(distPath, "index.html"));
   });
 }
