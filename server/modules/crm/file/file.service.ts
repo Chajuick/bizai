@@ -22,7 +22,7 @@ import { fileLinkService } from "./fileLink.service";
 
 import { buildFilePath, getExt } from "../shared/fileKey";
 import { normalizePage } from "../shared/pagination";
-import { storageGetBuffer, storageGetPutUrl } from "../../../storage";
+import { storageGetBuffer, storageGetPutUrl, storageDelete } from "../../../storage";
 import { transcribeBuffer } from "../../../core/ai/voiceTranscription";
 // #endregion
 
@@ -156,15 +156,16 @@ export const fileService = {
     if (!file) throw new TRPCError({ code: "NOT_FOUND", message: "파일을 찾을 수 없습니다." });
 
     const { buffer, contentType } = await storageGetBuffer(file.file_path);
+
     const result = await transcribeBuffer(buffer, file.mime_type ?? contentType, {
       language: input.language ?? "ko",
     });
+
     if ("error" in result) {
       const code =
         result.code === "FILE_TOO_LARGE" || result.code === "INVALID_FORMAT"
           ? "BAD_REQUEST"
           : "INTERNAL_SERVER_ERROR";
-
       throw new TRPCError({ code, message: result.details ?? result.error });
     }
 
@@ -174,6 +175,15 @@ export const fileService = {
         code: "BAD_REQUEST",
         message: "음성이 너무 짧거나 인식할 수 없습니다. 2초 이상 다시 녹음해 주세요.",
       });
+    }
+
+    // ✅ 여기서부터 “즉시 삭제” (STT 성공했을 때만)
+    // 1) R2 삭제
+    try {
+      await storageDelete(file.file_path);
+    } catch (e) {
+      // 삭제 실패는 텍스트 결과 자체를 실패로 만들 필요는 없음(정책 선택)
+      console.error("[transcribeFile] storageDelete failed:", e);
     }
 
     return { text };

@@ -6,6 +6,7 @@ import {
   S3Client,
   PutObjectCommand,
   GetObjectCommand,
+  DeleteObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { ENV } from "./core/env/env";
@@ -118,10 +119,6 @@ export async function storageGetBuffer(
 
 /**
  * 클라이언트가 R2에 직접 업로드하기 위한 presigned PUT URL을 반환한다.
- *
- * - 클라이언트는 반환된 url에 PUT 요청으로 파일 본문을 전송한다.
- * - ContentType을 지정하면 클라이언트 요청에도 동일한 헤더가 필요하다.
- * - 기본 유효시간: 15분 (업로드 완료에 충분, 과도한 노출 방지)
  */
 export async function storageGetPutUrl(
   relKey: string,
@@ -140,5 +137,20 @@ export async function storageGetPutUrl(
   const upload_url = await getSignedUrl(client, command, { expiresIn });
 
   return { key, upload_url };
+}
+
+/**
+ * R2 파일 삭제 (보관 불필요한 음성파일 처리 후 즉시 삭제용)
+ */
+export async function storageDelete(relKey: string): Promise<void> {
+  const key = normalizeKey(relKey);
+  const client = getS3Client();
+
+  await client.send(
+    new DeleteObjectCommand({
+      Bucket: ENV.r2Bucket,
+      Key: key,
+    })
+  );
 }
 // #endregion
