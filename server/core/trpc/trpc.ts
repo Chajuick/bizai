@@ -6,6 +6,7 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 
 import type { TrpcContext } from "./context";
+import { AppError } from "./appError";
 // #endregion
 
 // #region Types
@@ -43,6 +44,9 @@ const t = initTRPC.context<TrpcContext>().create({
       });
     }
 
+    // AppError가 cause로 들어온 경우 구조화된 에러 메타 추출
+    const appErr = error.cause instanceof AppError ? error.cause : null;
+
     return {
       ...shape,
       data: {
@@ -50,9 +54,13 @@ const t = initTRPC.context<TrpcContext>().create({
         // 운영 로깅용 — requestId로 서버 로그와 연결
         requestId: ctx?.requestId ?? null,
         // Zod validation 상세 — BAD_REQUEST에서만 노출
-        ...(error.code === "BAD_REQUEST" && error.cause instanceof Error
+        ...(error.code === "BAD_REQUEST" && error.cause instanceof Error && !(error.cause instanceof AppError)
           ? { validationErrors: (error.cause as { issues?: unknown }).issues ?? null }
           : {}),
+        // 구조화된 에러 메타 — 클라이언트 handleApiError가 소비
+        appCode: appErr?.appCode ?? null,
+        displayType: appErr?.displayType ?? "toast",
+        retryable: appErr?.retryable ?? false,
       },
     };
   },

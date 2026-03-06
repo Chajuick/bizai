@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { handleApiError } from "@/lib/handleApiError";
 
 export function useCompanyMembersViewModel() {
   const utils = trpc.useUtils();
@@ -32,9 +33,8 @@ export function useCompanyMembersViewModel() {
       setInviteRole("member");
       await invalidate();
       toast.success("초대장이 생성되었습니다.");
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "초대 생성에 실패했습니다.";
-      toast.error(msg);
+    } catch (e) {
+      handleApiError(e);
     }
   };
 
@@ -43,8 +43,8 @@ export function useCompanyMembersViewModel() {
       await cancelInvite.mutateAsync({ invt_idno });
       await invalidate();
       toast.success("초대가 취소되었습니다.");
-    } catch {
-      toast.error("초대 취소에 실패했습니다.");
+    } catch (e) {
+      handleApiError(e);
     }
   };
 
@@ -54,8 +54,8 @@ export function useCompanyMembersViewModel() {
       setLatestToken(result.token);
       await invalidate();
       toast.success("새 초대 링크가 생성되었습니다.");
-    } catch {
-      toast.error("초대 재전송에 실패했습니다.");
+    } catch (e) {
+      handleApiError(e);
     }
   };
 
@@ -64,8 +64,8 @@ export function useCompanyMembersViewModel() {
       await removeMember.mutateAsync({ user_idno });
       await invalidate();
       toast.success("멤버가 제거되었습니다.");
-    } catch {
-      toast.error("멤버 제거에 실패했습니다.");
+    } catch (e) {
+      handleApiError(e);
     }
   };
 
@@ -74,8 +74,8 @@ export function useCompanyMembersViewModel() {
       await updateMemberRole.mutateAsync({ user_idno, role });
       await invalidate();
       toast.success("권한이 변경되었습니다.");
-    } catch {
-      toast.error("권한 변경에 실패했습니다.");
+    } catch (e) {
+      handleApiError(e);
     }
   };
 

@@ -3,6 +3,7 @@
 // #region Imports
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { handleApiError } from "@/lib/handleApiError";
 
 import { toLocalDatetimeInputValue, toLocalDateInputValue } from "@/lib/utils";
 
@@ -160,8 +161,8 @@ export function useScheduleListVM() {
         toast.success("일정이 등록되었습니다.");
         setShowForm(false);
         resetForm();
-      } catch {
-        toast.error("등록에 실패했습니다.");
+      } catch (e) {
+        handleApiError(e);
       }
     },
     [actions, form, resetForm]
@@ -199,8 +200,8 @@ export function useScheduleListVM() {
         toast.success("일정이 수정되었습니다.");
         setShowForm(false);
         resetForm();
-      } catch {
-        toast.error("수정에 실패했습니다.");
+      } catch (e) {
+        handleApiError(e);
       }
     },
     [actions, editingId, form, resetForm]
@@ -212,8 +213,8 @@ export function useScheduleListVM() {
         await actions.deleteSchedule({ sche_idno: id });
         toast.success("삭제되었습니다.");
         refresh();
-      } catch {
-        toast.error("삭제에 실패했습니다.");
+      } catch (e) {
+        handleApiError(e);
       }
     },
     [actions]
@@ -225,8 +226,8 @@ export function useScheduleListVM() {
         await actions.completeSchedule({ sche_idno: id });
         toast.success("완료 처리되었습니다.");
         refresh();
-      } catch {
-        toast.error("처리에 실패했습니다.");
+      } catch (e) {
+        handleApiError(e);
       }
     },
     [actions]
@@ -238,8 +239,8 @@ export function useScheduleListVM() {
         await actions.cancelSchedule({ sche_idno: id });
         toast.success("취소 처리되었습니다.");
         refresh();
-      } catch {
-        toast.error("처리에 실패했습니다.");
+      } catch (e) {
+        handleApiError(e);
       }
     },
     [actions, refresh]
@@ -280,8 +281,8 @@ export function useScheduleListVM() {
         setShowOrderForm(false);
         setSelectedSchedule(null);
         setOrderForm(EMPTY_ORDER_FORM);
-      } catch {
-        toast.error("수주 생성에 실패했습니다.");
+      } catch (e) {
+        handleApiError(e);
       }
     },
     [actions, orderForm, selectedSchedule]

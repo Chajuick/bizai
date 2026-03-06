@@ -18,6 +18,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { Check, ChevronDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { handleApiError } from "@/lib/handleApiError";
 
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/focuswin/common/ui/input";
@@ -165,8 +166,8 @@ export default function ClientNameField({
       onChange(value, (result as any).clie_idno);
 
       toast.success(`'${value}' 고객사가 추가되었습니다.`);
-    } catch {
-      toast.error("고객사 추가에 실패했습니다.");
+    } catch (e) {
+      handleApiError(e);
     } finally {
       setSuggestion(null);
     }

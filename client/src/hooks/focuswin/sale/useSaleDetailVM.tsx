@@ -4,6 +4,7 @@ import { useMemo, useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { handleApiError } from "@/lib/handleApiError";
 
 import type { AiCore, AiCorePricing } from "@/types/ai";
 import type { PageInvalidState, PageStatus } from "@/components/focuswin/common/page/scaffold/page-scaffold";
@@ -227,8 +228,8 @@ export function useSaleDetailVM(logId: number) {
 
       setIsEditing(false);
       toast.success("수정되었습니다.");
-    } catch {
-      toast.error("수정에 실패했습니다.");
+    } catch (e) {
+      handleApiError(e);
     }
   };
 
@@ -243,8 +244,8 @@ export function useSaleDetailVM(logId: number) {
 
       const opened = aiLink.maybeOpenPostAnalyzeModal(logId, res, !!log?.sale.clie_idno);
       if (opened) return;
-    } catch {
-      toast.error("AI 분석에 실패했습니다.");
+    } catch (e) {
+      handleApiError(e);
     }
   };
 
@@ -253,8 +254,8 @@ export function useSaleDetailVM(logId: number) {
       await del.mutateAsync({ sale_idno: logId });
       await utils.crm.sale.list.invalidate();
       toast.success("삭제되었습니다.");
-    } catch {
-      toast.error("삭제에 실패했습니다.");
+    } catch (e) {
+      handleApiError(e);
     }
   };
 

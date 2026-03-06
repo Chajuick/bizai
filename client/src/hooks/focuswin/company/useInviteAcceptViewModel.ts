@@ -2,6 +2,7 @@ import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { handleApiError } from "@/lib/handleApiError";
 
 export function useInviteAcceptViewModel(token: string) {
   const [, navigate] = useLocation();
@@ -32,9 +33,8 @@ export function useInviteAcceptViewModel(token: string) {
       await utils.invalidate();
       toast.success("회사에 합류했습니다!");
       navigate("/");
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "초대 수락에 실패했습니다.";
-      toast.error(msg);
+    } catch (e) {
+      handleApiError(e);
     }
   };
 

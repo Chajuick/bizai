@@ -5,6 +5,7 @@ import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toLocalDatetimeInputValue } from "@/lib/utils";
 import { toast } from "sonner";
+import { handleApiError } from "@/lib/handleApiError";
 
 import type { PageStatus } from "@/components/focuswin/common/page/scaffold/page-scaffold";
 import type { PreSaveState, SaleFormState } from "@/types/sale";
@@ -131,8 +132,8 @@ export function useSaleRegistVM() {
         analyzeResult = await analyzeMutation.mutateAsync({ sale_idno: created.sale_idno });
         if (analyzeResult.schedule_idno) toast.success("AI 분석 완료. 일정이 자동 등록되었습니다.");
         else toast.success("AI 분석이 완료되었습니다.");
-      } catch {
-        toast.error("AI 분석에 실패했습니다. 나중에 다시 시도해주세요.");
+      } catch (e) {
+        handleApiError(e);
       }
     }
 

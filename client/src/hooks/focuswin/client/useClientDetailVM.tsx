@@ -6,6 +6,7 @@ import { useLocation, useParams } from "wouter";
 import { toast } from "sonner";
 
 import { trpc } from "@/lib/trpc";
+import { handleApiError } from "@/lib/handleApiError";
 import { buildDeleteConfirm } from "@/lib/confirm";
 
 import type { PageInvalidState, PageStatus } from "@/components/focuswin/common/page/scaffold/page-scaffold";
@@ -278,8 +279,8 @@ export function useClientDetailVM() {
       await utils.crm.client.contact.list.invalidate({ clie_idno: clientId });
 
       setIsEditing(false);
-    } catch {
-      toast.error("저장에 실패했습니다.");
+    } catch (e) {
+      handleApiError(e);
     } finally {
       setIsSaving(false);
     }

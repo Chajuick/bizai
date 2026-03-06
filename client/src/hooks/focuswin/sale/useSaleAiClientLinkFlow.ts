@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
+import { handleApiError } from "@/lib/handleApiError";
 import type { PostAnalyzeClientState, AiContact } from "@/types/ai";
 
 // #region Types
@@ -142,8 +143,8 @@ export function useSaleAiClientLinkFlow() {
       toast.success(`'${client.clie_name}'을(를) 신규 고객사로 등록하고 연결했습니다.`);
 
       return saleId;
-    } catch {
-      toast.error("고객사 연결에 실패했습니다.");
+    } catch (e) {
+      handleApiError(e);
       return saleId;
     }
   };
@@ -186,8 +187,8 @@ export function useSaleAiClientLinkFlow() {
       toast.success(`'${client.clie_name}'을(를) 신규 고객사로 등록하고 연결했습니다.`);
 
       return saleId;
-    } catch {
-      toast.error("고객사 처리 중 오류가 발생했습니다.");
+    } catch (e) {
+      handleApiError(e);
       return saleId;
     }
   };

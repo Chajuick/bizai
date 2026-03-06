@@ -5,6 +5,7 @@ import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { trpc } from "@/lib/trpc";
+import { handleApiError } from "@/lib/handleApiError";
 import { formatKRW } from "@/lib/format";
 
 import type { PageStatus } from "@/components/focuswin/common/page/scaffold/page-scaffold";
@@ -146,8 +147,8 @@ export function useShipmentListVM() {
         shipmentVM.resetPaging();
         setShowForm(false);
         resetForm();
-      } catch {
-        toast.error("처리에 실패했습니다.");
+      } catch (e) {
+        handleApiError(e);
       }
     },
     [actions, editingId, form, resetForm, shipmentVM]
@@ -172,8 +173,8 @@ export function useShipmentListVM() {
         await actions.deleteShipment({ ship_idno: id });
         shipmentVM.resetPaging();
         toast.success("삭제되었습니다.");
-      } catch {
-        toast.error("삭제 실패");
+      } catch (e) {
+        handleApiError(e);
       }
     },
     [actions, shipmentVM]
@@ -185,8 +186,8 @@ export function useShipmentListVM() {
         await actions.updateShipment({ ship_idno: id, stat_code });
         shipmentVM.resetPaging();
         toast.success("상태가 변경되었습니다.");
-      } catch {
-        toast.error("상태 변경 실패");
+      } catch (e) {
+        handleApiError(e);
       }
     },
     [actions, shipmentVM]

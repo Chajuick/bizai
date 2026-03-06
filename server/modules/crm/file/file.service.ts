@@ -1,9 +1,8 @@
 // server/modules/crm/file/file.service.ts
 
 // #region Imports
-import { TRPCError } from "@trpc/server";
-
 import type { ServiceCtx } from "../../../core/serviceCtx";
+import { throwAppError } from "../../../core/trpc/appError";
 import { getDb } from "../../../core/db";
 
 import type {
@@ -153,7 +152,15 @@ export const fileService = {
     const db = getDb();
 
     const file = await fileRepo.findById({ db }, { file_idno: input.file_idno, comp_idno: ctx.comp_idno });
-    if (!file) throw new TRPCError({ code: "NOT_FOUND", message: "파일을 찾을 수 없습니다." });
+    if (!file) {
+      throwAppError({
+        tRPCCode: "NOT_FOUND",
+        appCode: "FILE_NOT_FOUND",
+        message: "파일을 찾을 수 없습니다.",
+        displayType: "toast",
+        retryable: false,
+      });
+    }
 
     const { buffer, contentType } = await storageGetBuffer(file.file_path);
 
@@ -162,18 +169,24 @@ export const fileService = {
     });
 
     if ("error" in result) {
-      const code =
-        result.code === "FILE_TOO_LARGE" || result.code === "INVALID_FORMAT"
-          ? "BAD_REQUEST"
-          : "INTERNAL_SERVER_ERROR";
-      throw new TRPCError({ code, message: result.details ?? result.error });
+      const isClientError = result.code === "FILE_TOO_LARGE" || result.code === "INVALID_FORMAT";
+      throwAppError({
+        tRPCCode: isClientError ? "BAD_REQUEST" : "INTERNAL_SERVER_ERROR",
+        appCode: result.code ?? "STT_ERROR",
+        message: result.details ?? result.error,
+        displayType: "toast",
+        retryable: !isClientError,
+      });
     }
 
     const text = result.text.trim();
     if ((result.duration ?? 0) < 2 || text.length < 2) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
+      throwAppError({
+        tRPCCode: "BAD_REQUEST",
+        appCode: "AUDIO_TOO_SHORT",
         message: "음성이 너무 짧거나 인식할 수 없습니다. 2초 이상 다시 녹음해 주세요.",
+        displayType: "toast",
+        retryable: true,
       });
     }
 

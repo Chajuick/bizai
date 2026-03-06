@@ -3,6 +3,7 @@
 // #region Imports
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { handleApiError } from "@/lib/handleApiError";
 
 import { formatKRW } from "@/lib/format";
 
@@ -183,8 +184,8 @@ export function useOrderListVM() {
         toast.success("수주가 등록되었습니다.");
         setShowForm(false);
         resetForm();
-      } catch {
-        toast.error("등록에 실패했습니다.");
+      } catch (e) {
+        handleApiError(e);
       }
     },
     [actions, form, orderVM, resetForm]
@@ -231,8 +232,8 @@ export function useOrderListVM() {
         toast.success("수주가 수정되었습니다.");
         setShowForm(false);
         resetForm();
-      } catch {
-        toast.error("수정에 실패했습니다.");
+      } catch (e) {
+        handleApiError(e);
       }
     },
     [actions, editingId, form, orderVM, resetForm]
@@ -244,8 +245,8 @@ export function useOrderListVM() {
         await actions.deleteOrder({ orde_idno: id });
         orderVM.resetPaging();
         toast.success("수주가 삭제되었습니다.");
-      } catch {
-        toast.error("삭제에 실패했습니다.");
+      } catch (e) {
+        handleApiError(e);
       }
     },
     [actions, orderVM]
@@ -257,8 +258,8 @@ export function useOrderListVM() {
         await actions.updateOrder({ orde_idno: id, stat_code: next });
         orderVM.resetPaging();
         toast.success("상태가 변경되었습니다.");
-      } catch {
-        toast.error("상태 변경에 실패했습니다.");
+      } catch (e) {
+        handleApiError(e);
       }
     },
     [actions, orderVM]
@@ -287,8 +288,8 @@ export function useOrderListVM() {
         orderVM.resetPaging();
         toast.success("납품이 생성되었습니다.");
         resetDeliveryForm();
-      } catch {
-        toast.error("납품 생성에 실패했습니다.");
+      } catch (e) {
+        handleApiError(e);
       }
     },
     [actions, deliveryForm, orderVM, resetDeliveryForm, selectedOrder]

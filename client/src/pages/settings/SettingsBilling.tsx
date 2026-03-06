@@ -10,6 +10,7 @@ import PageShell from "@/components/focuswin/common/page/scaffold/page-shell";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { useWorkspaceSwitcher } from "@/hooks/focuswin/company/useWorkspaceSwitcher";
+import { handleApiError } from "@/lib/handleApiError";
 // #endregion
 
 // #region Plan Meta + AI Baseline
@@ -234,9 +235,8 @@ function PlanCards() {
       await changePlan.mutateAsync({ plan_code: plan_code as "free" | "pro" | "team" | "enterprise" });
       await utils.billing.getSummary.invalidate();
       toast.success("플랜이 변경되었습니다.");
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "플랜 변경에 실패했습니다.";
-      toast.error(msg);
+    } catch (e) {
+      handleApiError(e);
     } finally {
       setPending(null);
     }
@@ -346,9 +346,8 @@ function CancelSubscriptionDialog({ open, onClose, endsDate }: { open: boolean; 
       await utils.billing.getSummary.invalidate();
       toast.success(res.message ?? "해지 예약이 완료되었습니다.");
       onClose();
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "해지 요청에 실패했습니다.";
-      toast.error(msg);
+    } catch (e) {
+      handleApiError(e);
     } finally {
       setLoading(false);
     }

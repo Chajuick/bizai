@@ -7,6 +7,7 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { useLocation } from "wouter";
 import { toast } from "sonner";
+import { handleApiError } from "@/lib/handleApiError";
 
 const ROLE_LABEL: Record<string, string> = { admin: "관리자", member: "멤버" };
 
@@ -64,9 +65,8 @@ export default function InviteEnterPage() {
       await utils.invalidate();
       toast.success("회사에 합류했습니다!");
       navigate("/");
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "초대 수락에 실패했습니다.";
-      toast.error(msg);
+    } catch (e) {
+      handleApiError(e);
     }
   };
 

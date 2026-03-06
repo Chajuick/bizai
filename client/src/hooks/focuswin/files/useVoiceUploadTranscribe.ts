@@ -1,7 +1,7 @@
 import { useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
-import { TRPCClientError } from "@trpc/client";
+import { handleApiError } from "@/lib/handleApiError";
 
 export function useVoiceUploadTranscribe() {
   const uploadingAbortRef = useRef<AbortController | null>(null);
@@ -39,6 +39,7 @@ export function useVoiceUploadTranscribe() {
 
       try {
         if (blob.size > maxBytes) {
+          // 브라우저에서만 알 수 있는 크기 제한 — 직접 처리
           toast.error(`파일 크기가 ${(maxBytes / (1024 * 1024)).toFixed(0)}MB를 초과합니다.`);
           onState?.("idle");
           return;
@@ -62,8 +63,9 @@ export function useVoiceUploadTranscribe() {
         });
 
         if (!putRes.ok) {
-          const t = await putRes.text().catch(() => "");
-          console.error("PUT failed:", putRes.status, t);
+          // presigned PUT은 tRPC 외부 fetch이므로 직접 처리
+          const errText = await putRes.text().catch(() => "");
+          console.error("PUT failed:", putRes.status, errText);
           toast.error("스토리지 업로드에 실패했습니다. (CORS/권한 확인)");
           onState?.("idle");
           return;
@@ -84,23 +86,15 @@ export function useVoiceUploadTranscribe() {
         // 4) transcribeFile
         onState?.("transcribing");
         const tx = await transcribeFile.mutateAsync({ file_idno: fileId });
-        console.log("transcribe response =", tx);
-        console.log("transcribe text =", (tx as any)?.text);
         onTranscribed(tx.text);
 
         onState?.("done");
       } catch (e) {
-        if ((e as any)?.name === "AbortError") {
-          toast.message("작업을 취소했습니다.");
+        const meta = handleApiError(e);
+        // AbortError는 silent — 취소 버튼이 직접 toast를 띄우므로 여기선 무시
+        if (meta.appCode === "ABORTED") {
+          // no-op
         }
-        else if (e instanceof TRPCClientError) {
-          toast.error(e.message);
-        }
-        else {
-          console.error(e);
-          toast.error("처리 중 오류가 발생했습니다.");
-        }
-
         onState?.("idle");
       } finally {
         uploadingAbortRef.current = null;
@@ -113,11 +107,5 @@ export function useVoiceUploadTranscribe() {
   return {
     uploadAndTranscribe,
     abort,
-    // 디버그용(필요 없으면 안 써도 됨)
-    errors: {
-      prepareUpload: prepareUpload.error,
-      confirmUpload: confirmUpload.error,
-      transcribeFile: transcribeFile.error,
-    },
   };
 }

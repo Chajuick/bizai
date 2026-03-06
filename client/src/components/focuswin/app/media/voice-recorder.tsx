@@ -36,7 +36,7 @@ export default function VoiceRecorder({
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const { uploadAndTranscribe, abort, errors } = useVoiceUploadTranscribe();
+  const { uploadAndTranscribe, abort } = useVoiceUploadTranscribe();
 
   const cleanupRecording = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
@@ -93,8 +93,13 @@ export default function VoiceRecorder({
       setDuration(0);
       timerRef.current = setInterval(() => setDuration((d) => d + 1), 1000);
     } catch (e) {
-      console.error(e);
-      toast.error("마이크 접근 권한이 필요합니다.");
+      // 브라우저/디바이스 에러 — getUserMedia 권한 거부, MediaRecorder 미지원 등
+      // tRPC 외부이므로 직접 toast 처리
+      const msg =
+        e instanceof Error && e.name === "NotAllowedError"
+          ? "마이크 접근 권한이 필요합니다."
+          : "마이크를 사용할 수 없습니다. 브라우저 설정을 확인해 주세요.";
+      toast.error(msg);
     }
   }, [cleanupRecording, uploadAndTranscribe, maxBytes, onUploadedFileId, onTranscribed]);
 
@@ -113,6 +118,7 @@ export default function VoiceRecorder({
 
       // 타입 제한(원하면 더 엄격히)
       if (!file.type.startsWith("audio/") && file.type !== "video/webm") {
+        // 파일 형식 검증 — 브라우저에서만 알 수 있으므로 직접 처리
         toast.error("오디오 파일만 업로드할 수 있습니다.");
         return;
       }
@@ -247,10 +253,6 @@ export default function VoiceRecorder({
         </div>
       )}
 
-      {/* 디버깅용 - 필요 없으면 제거 */}
-      {errors.prepareUpload && <span className="text-xs text-red-500">prepareUpload 실패</span>}
-      {errors.confirmUpload && <span className="text-xs text-red-500">confirmUpload 실패</span>}
-      {errors.transcribeFile && <span className="text-xs text-red-500">transcribeFile 실패</span>}
     </div>
   );
 }

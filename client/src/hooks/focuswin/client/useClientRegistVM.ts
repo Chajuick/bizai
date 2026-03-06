@@ -6,6 +6,7 @@ import { useLocation } from "wouter";
 import { toast } from "sonner";
 
 import { trpc } from "@/lib/trpc";
+import { handleApiError } from "@/lib/handleApiError";
 import type { ClientDraft, ContactDraft } from "@/types/client";
 
 import type { PageStatus } from "@/components/focuswin/common/page/scaffold/page-scaffold";
@@ -136,8 +137,8 @@ export function useClientRegistVM() {
       toast.success("고객사를 등록했어요.");
       await utils.crm.client.list.invalidate();
       goDetail(res.clie_idno);
-    } catch {
-      toast.error("등록에 실패했습니다.");
+    } catch (e) {
+      handleApiError(e);
     } finally {
       setIsSaving(false);
     }
