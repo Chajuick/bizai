@@ -78,6 +78,20 @@
       "when": 1772609908013,
       "tag": "0010_dizzy_tana_nile",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1772843623048,
+      "tag": "0011_easy_eternity",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1772844137360,
+      "tag": "0012_sparkling_rocket_raccoon",
+      "breakpoints": true
     }
   ]
 }

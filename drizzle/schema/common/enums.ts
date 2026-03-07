@@ -148,6 +148,16 @@ export const JOB_STATUSES = [
 ] as const;
 // #endregion
 
+// #region Sale AI status
+export const AI_STATUSES = [
+  "pending",    // 분석 대기 (생성 직후 / 재시도 대기)
+  "processing", // 분석 진행 중
+  "completed",  // 분석 완료
+  "failed",     // 분석 실패 (재시도 가능)
+] as const;
+export type AiStatus = typeof AI_STATUSES[number];
+// #endregion
+
 
 
 /**
@@ -192,4 +202,8 @@ export const filePurpTypeEnum = mysqlEnum("file_purp_type", FILE_PURP_TYPES);
 
 // #region Job enums
 export const jobsStatusEnum = mysqlEnum("jobs_status", JOB_STATUSES);
+// #endregion
+
+// #region Sale AI status enums
+export const aiStatusEnum = mysqlEnum("ai_status", AI_STATUSES);
 // #endregion

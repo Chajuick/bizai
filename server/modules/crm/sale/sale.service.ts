@@ -110,6 +110,7 @@ export const saleService = {
 
         aiex_done: !!r.aiex_done,
         aiex_summ: r.aiex_summ ?? null,
+        ai_status: (r.ai_status ?? "pending") as "pending" | "processing" | "completed" | "failed",
       })),
       page: { limit: page.limit, offset: page.offset, hasMore },
     };
@@ -177,9 +178,11 @@ export const saleService = {
 
         orig_memo: String(sale.orig_memo),
         sttx_text: sale.sttx_text ?? null,
+        edit_text: sale.edit_text ?? null,
 
         aiex_done: !!sale.aiex_done,
         aiex_summ: sale.aiex_summ ?? null,
+        ai_status: (sale.ai_status ?? "pending") as "pending" | "processing" | "completed" | "failed",
         aiex_core,
       },
       client_contact,
@@ -218,10 +221,12 @@ export const saleService = {
       orig_memo: input.orig_memo,
 
       sttx_text: input.sttx_text ?? null,
+      edit_text: input.edit_text ?? null,
 
       aiex_done: false,
       aiex_summ: null,
       aiex_text: null,
+      ai_status: "pending" as const,
 
       enab_yesn: true,
     };
@@ -394,7 +399,8 @@ export const saleService = {
     const sale = await saleRepo.getById({ db }, { comp_idno: ctx.comp_idno, owne_idno: ctx.user_idno, sale_idno });
     if (!sale) throw new TRPCError({ code: "NOT_FOUND", message: "영업일지를 찾을 수 없습니다." });
 
-    const text = sale.sttx_text ?? sale.orig_memo;
+    // AI 입력 우선순위: edit_text(사용자 수정본) > orig_memo(원문/STT 결과)
+    const text = sale.edit_text?.trim() || sale.orig_memo;
     if (!text?.trim()) {
       throw new TRPCError({ code: "BAD_REQUEST", message: "분석할 텍스트가 없습니다. 먼저 음성을 전사해주세요." });
     }
@@ -455,18 +461,38 @@ export const saleService = {
 
     await saleRepo.updateAudioJob({ db }, { jobs_idno, data: { jobs_stat: "running" } });
 
+    // ai_status: processing
+    await saleRepo.update({ db }, {
+      comp_idno: ctx.comp_idno, owne_idno: ctx.user_idno, sale_idno,
+      data: { ai_status: "processing" as const },
+    });
+
     await aiService.checkQuota(ctx.comp_idno, 1500);
 
     const kstInfo = getKSTDateInfo(sale.vist_date);
     const systemPrompt = buildAnalysisPrompt(kstInfo);
-    const llmResult = await invokeLLM({
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: text },
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.1,
-    });
+
+    let llmResult: Awaited<ReturnType<typeof invokeLLM>>;
+    try {
+      llmResult = await invokeLLM({
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: text },
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.1,
+      });
+    } catch (err) {
+      await saleRepo.update({ db }, {
+        comp_idno: ctx.comp_idno, owne_idno: ctx.user_idno, sale_idno,
+        data: { ai_status: "failed" as const },
+      });
+      await saleRepo.updateAudioJob({ db }, {
+        jobs_idno,
+        data: { jobs_stat: "failed", fail_mess: err instanceof Error ? err.message : "LLM 호출 실패", fini_date: new Date() },
+      });
+      throw err;
+    }
 
     const rawContent = llmResult.choices[0]?.message?.content;
     const contentStr = typeof rawContent === "string" ? rawContent : JSON.stringify(rawContent ?? {});
@@ -550,6 +576,7 @@ export const saleService = {
         aiex_done: true,
         aiex_summ: summary,
         aiex_text: parsed as Record<string, unknown>,
+        ai_status: "completed" as const,
         ...(sale_pric !== null && !sale.sale_pric ? { sale_pric: String(sale_pric) } : {}),
         ...(contact_person && !sale.cont_name ? { cont_name: contact_person } : {}),
         ...(primaryContact?.cont_role && !sale.cont_role ? { cont_role: primaryContact.cont_role } : {}),

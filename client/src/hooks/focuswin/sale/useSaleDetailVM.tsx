@@ -198,6 +198,7 @@ export function useSaleDetailVM(logId: number) {
       vist_date: log.sale.vist_date ? new Date(log.sale.vist_date).toISOString().slice(0, 16) : "",
       sale_pric: log.sale.sale_pric != null ? Number(log.sale.sale_pric) : undefined,
       orig_memo: log.sale.orig_memo ?? "",
+      edit_text: log.sale.edit_text ?? undefined,
     });
   }, [log]);
 
@@ -216,11 +217,16 @@ export function useSaleDetailVM(logId: number) {
 
   const save = async () => {
     try {
+      // STT 원본이 있고 사용자가 내용을 저장하면 edit_text에 반영
+      // → AI 분석이 항상 사용자 최종 수정본을 사용하도록 보장
+      const edit_text = log?.sale.sttx_text ? editForm.orig_memo : undefined;
+
       await update.mutateAsync({
         sale_idno: logId,
         ...editForm,
         sale_pric: editForm.sale_pric ?? undefined,
         vist_date: editForm.vist_date ? new Date(editForm.vist_date).toISOString() : undefined,
+        edit_text: edit_text ?? null,
       });
 
       await utils.crm.sale.get.invalidate({ sale_idno: logId });
@@ -277,6 +283,9 @@ export function useSaleDetailVM(logId: number) {
     return "AI 분석이 완료되었습니다.";
   }, [analyze.data]);
 
+  const aiStatus = log?.sale.ai_status ?? "pending";
+  const canAnalyze = aiStatus === "pending" || aiStatus === "failed";
+
   const primaryAction = isEditing
     ? {
         label: "저장",
@@ -285,9 +294,9 @@ export function useSaleDetailVM(logId: number) {
         disabled: update.isPending,
         variant: "primary" as const,
       }
-    : !log?.sale.aiex_done
+    : canAnalyze
       ? {
-          label: "AI 분석",
+          label: aiStatus === "failed" ? "AI 재분석" : "AI 분석",
           icon: analyze.isPending ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />,
           onClick: runAnalyze,
           disabled: analyze.isPending,
@@ -366,6 +375,7 @@ export function useSaleDetailVM(logId: number) {
     // ai
     ai,
     aiActions,
+    aiStatus,
 
     // navigation
     goList,

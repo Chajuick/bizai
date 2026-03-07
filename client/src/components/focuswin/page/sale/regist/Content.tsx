@@ -21,7 +21,7 @@ export default function SaleRegistContent({ vm }: Props) {
 
       <SaleRegistContentCard
         rawContent={vm.form.orig_memo}
-        onChangeRaw={(v) => vm.setForm((f) => ({ ...f, orig_memo: v }))}
+        onChangeRaw={vm.handleMemoChange}
       />
     </div>
   );

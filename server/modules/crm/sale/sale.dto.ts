@@ -5,7 +5,7 @@
 import { z } from "zod";
 import { PaginationInput } from "../shared/pagination";
 import { makeSortInput } from "../shared/sort";
-import { FILE_PURP_TYPES } from "../../../../drizzle/schema";
+import { FILE_PURP_TYPES, AI_STATUSES } from "../../../../drizzle/schema";
 import { IsoDateTime, DecimalLikeNullable } from "../shared/dto";
 
 // #endregion
@@ -61,6 +61,7 @@ export const SaleCreateInput = z.object({
   attachments: z.array(SaleAttachmentInput).optional(),
 
   sttx_text: z.string().optional(),
+  edit_text: z.string().optional(),
 });
 
 export const SaleUpdateInput = z.object({
@@ -76,6 +77,7 @@ export const SaleUpdateInput = z.object({
   orig_memo: z.string().nullable().optional(),
 
   sttx_text: z.string().nullable().optional(),
+  edit_text: z.string().nullable().optional(),
 });
 
 export const SaleDeleteInput = z.object({
@@ -152,6 +154,7 @@ export const SaleItemOutput = z.object({
 
   aiex_done: z.boolean(),
   aiex_summ: z.string().nullable(),
+  ai_status: z.enum(AI_STATUSES),
 });
 
 export const SaleListOutput = z.object({
@@ -193,9 +196,11 @@ export const SaleGetOutput = z.object({
     orig_memo: z.string(),
 
     sttx_text: z.string().nullable(),
+    edit_text: z.string().nullable(),
 
     aiex_done: z.boolean(),
     aiex_summ: z.string().nullable(),
+    ai_status: z.enum(AI_STATUSES),
 
     aiex_core: AiCoreOutput.nullable(),
   }),

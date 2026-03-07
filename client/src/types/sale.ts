@@ -19,7 +19,10 @@ export type SaleFormState = {
   vist_date: string;
   orig_memo: string;
   audi_addr: string;
+  /** STT 원본 텍스트 (참조용) */
   sttx_text: string;
+  /** 사용자가 STT 결과를 수정했을 때의 텍스트 (AI 분석에 사용) */
+  edit_text?: string;
 };
 
 /** 영업일지 수정 폼 상태 */
@@ -34,6 +37,8 @@ export type SaleEditForm = {
   vist_date: string;
   sale_pric?: number;
   orig_memo: string;
+  /** 사용자가 STT 결과를 수정했을 때의 텍스트 (AI 분석에 사용) */
+  edit_text?: string;
 };
 
 /** 저장 전 고객사 매칭 확인 상태 */

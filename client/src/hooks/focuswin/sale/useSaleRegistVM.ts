@@ -87,8 +87,18 @@ export function useSaleRegistVM() {
       ...f,
       orig_memo: f.orig_memo ? `${f.orig_memo}\n${text}` : text,
       sttx_text: text,
+      edit_text: undefined, // 새 STT가 들어오면 수정본 초기화
     }));
     toast.success("음성이 텍스트로 변환되었습니다.");
+  };
+
+  // STT 결과가 있을 때 사용자가 직접 내용을 수정하면 edit_text에 저장
+  const handleMemoChange = (value: string) => {
+    setForm((f) => ({
+      ...f,
+      orig_memo: value,
+      edit_text: f.sttx_text ? value : f.edit_text,
+    }));
   };
 
   const setAudioUrl = (url: string) => setForm((f) => ({ ...f, audi_addr: url }));
@@ -120,6 +130,7 @@ export function useSaleRegistVM() {
       vist_date: new Date(form.vist_date || new Date()).toISOString(),
       orig_memo: form.orig_memo,
       sttx_text: form.sttx_text || undefined,
+      edit_text: form.edit_text || undefined,
       attachments: audioFileIdno
         ? [{ file_idno: audioFileIdno, purp_type: "sale_audio" as const, sort_orde: 0 }]
         : undefined,
@@ -275,6 +286,7 @@ export function useSaleRegistVM() {
 
     // handlers
     handleTranscribed,
+    handleMemoChange,
     setAudioUrl,
 
     // flags
