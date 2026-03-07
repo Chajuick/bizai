@@ -1,29 +1,37 @@
 # Sales Manager
 
-영업사원을 위한 AI 기반 CRM · 영업 관리 앱.
-음성으로 영업일지를 작성하면 AI가 자동으로 고객명, 금액, 후속 일정을 추출합니다.
+영업사원을 위한 AI 기반 CRM · 영업 관리 SaaS.
+음성으로 영업일지를 작성하면 AI가 자동으로 고객사명, 금액, 후속 일정을 추출합니다.
+
+---
 
 ## 주요 기능
 
 | 기능 | 설명 |
 |------|------|
-| 영업일지 | 텍스트 또는 음성으로 방문 기록 작성 |
-| AI 분석 | Gemini 2.5 Flash가 일지 요약 · 일정 자동 추출 |
-| 음성 녹음 | Whisper STT로 음성 → 텍스트 변환 |
-| 고객사 관리 | 거래처 정보 및 활동 이력 관리 |
-| 일정 관리 | 후속 미팅 · 할일 일정 추적 |
-| 수주 관리 | 제안 → 협상 → 수주 파이프라인 |
-| 납품 · 매출 | 납품 현황 및 청구 상태 관리 |
-| 대시보드 | 이번 달 실적 · 매출 트렌드 차트 |
+| 영업일지 | 텍스트 또는 음성으로 방문/활동 기록 작성 |
+| AI 분석 | LLM이 일지 요약 · 고객사 · 금액 · 일정 자동 추출 |
+| 음성 → 텍스트 | Whisper STT로 음성 파일을 한국어 텍스트로 변환 |
+| 고객사 관리 | 거래처 정보 · 담당자 · 활동 이력 관리 |
+| 일정 관리 | AI가 추출한 후속 미팅 자동 등록 + 수동 관리 |
+| 수주 관리 | 제안 → 협상 → 확정 파이프라인 추적 |
+| 납품 · 매출 | 납품 현황 및 수금 상태 관리 |
+| 대시보드 | 이번 달 실적 · KPI 카드 |
+| 팀 관리 | 회사 단위 멤버 초대 · 역할(owner/admin/member) 관리 |
+| 플랜/빌링 | 무료 · pro · team · enterprise 플랜 |
+
+---
 
 ## 기술 스택
 
 ```
-Frontend  React 19 + Vite + TailwindCSS v4 + shadcn/ui + wouter + tRPC
-Backend   Express.js + tRPC + Drizzle ORM
-Database  MySQL
-Storage   Manus Forge (파일 업로드)
-AI        Gemini 2.5 Flash (LLM) · Whisper (STT)
+Frontend   React 19 + Vite + TailwindCSS v4 + shadcn/ui + wouter + tRPC
+Backend    Express.js + tRPC + Drizzle ORM
+Database   MySQL
+Storage    Cloudflare R2 (S3 호환)
+AI/LLM     Groq — llama-3.3-70b-versatile
+AI/STT     Groq — whisper-large-v3-turbo
+Auth       JWT(jose) + Google OAuth 2.0 + 이메일/비밀번호
 ```
 
 ---
@@ -32,9 +40,11 @@ AI        Gemini 2.5 Flash (LLM) · Whisper (STT)
 
 ### 사전 준비
 
-- Node.js 18+
+- Node.js 20+
 - pnpm (`npm install -g pnpm`)
 - MySQL 서버 (로컬 또는 클라우드)
+- Cloudflare R2 버킷
+- Groq API 키 (AI 기능 사용 시)
 
 ### 1. 의존성 설치
 
@@ -47,22 +57,30 @@ pnpm install
 프로젝트 루트에 `.env` 파일 생성:
 
 ```env
-# 데이터베이스
-DATABASE_URL=mysql://user:password@localhost:3306/sales_manager
+# 필수
+DATABASE_URL=mysql://user:password@localhost:3306/bizai
+JWT_SECRET=임의의-긴-문자열
 
-# 인증 (JWT 서명 키 — 임의의 긴 문자열)
-JWT_SECRET=your-secret-key-here
+# Cloudflare R2
+R2_ENDPOINT=https://{ACCOUNT_ID}.r2.cloudflarestorage.com
+R2_ACCESS_KEY_ID=your-access-key
+R2_SECRET_ACCESS_KEY=your-secret-key
+R2_BUCKET_NAME=your-bucket-name
 
-# OAuth 서버 (Manus 플랫폼 제공)
-OAUTH_SERVER_URL=https://your-oauth-server-url
-OWNER_OPEN_ID=your-open-id
+# 선택 — AI 기능
+LLM_API_KEY=gsk_xxxx              # Groq API key (LLM)
+LLM_API_URL=https://api.groq.com/openai/v1
+LLM_MODEL=llama-3.3-70b-versatile
+STT_API_KEY=gsk_xxxx              # Groq API key (STT, 생략 시 LLM_API_KEY 사용)
+STT_MODEL=whisper-large-v3-turbo
 
-# Manus Forge API (LLM · STT · 스토리지)
-BUILT_IN_FORGE_API_URL=https://forge.manus.im
-BUILT_IN_FORGE_API_KEY=your-forge-api-key
+# 선택 — Google OAuth
+GOOGLE_CLIENT_ID=your-client-id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your-secret
 
-# 앱 ID
-VITE_APP_ID=your-app-id
+# 선택
+OWNER_EMAIL=admin@example.com     # 최초 admin 계정 이메일
+PORT=3000
 ```
 
 > `.env` 파일은 절대 Git에 커밋하지 마세요.
@@ -73,15 +91,13 @@ VITE_APP_ID=your-app-id
 pnpm db:push
 ```
 
-MySQL에 모든 테이블이 자동으로 생성됩니다.
-
 ### 4. 개발 서버 실행
 
 ```bash
 pnpm dev
 ```
 
-브라우저에서 `http://localhost:3000` 접속.
+`http://localhost:3000` 에서 확인.
 
 ---
 
@@ -102,63 +118,102 @@ pnpm db:push    # DB 스키마 마이그레이션
 ## 프로젝트 구조
 
 ```
-biz-ai/
-├── client/                  # React SPA (프론트엔드)
+bizai/
+├── client/                        # React SPA
 │   └── src/
-│       ├── pages/           # 라우트별 페이지 컴포넌트
-│       ├── components/      # 공유 컴포넌트
-│       │   └── ui/          # shadcn/ui 기본 컴포넌트
-│       ├── hooks/           # 커스텀 훅
-│       ├── lib/trpc.ts      # API 클라이언트 설정
-│       └── App.tsx          # 라우터 설정
+│       ├── _core/hooks/           # 인증 훅 (useAuth)
+│       ├── components/
+│       │   ├── ui/                # shadcn/ui 기본 컴포넌트
+│       │   └── focuswin/          # 앱 전용 컴포넌트
+│       ├── hooks/focuswin/        # 도메인별 ViewModel 훅
+│       ├── lib/
+│       │   ├── trpc.ts            # tRPC 클라이언트
+│       │   ├── queryClient.ts     # TanStack Query + 전역 인증 리다이렉트
+│       │   └── handleApiError.ts  # 공통 API 에러 처리
+│       ├── pages/                 # 페이지 컴포넌트
+│       └── router/                # 라우터 (wouter)
 │
-├── server/                  # Express 백엔드
-│   ├── _core/               # 인프라 (tRPC, 인증, LLM, STT)
-│   ├── routers/             # API 엔드포인트 (도메인별)
-│   ├── routers.ts           # 전체 라우터 조합
-│   └── db.ts                # DB 쿼리 함수
+├── server/
+│   ├── core/
+│   │   ├── trpc/
+│   │   │   ├── trpc.ts            # tRPC 초기화 + errorFormatter
+│   │   │   ├── appError.ts        # 구조화 에러 (AppError + throwAppError)
+│   │   │   ├── context.ts         # 요청 컨텍스트 (인증 · 테넌트 해석)
+│   │   │   └── appRouters.ts      # 루트 라우터
+│   │   ├── sdk.ts                 # SessionManager (JWT)
+│   │   ├── oauth.ts               # 인증 Express 라우터
+│   │   ├── llm.ts                 # LLM 호출 (Groq)
+│   │   └── ai/voiceTranscription.ts  # STT
+│   ├── modules/
+│   │   ├── crm/                   # sale · schedule · order · shipment · client · file · dashboard
+│   │   ├── org/company/           # 회사 · 멤버십 · 초대
+│   │   ├── billing/               # 플랜/구독
+│   │   └── ai/token/              # AI 토큰 차감
+│   └── storage.ts                 # R2 스토리지
 │
 ├── drizzle/
-│   ├── schema.ts            # DB 테이블 정의
-│   └── relations.ts         # 테이블 관계 정의
+│   ├── schema/                    # 테이블 정의
+│   └── relations.ts
 │
-└── package.json
+└── shared/                        # 서버·클라이언트 공유 타입/상수
 ```
 
 ---
 
-## 주요 화면 흐름
-
-```
-로그인 (OAuth)
-  └─ 대시보드          이번 달 실적 요약
-       ├─ 영업일지 목록
-       │    └─ 새 일지 작성   [음성 녹음] 또는 텍스트 입력
-       │         └─ AI 분석  고객명 · 금액 · 일정 자동 추출
-       ├─ 고객사 관리    거래처 등록 · 이력 조회
-       ├─ 일정 관리     일정 목록 · 완료 처리
-       ├─ 수주 관리     파이프라인 상태 추적
-       └─ 납품 · 매출   청구 현황 관리
-```
-
----
-
-## 데이터베이스 스키마
+## 데이터베이스 스키마 (주요 테이블)
 
 | 테이블 | 설명 |
 |--------|------|
-| `users` | 사용자 (영업사원 계정) |
-| `clients` | 고객사 (거래처 정보) |
-| `salesLogs` | 영업일지 (AI 분석 결과 포함) |
-| `promises` | 일정 · 후속 액션 |
-| `orders` | 수주 (제안 → 계약) |
-| `deliveries` | 납품 · 매출 정보 |
-| `attachments` | 첨부파일 (S3 메타데이터) |
+| `CORE_USER` | 사용자 (영업사원 계정) |
+| `CORE_COMPANY` | 회사 (테넌트 단위) |
+| `CORE_COMPANY_USER` | 멤버십 — 사용자 ↔ 회사 + 역할 |
+| `CORE_INVITE` | 토큰 기반 초대장 |
+| `CORE_FILE` | 첨부파일 메타데이터 (R2) |
+| `CRM_CLIENT` | 고객사 (거래처) |
+| `CRM_CONTACT` | 고객사 담당자 |
+| `CRM_SALE` | 영업일지 + AI 분석 결과 |
+| `CRM_SCHEDULE` | 일정 · 후속 액션 |
+| `CRM_ORDER` | 수주 (제안 → 협상 → 확정) |
+| `CRM_SHIPMENT` | 납품 · 매출 |
 
-스키마 변경 후 반드시 실행:
+스키마 변경 후:
 ```bash
 pnpm db:push
 ```
+
+---
+
+## 인증 흐름
+
+1. **Google OAuth**: `/api/auth/google` → Google 인증 → 콜백 → 쿠키 발급
+2. **이메일/비밀번호**: `POST /api/auth/register` 가입 → `POST /api/auth/login` 로그인 → 쿠키 발급
+3. **세션**: JWT(HS256) HttpOnly 쿠키 — `{ userId, name }`
+4. **테넌트**: `x-comp-id` 헤더 → 멤버십 검증 → `comp_idno` 컨텍스트 주입
+
+---
+
+## API 에러 처리
+
+서버는 tRPC errorFormatter를 통해 구조화된 에러를 내려줍니다:
+
+```json
+{
+  "error": {
+    "data": {
+      "appCode": "AUDIO_TOO_SHORT",
+      "displayType": "toast",
+      "retryable": true,
+      "requestId": "abc-123"
+    },
+    "message": "음성이 너무 짧습니다."
+  }
+}
+```
+
+클라이언트는 `handleApiError(e)`로 일괄 처리합니다:
+- `displayType: "toast"` → `toast.error(message)` 자동 호출
+- `displayType: "inline"` → 호출부에서 직접 렌더링
+- `displayType: "silent"` → 아무것도 하지 않음
 
 ---
 
@@ -180,24 +235,12 @@ pnpm build
 NODE_ENV=production node dist/index.js
 ```
 
-### 권장 배포 환경
+### 권장 환경
 
-- **서버**: Railway, Render, Fly.io, EC2 등
+- **서버**: Railway, Render, Fly.io, EC2 등 Node.js 지원 환경
 - **데이터베이스**: PlanetScale, AWS RDS, Railway MySQL
-- **포트**: 기본 `3000`, 환경 변수 `PORT`로 변경 가능
-
----
-
-## API 비용 (1인당 월 기준)
-
-일 5건 처리 기준 추정값. 자세한 내용은 [`.claude/api-cost-analysis.md`](.claude/api-cost-analysis.md) 참조.
-
-| API | 용도 | 월 비용 |
-|-----|------|--------|
-| Gemini 2.5 Flash | 영업일지 AI 분석 | ~$0.14 |
-| Whisper STT | 음성 → 텍스트 | ~$0.53 |
-| 파일 스토리지 | 음성·첨부 파일 | ~$0.00 |
-| **합계** | | **~$0.67** |
+- **스토리지**: Cloudflare R2 (이미 연동됨)
+- **포트**: 기본 `3000`, 환경변수 `PORT`로 변경
 
 ---
 
@@ -210,18 +253,3 @@ pnpm test
 pnpm vitest run server/salesManager.test.ts
 pnpm vitest run server/auth.logout.test.ts
 ```
-
----
-
-## 환경 변수 전체 목록
-
-| 변수명 | 필수 | 설명 |
-|--------|------|------|
-| `DATABASE_URL` |  | MySQL 연결 문자열 |
-| `JWT_SECRET` |  | 세션 토큰 서명 키 |
-| `OAUTH_SERVER_URL` |  | OAuth 인증 서버 URL |
-| `OWNER_OPEN_ID` |  | 관리자 계정의 OpenID |
-| `BUILT_IN_FORGE_API_URL` |  | Forge API 기본 URL |
-| `BUILT_IN_FORGE_API_KEY` |  | Forge API 인증 키 |
-| `VITE_APP_ID` |  | 앱 식별자 |
-| `PORT` | ❌ | 서버 포트 (기본값: 3000) |
