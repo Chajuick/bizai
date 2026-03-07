@@ -30,6 +30,7 @@ import {
 } from "@/components/focuswin/common/ui/popover";
 import { useWorkspaceSwitcher } from "@/hooks/focuswin/company/useWorkspaceSwitcher";
 import { COMPANY } from "@/config/company";
+import TokenWarningBanner from "@/components/focuswin/common/feedback/TokenWarningBanner";
 
 // ─── Nav items (업무 중심) ───────────────────────────────────────────────────
 const navItems = [
@@ -454,6 +455,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           className="flex-1 min-h-0 overflow-y-auto pb-24 lg:pb-6"
           style={{ scrollbarGutter: "stable both-edges" }}
         >
+          <TokenWarningBanner />
           <div className="page-enter">{children}</div>
         </main>
       </div>
