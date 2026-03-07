@@ -76,6 +76,28 @@ export const tokenRepo = {
   },
   // #endregion
 
+  // #region initBalance
+  /**
+   * 잔액 행 초기화 (INSERT IGNORE)
+   *
+   * 행이 없을 때만 초기값을 삽입한다.
+   * 이미 행이 있으면 아무것도 하지 않는다.
+   * 동시 호출 안전: INSERT IGNORE는 원자적.
+   */
+  async initBalance(
+    deps: TokenRepoDeps,
+    args: { comp_idno: number; amount: number }
+  ): Promise<void> {
+    const { db } = deps;
+    const { comp_idno, amount } = args;
+
+    await db
+      .insert(AI_TOKEN_BALANCE)
+      .values({ comp_idno, bala_tokn: amount })
+      .onDuplicateKeyUpdate({ set: { bala_tokn: sql`${AI_TOKEN_BALANCE.bala_tokn}` } }); // no-op on conflict
+  },
+  // #endregion
+
   // #region addTokens
   /**
    * 토큰 충전/지급 (UPSERT)

@@ -5,6 +5,7 @@ import { drizzle, type MySql2Database } from "drizzle-orm/mysql2";
 import mysql from "mysql2/promise";
 
 import * as schema from "../../../drizzle/schema";
+import { ENV } from "../env/env";
 // #endregion
 
 // #region Types
@@ -39,7 +40,7 @@ export function getDb(): DbClient {
   // connectionLimit: DB 최대 동시 연결 수 제한 (기본값 무제한 → MySQL max_connections 초과 방지)
   _pool = mysql.createPool({
     uri: url,
-    connectionLimit: 10,
+    connectionLimit: ENV.dbPoolSize,
     waitForConnections: true,
     queueLimit: 0,
     // 서버 환경에 관계없이 UTC 기준으로 날짜 처리 (Invalid Date / zero-date 방지)

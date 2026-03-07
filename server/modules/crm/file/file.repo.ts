@@ -1,9 +1,9 @@
 // server/modules/crm/file/file.repo.ts
 
 // #region Imports
-import { and, asc, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull, lt, or, sql } from "drizzle-orm";
 
-import { CORE_FILE, CORE_FILE_LINK, FILE_REF_TYPES } from "../../../../drizzle/schema";
+import { CORE_FILE, CORE_FILE_LINK, CRM_SALE_AUDIO_JOB, FILE_REF_TYPES } from "../../../../drizzle/schema";
 import type { DbClient } from "../../../core/db";
 import { getInsertId } from "../../../core/db";
 // #endregion
@@ -194,10 +194,71 @@ export const fileRepo = {
       .set({
         dele_yesn: 1,
         dele_date: sql`NOW()`,
-        // drop_date도 쓰고 싶으면 정책에 맞춰 설정
-        // drop_date: sql`NOW()`,
       })
       .where(and(eq(CORE_FILE.comp_idno, args.comp_idno), eq(CORE_FILE.file_idno, args.file_idno)));
+  },
+  // #endregion
+
+  // #region findOrphanFiles
+  /**
+   * 링크 없는 고아 파일 조회
+   * - CORE_FILE_LINK에 연결되지 않은 파일
+   * - 업로드 후 페이지를 벗어나거나 STT 실패 후 남겨진 파일 대상
+   * - cutoff보다 오래된 파일만 (최근 업로드는 링크 연결 중일 수 있음)
+   */
+  async findOrphanFiles(
+    deps: FileRepoDeps,
+    args: { cutoff: Date; limit?: number }
+  ): Promise<Array<{ file_idno: number; file_path: string; comp_idno: number }>> {
+    const rows = await deps.db
+      .select({
+        file_idno: CORE_FILE.file_idno,
+        file_path: CORE_FILE.file_path,
+        comp_idno: CORE_FILE.comp_idno,
+      })
+      .from(CORE_FILE)
+      .leftJoin(CORE_FILE_LINK, eq(CORE_FILE.file_idno, CORE_FILE_LINK.file_idno))
+      .leftJoin(
+        CRM_SALE_AUDIO_JOB,
+        and(
+          eq(CORE_FILE.file_idno, CRM_SALE_AUDIO_JOB.file_idno),
+          or(
+            eq(CRM_SALE_AUDIO_JOB.jobs_stat, "queued"),
+            eq(CRM_SALE_AUDIO_JOB.jobs_stat, "running"),
+          ),
+        ),
+      )
+      .where(
+        and(
+          eq(CORE_FILE.dele_yesn, 0),
+          lt(CORE_FILE.crea_date, args.cutoff),
+          isNull(CORE_FILE_LINK.file_idno),        // 링크 없는 파일만
+          isNull(CRM_SALE_AUDIO_JOB.jobs_idno),    // 활성(queued/running) audio job 없는 파일만
+        )
+      )
+      .limit(args.limit ?? 200);
+
+    return rows.map((r) => ({
+      file_idno: Number(r.file_idno),
+      file_path: String(r.file_path),
+      comp_idno: Number(r.comp_idno),
+    }));
+  },
+  // #endregion
+
+  // #region softDeleteBatch
+  /**
+   * 여러 파일을 한 번에 soft-delete (스토리지 삭제 후 호출)
+   */
+  async softDeleteBatch(
+    deps: FileRepoDeps,
+    file_idnos: number[]
+  ): Promise<void> {
+    if (!file_idnos.length) return;
+    await deps.db
+      .update(CORE_FILE)
+      .set({ dele_yesn: 1, dele_date: sql`NOW()` })
+      .where(inArray(CORE_FILE.file_idno, file_idnos));
   },
   // #endregion
 } as const;

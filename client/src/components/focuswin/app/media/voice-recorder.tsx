@@ -93,13 +93,32 @@ export default function VoiceRecorder({
       setDuration(0);
       timerRef.current = setInterval(() => setDuration((d) => d + 1), 1000);
     } catch (e) {
-      // 브라우저/디바이스 에러 — getUserMedia 권한 거부, MediaRecorder 미지원 등
-      // tRPC 외부이므로 직접 toast 처리
-      const msg =
-        e instanceof Error && e.name === "NotAllowedError"
-          ? "마이크 접근 권한이 필요합니다."
-          : "마이크를 사용할 수 없습니다. 브라우저 설정을 확인해 주세요.";
-      toast.error(msg);
+      // getUserMedia 권한 거부, 디바이스 없음, MediaRecorder 미지원 등
+      if (e instanceof Error) {
+        if (e.name === "NotAllowedError" || e.name === "PermissionDeniedError") {
+          toast.error("마이크 권한이 차단되어 있습니다.", {
+            description: "브라우저 주소창의 🔒 아이콘을 클릭하여 마이크를 '허용'으로 변경해 주세요.",
+            duration: 6000,
+          });
+        } else if (e.name === "NotFoundError" || e.name === "DevicesNotFoundError") {
+          toast.error("마이크를 찾을 수 없습니다.", {
+            description: "마이크가 연결되어 있는지 확인해 주세요.",
+            duration: 4000,
+          });
+        } else if (e.name === "NotReadableError") {
+          toast.error("마이크가 다른 앱에서 사용 중입니다.", {
+            description: "다른 앱에서 마이크를 종료한 후 다시 시도해 주세요.",
+            duration: 4000,
+          });
+        } else {
+          toast.error("마이크를 사용할 수 없습니다.", {
+            description: "브라우저 설정에서 마이크 권한을 확인해 주세요.",
+            duration: 4000,
+          });
+        }
+      } else {
+        toast.error("마이크를 사용할 수 없습니다.");
+      }
     }
   }, [cleanupRecording, uploadAndTranscribe, maxBytes, onUploadedFileId, onTranscribed]);
 

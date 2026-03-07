@@ -97,7 +97,7 @@ pnpm db:push
 pnpm dev
 ```
 
-`http://localhost:3000` 에서 확인.
+`http://localhost:9000` 에서 확인.
 
 ---
 

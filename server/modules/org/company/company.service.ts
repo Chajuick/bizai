@@ -2,9 +2,8 @@
 
 // #region Imports
 import crypto from "crypto";
-import { TRPCError } from "@trpc/server";
-
 import type { ServiceCtx } from "../../../core/serviceCtx";
+import { throwAppError } from "../../../core/trpc/appError";
 import { getDb } from "../../../core/db";
 import { tx } from "../../../core/db/tx";
 
@@ -29,7 +28,7 @@ function hashToken(raw: string): string {
 // #region Permission helpers
 function requireAdmin(ctx: ServiceCtx): void {
   if (ctx.company_role !== "owner" && ctx.company_role !== "admin") {
-    throw new TRPCError({ code: "FORBIDDEN", message: "관리자 권한이 필요합니다." });
+    throwAppError({ tRPCCode: "FORBIDDEN", appCode: "ADMIN_REQUIRED", message: "관리자 권한이 필요합니다.", displayType: "toast", retryable: false });
   }
 }
 // #endregion
@@ -80,17 +79,11 @@ export const companyService = {
     const name = comp_name.trim();
 
     if (name.length < 2) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "팀 이름은 최소 2자 이상이어야 합니다.",
-      });
+      throwAppError({ tRPCCode: "BAD_REQUEST", appCode: "COMPANY_NAME_TOO_SHORT", message: "팀 이름은 최소 2자 이상이어야 합니다.", displayType: "toast", retryable: false });
     }
 
     if (name.length > 120) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "팀 이름이 너무 깁니다.",
-      });
+      throwAppError({ tRPCCode: "BAD_REQUEST", appCode: "COMPANY_NAME_TOO_LONG", message: "팀 이름이 너무 깁니다.", displayType: "toast", retryable: false });
     }
 
     const db = getDb();
@@ -154,7 +147,7 @@ export const companyService = {
 
     const invite = await companyRepo.findInviteByTokenHash({ db }, tokenHash);
     if (!invite) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "초대장을 찾을 수 없습니다." });
+      throwAppError({ tRPCCode: "NOT_FOUND", appCode: "INVITE_NOT_FOUND", message: "초대장을 찾을 수 없습니다.", displayType: "toast", retryable: false });
     }
 
     const company = await companyRepo.findById({ db }, invite.comp_idno);
@@ -183,13 +176,13 @@ export const companyService = {
 
     const invite = await companyRepo.findInviteByTokenHash({ db }, tokenHash);
     if (!invite) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "초대장을 찾을 수 없습니다." });
+      throwAppError({ tRPCCode: "NOT_FOUND", appCode: "INVITE_NOT_FOUND", message: "초대장을 찾을 수 없습니다.", displayType: "toast", retryable: false });
     }
     if (invite.stat_code !== "active") {
-      throw new TRPCError({ code: "BAD_REQUEST", message: "이미 사용되었거나 취소된 초대입니다." });
+      throwAppError({ tRPCCode: "BAD_REQUEST", appCode: "INVITE_ALREADY_USED", message: "이미 사용되었거나 취소된 초대입니다.", displayType: "toast", retryable: false });
     }
     if (new Date() > invite.expi_date) {
-      throw new TRPCError({ code: "BAD_REQUEST", message: "초대 기간이 만료되었습니다." });
+      throwAppError({ tRPCCode: "BAD_REQUEST", appCode: "INVITE_EXPIRED", message: "초대 기간이 만료되었습니다.", displayType: "toast", retryable: false });
     }
 
     await tx(async (trx) => {
@@ -200,7 +193,7 @@ export const companyService = {
 
       if (existing) {
         if (existing.status_code === "active") {
-          throw new TRPCError({ code: "CONFLICT", message: "이미 해당 회사의 멤버입니다." });
+          throwAppError({ tRPCCode: "CONFLICT", appCode: "ALREADY_MEMBER", message: "이미 해당 회사의 멤버입니다.", displayType: "toast", retryable: false });
         }
         // removed/pending → 재활성화
         await companyRepo.updateMembership(
@@ -254,7 +247,7 @@ export const companyService = {
     const invite = invites.find((i) => i.invt_idno === invt_idno);
 
     if (!invite) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "초대장을 찾을 수 없습니다." });
+      throwAppError({ tRPCCode: "NOT_FOUND", appCode: "INVITE_NOT_FOUND", message: "초대장을 찾을 수 없습니다.", displayType: "toast", retryable: false });
     }
 
     await companyRepo.updateInvite(
@@ -273,7 +266,7 @@ export const companyService = {
     const invite = invites.find((i) => i.invt_idno === invt_idno);
 
     if (!invite) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "초대장을 찾을 수 없습니다." });
+      throwAppError({ tRPCCode: "NOT_FOUND", appCode: "INVITE_NOT_FOUND", message: "초대장을 찾을 수 없습니다.", displayType: "toast", retryable: false });
     }
 
     const rawToken = generateRawToken();
@@ -295,7 +288,7 @@ export const companyService = {
   async removeMember(ctx: ServiceCtx, target_user_idno: number) {
     requireAdmin(ctx);
     if (target_user_idno === ctx.user_idno) {
-      throw new TRPCError({ code: "BAD_REQUEST", message: "자기 자신은 제거할 수 없습니다." });
+      throwAppError({ tRPCCode: "BAD_REQUEST", appCode: "CANNOT_REMOVE_SELF", message: "자기 자신은 제거할 수 없습니다.", displayType: "toast", retryable: false });
     }
 
     const db = getDb();
@@ -305,10 +298,10 @@ export const companyService = {
     );
 
     if (!membership || membership.status_code !== "active") {
-      throw new TRPCError({ code: "NOT_FOUND", message: "멤버를 찾을 수 없습니다." });
+      throwAppError({ tRPCCode: "NOT_FOUND", appCode: "MEMBER_NOT_FOUND", message: "멤버를 찾을 수 없습니다.", displayType: "toast", retryable: false });
     }
     if (membership.role_code === "owner") {
-      throw new TRPCError({ code: "FORBIDDEN", message: "소유자는 제거할 수 없습니다." });
+      throwAppError({ tRPCCode: "FORBIDDEN", appCode: "CANNOT_REMOVE_OWNER", message: "소유자는 제거할 수 없습니다.", displayType: "toast", retryable: false });
     }
 
     await companyRepo.updateMembership(
@@ -333,10 +326,10 @@ export const companyService = {
     );
 
     if (!membership || membership.status_code !== "active") {
-      throw new TRPCError({ code: "NOT_FOUND", message: "멤버를 찾을 수 없습니다." });
+      throwAppError({ tRPCCode: "NOT_FOUND", appCode: "MEMBER_NOT_FOUND", message: "멤버를 찾을 수 없습니다.", displayType: "toast", retryable: false });
     }
     if (membership.role_code === "owner") {
-      throw new TRPCError({ code: "FORBIDDEN", message: "소유자의 권한은 변경할 수 없습니다." });
+      throwAppError({ tRPCCode: "FORBIDDEN", appCode: "CANNOT_CHANGE_OWNER_ROLE", message: "소유자의 권한은 변경할 수 없습니다.", displayType: "toast", retryable: false });
     }
 
     await companyRepo.updateMembership(

@@ -7,6 +7,7 @@ import superjson from "superjson";
 
 import type { TrpcContext } from "./context";
 import { AppError } from "./appError";
+import { logger } from "../logger";
 // #endregion
 
 // #region Types
@@ -36,12 +37,12 @@ const t = initTRPC.context<TrpcContext>().create({
     // Output validation 실패는 INTERNAL_SERVER_ERROR — 서버 로그로 상세 출력
     if (error.code === "INTERNAL_SERVER_ERROR") {
       const cause = error.cause;
-      console.error("[tRPC] INTERNAL_SERVER_ERROR", {
+      logger.error({
         path: shape.data?.path,
         message: error.message,
         cause: cause instanceof Error ? cause.message : cause,
         issues: (cause as { issues?: unknown })?.issues ?? null,
-      });
+      }, "[tRPC] INTERNAL_SERVER_ERROR");
     }
 
     // AppError가 cause로 들어온 경우 구조화된 에러 메타 추출

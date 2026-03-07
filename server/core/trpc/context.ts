@@ -3,7 +3,7 @@
 // #region Imports
 import type { CreateExpressContextOptions } from "@trpc/server/adapters/express";
 import { TRPCError } from "@trpc/server";
-import { and, eq } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 
 import type { User } from "../../../drizzle/schema";
 import { CORE_COMPANY_USER } from "../../../drizzle/schema";
@@ -162,6 +162,7 @@ export async function createContext(opts: CreateExpressContextOptions): Promise<
               eq(CORE_COMPANY_USER.status_code, "active"),
             ),
           )
+          .orderBy(asc(CORE_COMPANY_USER.crea_date))
           .limit(1);
 
         comp_idno = membership?.comp_idno ?? null;

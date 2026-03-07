@@ -9,8 +9,10 @@ export const CRM_SALE_AUDIO_JOB = table(
     jobs_idno: int("jobs_idno").autoincrement().primaryKey(),          // 작업 PK
     ...companyCols(),                                                 // comp_idno (회사 키)
 
-    sale_idno: int("sale_idno").notNull(),                            // 영업일지 PK(대상)
+    sale_idno: int("sale_idno"),                                      // 영업일지 PK(대상) — file-only transcribe job은 NULL
     file_idno: int("file_idno"),                                      // 음성 파일 PK(CORE_FILE) — 텍스트 전용 분석 시 NULL
+
+    jobs_type: varchar("jobs_type", { length: 20 }).default("analyze").notNull(), // "analyze" | "transcribe"
 
     jobs_stat: jobsStatusEnum.default("queued").notNull(),            // queued|running|done|failed
     fail_mess: text("fail_mess"),                                     // 실패 메시지(옵션)
@@ -30,7 +32,7 @@ export const CRM_SALE_AUDIO_JOB = table(
   },
   (t) => [
     // 중복 생성 방지
-    uniqueIndex("ux_sale_audio_job_ref").on(t.comp_idno, t.sale_idno, t.file_idno),
+    uniqueIndex("ux_sale_audio_job_ref").on(t.comp_idno, t.sale_idno, t.file_idno, t.jobs_type),
 
     // 조회 패턴 최적화
     index("ix_sale_audio_job_sale").on(t.comp_idno, t.sale_idno),

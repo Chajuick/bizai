@@ -2,9 +2,8 @@
 
 // #region Imports
 
-import { TRPCError } from "@trpc/server";
-
 import type { ServiceCtx } from "../../../core/serviceCtx";
+import { throwAppError } from "../../../core/trpc/appError";
 import { getDb } from "../../../core/db";
 
 import { withCreateAudit, withUpdateAudit } from "../shared/audit";
@@ -32,7 +31,7 @@ import { makeAiApptKey, toAiCore } from "../../ai/ai.util";
 
 function parseDateOrThrow(v: string | number, errMsg: string) {
   const d = new Date(v);
-  if (Number.isNaN(d.getTime())) throw new TRPCError({ code: "BAD_REQUEST", message: errMsg });
+  if (Number.isNaN(d.getTime())) throwAppError({ tRPCCode: "BAD_REQUEST", appCode: "INVALID_DATE", message: errMsg, displayType: "toast" });
   return d;
 }
 
@@ -72,11 +71,13 @@ export const saleService = {
     const sort_field = input?.sort?.field ?? "vist_date";
     const sort_dir = input?.sort?.dir ?? "desc";
 
+    const isAdminOrOwner = ctx.company_role === "owner" || ctx.company_role === "admin";
+
     const rows = await saleRepo.list(
       { db },
       {
         comp_idno: ctx.comp_idno,
-        owne_idno: ctx.user_idno,
+        owne_idno: isAdminOrOwner ? undefined : ctx.user_idno,
         clie_idno: input?.clie_idno,
         search: input?.search,
         limit: page.limit,
@@ -123,7 +124,12 @@ export const saleService = {
   async getSale(ctx: ServiceCtx, sale_idno: number) {
     const db = getDb();
 
-    const sale = await saleRepo.getById({ db }, { comp_idno: ctx.comp_idno, owne_idno: ctx.user_idno, sale_idno });
+    const isAdminOrOwner = ctx.company_role === "owner" || ctx.company_role === "admin";
+    const sale = await saleRepo.getById({ db }, {
+      comp_idno: ctx.comp_idno,
+      owne_idno: isAdminOrOwner ? undefined : ctx.user_idno,
+      sale_idno,
+    });
     if (!sale) return null;
 
     const attachments = await saleRepo.listAttachments({ db }, { comp_idno: ctx.comp_idno, sale_idno });
@@ -285,56 +291,94 @@ export const saleService = {
 
   // #endregion
 
-  // #region transcribe
+  // #region transcribe (비동기 큐 등록)
 
+  /**
+   * STT 큐 등록 (HTTP 즉시 응답)
+   * - job 생성 후 즉시 반환 — 실제 STT는 background worker가 처리
+   * - 결과는 getTranscribeJobResult로 polling 조회
+   */
   async transcribe(ctx: ServiceCtx, input: { sale_idno: number; file_idno: number; language?: string }) {
     const db = getDb();
 
     const exists = await saleRepo.getAudioJobByRef(
       { db },
-      { comp_idno: ctx.comp_idno, sale_idno: input.sale_idno, file_idno: input.file_idno }
+      { comp_idno: ctx.comp_idno, sale_idno: input.sale_idno, file_idno: input.file_idno, jobs_type: "transcribe" }
     );
 
-    let jobs_idno: number;
     if (exists) {
-      jobs_idno = Number(exists.jobs_idno);
-      if (exists.jobs_stat === "done") {
-        return { jobs_idno, jobs_stat: "done" as const, sttx_text: exists.sttx_text ?? null };
-      }
-    } else {
-      const jobBase: AudioJobBase = {
-        comp_idno: ctx.comp_idno,
-        sale_idno: input.sale_idno,
-        file_idno: input.file_idno,
-        jobs_stat: "queued",
-        fail_mess: null,
-        sttx_text: null,
-        aiex_sum: null,
-        aiex_ext: null,
-        sttx_name: null,
-        llmd_name: null,
-        meta_json: { task: "transcribe", language: input.language ?? null },
-        reqe_date: new Date(),
-        fini_date: null,
-      };
-      const job = withCreateAudit(ctx, jobBase) as InsertSaleAudioJob;
-      const created = await saleRepo.createAudioJob({ db }, job);
-      jobs_idno = created.jobs_idno;
+      return { jobs_idno: Number(exists.jobs_idno), jobs_stat: exists.jobs_stat };
     }
+
+    const jobBase: AudioJobBase = {
+      comp_idno: ctx.comp_idno,
+      sale_idno: input.sale_idno,
+      file_idno: input.file_idno,
+      jobs_type: "transcribe",
+      jobs_stat: "queued",
+      fail_mess: null,
+      sttx_text: null,
+      aiex_sum: null,
+      aiex_ext: null,
+      sttx_name: null,
+      llmd_name: null,
+      meta_json: { task: "transcribe", language: input.language ?? null },
+      reqe_date: new Date(),
+      fini_date: null,
+    };
+    const job = withCreateAudit(ctx, jobBase) as InsertSaleAudioJob;
+    const created = await saleRepo.createAudioJob({ db }, job);
+
+    return { jobs_idno: created.jobs_idno, jobs_stat: "queued" as const };
+  },
+
+  // #endregion
+
+  // #region processQueuedTranscribeJob (Worker용)
+
+  /**
+   * queued 상태의 transcribe job 처리 — background worker 전용
+   */
+  async processQueuedTranscribeJob(jobs_idno: number) {
+    const db = getDb();
+
+    const job = await saleRepo.getAudioJobById({ db }, jobs_idno);
+    if (!job || job.jobs_stat !== "queued") return;
+    if (job.sale_idno == null) return; // file-only job은 processQueuedFileTranscribeJob이 처리
 
     await saleRepo.updateAudioJob({ db }, { jobs_idno, data: { jobs_stat: "running" } });
 
-    const fileRow = await aiRepo.findFileById({ db }, input.file_idno);
+    const language = (job.meta_json as { language?: string | null } | null)?.language ?? "ko";
+    const file_idno = job.file_idno;
+    const comp_idno = Number(job.comp_idno);
+
+    if (!file_idno) {
+      await saleRepo.updateAudioJob({ db }, {
+        jobs_idno,
+        data: { jobs_stat: "failed", fail_mess: "file_idno가 없습니다.", fini_date: new Date() },
+      });
+      return;
+    }
+
+    const fileRow = await aiRepo.findFileById({ db }, { file_idno: Number(file_idno), comp_idno });
     if (!fileRow) {
       await saleRepo.updateAudioJob({ db }, {
         jobs_idno,
         data: { jobs_stat: "failed", fail_mess: "파일을 찾을 수 없습니다.", fini_date: new Date() },
       });
-      throw new TRPCError({ code: "NOT_FOUND", message: "파일을 찾을 수 없습니다." });
+      return;
     }
 
     const estimate = (fileRow.dura_secs ?? 100) * 10;
-    await aiService.checkQuota(ctx.comp_idno, estimate);
+    try {
+      await aiService.checkAndDeductQuota(comp_idno, estimate);
+    } catch {
+      await saleRepo.updateAudioJob({ db }, {
+        jobs_idno,
+        data: { jobs_stat: "failed", fail_mess: "토큰 부족", fini_date: new Date() },
+      });
+      return;
+    }
 
     let buffer: Buffer;
     let contentType: string;
@@ -345,29 +389,31 @@ export const saleService = {
       contentType = fileRow.mime_type ?? result.contentType;
     } catch (err) {
       const msg = err instanceof Error ? err.message : "스토리지 다운로드 실패";
+      await aiService.refundQuota(comp_idno, estimate);
       await saleRepo.updateAudioJob({ db }, {
         jobs_idno,
         data: { jobs_stat: "failed", fail_mess: msg, fini_date: new Date() },
       });
-      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: `오디오 파일 다운로드 실패: ${msg}` });
+      return;
     }
 
-    const sttResult = await transcribeBuffer(buffer, contentType, { language: input.language ?? "ko" });
+    const sttResult = await transcribeBuffer(buffer, contentType, { language });
 
     if ("error" in sttResult) {
+      await aiService.refundQuota(comp_idno, estimate);
       await saleRepo.updateAudioJob({ db }, {
         jobs_idno,
         data: { jobs_stat: "failed", fail_mess: sttResult.error, fini_date: new Date() },
       });
-      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: `음성 전사 실패: ${sttResult.error}` });
+      return;
     }
 
     const sttx_text = sttResult.text;
 
     await saleRepo.update({ db }, {
-      comp_idno: ctx.comp_idno,
-      owne_idno: ctx.user_idno,
-      sale_idno: input.sale_idno,
+      comp_idno,
+      owne_idno: Number(job.crea_idno),
+      sale_idno: Number(job.sale_idno),
       data: { sttx_text },
     });
 
@@ -377,98 +423,184 @@ export const saleService = {
     });
 
     await aiService.recordUsage(db, {
-      comp_idno: ctx.comp_idno,
-      user_idno: ctx.user_idno,
+      comp_idno,
+      user_idno: Number(job.crea_idno),
       feat_code: "stt",
       mode_name: "whisper",
       tokn_inpt: 0,
       tokn_outs: estimate,
-      meta_json: { file_idno: input.file_idno, dura_secs: fileRow.dura_secs },
+      meta_json: { file_idno, dura_secs: fileRow.dura_secs },
     });
-
-    return { jobs_idno, jobs_stat: "done" as const, sttx_text };
   },
 
   // #endregion
 
-  // #region analyzeSale
+  // #region getTranscribeJobResult
 
-  async analyzeSale(ctx: ServiceCtx, sale_idno: number, file_idno?: number) {
+  async getTranscribeJobResult(ctx: ServiceCtx, sale_idno: number) {
     const db = getDb();
 
-    const sale = await saleRepo.getById({ db }, { comp_idno: ctx.comp_idno, owne_idno: ctx.user_idno, sale_idno });
-    if (!sale) throw new TRPCError({ code: "NOT_FOUND", message: "영업일지를 찾을 수 없습니다." });
+    const isAdminOrOwner = ctx.company_role === "owner" || ctx.company_role === "admin";
+    const sale = await saleRepo.getById({ db }, {
+      comp_idno: ctx.comp_idno,
+      owne_idno: isAdminOrOwner ? undefined : ctx.user_idno,
+      sale_idno,
+    });
+    if (!sale) throwAppError({ tRPCCode: "NOT_FOUND", appCode: "SALE_NOT_FOUND", message: "영업일지를 찾을 수 없습니다.", displayType: "toast" });
 
-    // AI 입력 우선순위: edit_text(사용자 수정본) > orig_memo(원문/STT 결과)
+    const job = await saleRepo.getLatestTranscribeJob({ db }, { sale_idno, comp_idno: ctx.comp_idno });
+
+    return {
+      jobs_stat: (job?.jobs_stat ?? null) as "queued" | "running" | "done" | "failed" | null,
+      sttx_text: job?.sttx_text ?? null,
+      fail_mess: job?.fail_mess ?? null,
+    };
+  },
+
+  // #endregion
+
+  // #region queueAnalyze
+
+  /**
+   * AI 분석 큐 등록 (HTTP 즉시 응답)
+   * - 잡 생성 + 토큰 선차감 + ai_status = "pending" 설정 후 즉시 반환
+   * - 실제 LLM 처리는 background worker(processQueuedAnalyzeJob)가 수행
+   */
+  async queueAnalyze(ctx: ServiceCtx, sale_idno: number, file_idno?: number) {
+    const db = getDb();
+
+    const isAdminOrOwner = ctx.company_role === "owner" || ctx.company_role === "admin";
+    const sale = await saleRepo.getById({ db }, {
+      comp_idno: ctx.comp_idno,
+      owne_idno: isAdminOrOwner ? undefined : ctx.user_idno,
+      sale_idno,
+    });
+    if (!sale) throwAppError({ tRPCCode: "NOT_FOUND", appCode: "SALE_NOT_FOUND", message: "영업일지를 찾을 수 없습니다.", displayType: "toast" });
+
     const text = sale.edit_text?.trim() || sale.orig_memo;
     if (!text?.trim()) {
-      throw new TRPCError({ code: "BAD_REQUEST", message: "분석할 텍스트가 없습니다. 먼저 음성을 전사해주세요." });
+      throwAppError({ tRPCCode: "BAD_REQUEST", appCode: "SALE_NO_TEXT", message: "분석할 텍스트가 없습니다. 먼저 음성을 전사해주세요.", displayType: "toast" });
     }
 
-    // 파일 ID 결정
     let targetFileId = file_idno;
     if (!targetFileId) {
       const atts = await saleRepo.listAttachments({ db }, { comp_idno: ctx.comp_idno, sale_idno });
       targetFileId = atts[0]?.file_idno;
     }
 
-    // job 생성/재사용
+    // 잡 생성/재사용 — 기존 잡이 있으면 queued 상태로 리셋
     let jobs_idno: number;
     if (targetFileId) {
-      const exists = await saleRepo.getAudioJobByRef({ db }, { comp_idno: ctx.comp_idno, sale_idno, file_idno: targetFileId });
+      const exists = await saleRepo.getAudioJobByRef({ db }, { comp_idno: ctx.comp_idno, sale_idno, file_idno: targetFileId, jobs_type: "analyze" });
       if (exists) {
         jobs_idno = Number(exists.jobs_idno);
+        await saleRepo.updateAudioJob({ db }, {
+          jobs_idno,
+          data: { jobs_stat: "queued", fail_mess: null, aiex_sum: null, aiex_ext: null, reqe_date: new Date(), fini_date: null },
+        });
       } else {
         const jobBase: AudioJobBase = {
-          comp_idno: ctx.comp_idno,
-          sale_idno,
-          file_idno: targetFileId,
-          jobs_stat: "queued",
-          fail_mess: null,
-          sttx_text: null,
-          aiex_sum: null,
-          aiex_ext: null,
-          sttx_name: null,
-          llmd_name: null,
-          meta_json: { task: "analyze" },
-          reqe_date: new Date(),
-          fini_date: null,
+          comp_idno: ctx.comp_idno, sale_idno, file_idno: targetFileId,
+          jobs_stat: "queued", fail_mess: null, sttx_text: null,
+          aiex_sum: null, aiex_ext: null, sttx_name: null, llmd_name: null,
+          meta_json: { task: "analyze" }, reqe_date: new Date(), fini_date: null,
         };
         const job = withCreateAudit(ctx, jobBase) as InsertSaleAudioJob;
         const created = await saleRepo.createAudioJob({ db }, job);
         jobs_idno = created.jobs_idno;
       }
     } else {
-      const jobBase: AudioJobBase = {
-        comp_idno: ctx.comp_idno,
-        sale_idno,
-        file_idno: null,
-        jobs_stat: "queued",
-        fail_mess: null,
-        sttx_text: null,
-        aiex_sum: null,
-        aiex_ext: null,
-        sttx_name: null,
-        llmd_name: null,
-        meta_json: { task: "analyze_text" },
-        reqe_date: new Date(),
-        fini_date: null,
-      };
-      const job = withCreateAudit(ctx, jobBase) as InsertSaleAudioJob;
-      const created = await saleRepo.createAudioJob({ db }, job);
-      jobs_idno = created.jobs_idno;
+      // file 없는 분석 — 기존 job 재사용 (중복 토큰 차감 방지)
+      const existingNoFile = await saleRepo.getLatestAnalyzeNoFileJob({ db }, { comp_idno: ctx.comp_idno, sale_idno });
+      if (existingNoFile) {
+        jobs_idno = Number(existingNoFile.jobs_idno);
+        await saleRepo.updateAudioJob({ db }, {
+          jobs_idno,
+          data: { jobs_stat: "queued", fail_mess: null, aiex_sum: null, aiex_ext: null, reqe_date: new Date(), fini_date: null },
+        });
+      } else {
+        const jobBase: AudioJobBase = {
+          comp_idno: ctx.comp_idno, sale_idno, file_idno: null,
+          jobs_stat: "queued", fail_mess: null, sttx_text: null,
+          aiex_sum: null, aiex_ext: null, sttx_name: null, llmd_name: null,
+          meta_json: { task: "analyze_text" }, reqe_date: new Date(), fini_date: null,
+        };
+        const job = withCreateAudit(ctx, jobBase) as InsertSaleAudioJob;
+        const created = await saleRepo.createAudioJob({ db }, job);
+        jobs_idno = created.jobs_idno;
+      }
     }
 
-    await saleRepo.updateAudioJob({ db }, { jobs_idno, data: { jobs_stat: "running" } });
+    // 토큰 선차감 — 부족 시 잡을 failed로 마킹하고 에러 throw
+    try {
+      await aiService.checkAndDeductQuota(ctx.comp_idno, 1500);
+    } catch (err) {
+      await saleRepo.updateAudioJob({ db }, {
+        jobs_idno,
+        data: { jobs_stat: "failed", fail_mess: "AI 토큰 부족", fini_date: new Date() },
+      });
+      throw err;
+    }
 
-    // ai_status: processing
     await saleRepo.update({ db }, {
       comp_idno: ctx.comp_idno, owne_idno: ctx.user_idno, sale_idno,
+      data: { ai_status: "pending" as const },
+    });
+
+    return { jobs_idno, jobs_stat: "queued" as const };
+  },
+
+  // #endregion
+
+  // #region processQueuedAnalyzeJob
+
+  /**
+   * Worker: 큐에서 잡 하나를 꺼내 LLM 분석 실행
+   * - billing.jobs.ts의 runAiJobWorker가 5초마다 호출
+   * - 결과는 CRM_SALE_AUDIO_JOB.aiex_ext에 저장 (analyzeResult 엔드포인트로 조회)
+   */
+  async processQueuedAnalyzeJob(jobs_idno: number): Promise<void> {
+    const db = getDb();
+
+    const job = await saleRepo.getAudioJobById({ db }, jobs_idno);
+    if (!job || job.jobs_stat !== "queued") return;
+    if (job.sale_idno == null) return; // file-only job은 처리 대상 아님
+
+    const comp_idno = job.comp_idno;
+    const sale_idno = job.sale_idno;
+
+    // 잡 → running
+    await saleRepo.updateAudioJob({ db }, { jobs_idno, data: { jobs_stat: "running" } });
+
+    // sale 조회 (owne_idno 없이)
+    const sale = await saleRepo.getSaleForWorker({ db }, { sale_idno, comp_idno });
+    if (!sale) {
+      await saleRepo.updateAudioJob({ db }, {
+        jobs_idno,
+        data: { jobs_stat: "failed", fail_mess: "영업일지를 찾을 수 없습니다.", fini_date: new Date() },
+      });
+      return;
+    }
+
+    const owne_idno = Number(sale.owne_idno);
+    const workerCtx: ServiceCtx = { comp_idno, user_idno: owne_idno };
+
+    // sale → processing
+    await saleRepo.update({ db }, {
+      comp_idno, owne_idno, sale_idno,
       data: { ai_status: "processing" as const },
     });
 
-    await aiService.checkQuota(ctx.comp_idno, 1500);
+    const text = sale.edit_text?.trim() || sale.orig_memo;
+    if (!text?.trim()) {
+      await saleRepo.updateAudioJob({ db }, {
+        jobs_idno, data: { jobs_stat: "failed", fail_mess: "분석할 텍스트가 없습니다.", fini_date: new Date() },
+      });
+      await saleRepo.update({ db }, { comp_idno, owne_idno, sale_idno, data: { ai_status: "failed" as const } });
+      return;
+    }
 
+    // LLM 호출
     const kstInfo = getKSTDateInfo(sale.vist_date);
     const systemPrompt = buildAnalysisPrompt(kstInfo);
 
@@ -483,48 +615,34 @@ export const saleService = {
         temperature: 0.1,
       });
     } catch (err) {
-      await saleRepo.update({ db }, {
-        comp_idno: ctx.comp_idno, owne_idno: ctx.user_idno, sale_idno,
-        data: { ai_status: "failed" as const },
-      });
+      await aiService.refundQuota(comp_idno, 1500);
       await saleRepo.updateAudioJob({ db }, {
         jobs_idno,
         data: { jobs_stat: "failed", fail_mess: err instanceof Error ? err.message : "LLM 호출 실패", fini_date: new Date() },
       });
-      throw err;
+      await saleRepo.update({ db }, { comp_idno, owne_idno, sale_idno, data: { ai_status: "failed" as const } });
+      return;
     }
 
+    // LLM 응답 파싱
     const rawContent = llmResult.choices[0]?.message?.content;
     const contentStr = typeof rawContent === "string" ? rawContent : JSON.stringify(rawContent ?? {});
 
     type PricingEntry = {
-      amount?: number | null;
-      min?: number | null;
-      max?: number | null;
-      type?: "one_time" | "monthly" | "yearly";
-      vat?: "included" | "excluded" | "unknown";
-      approximate?: boolean;
-      inferred?: boolean;
-      label?: string;
+      amount?: number | null; min?: number | null; max?: number | null;
+      type?: "one_time" | "monthly" | "yearly"; vat?: "included" | "excluded" | "unknown";
+      approximate?: boolean; inferred?: boolean; label?: string;
     };
 
     let parsed: {
       summary?: string;
       appointments?: Array<{
-        title?: string;
-        date?: string | null;
-        date_adjusted?: boolean;
-        adjust_reason?: string;
-        desc?: string;
-        action_owner?: "self" | "client" | "shared";
+        title?: string; date?: string | null; date_adjusted?: boolean;
+        adjust_reason?: string; desc?: string; action_owner?: "self" | "client" | "shared";
       }> | null;
       client_name?: string | null;
       contacts?: Array<{ name: string; role?: string | null; phone?: string | null; email?: string | null }> | null;
-      pricing?: {
-        primary?: PricingEntry | null;
-        alternatives?: PricingEntry[];
-        final?: PricingEntry | null;
-      } | null;
+      pricing?: { primary?: PricingEntry | null; alternatives?: PricingEntry[]; final?: PricingEntry | null } | null;
       notes?: string;
     } = {};
 
@@ -535,26 +653,22 @@ export const saleService = {
     }
 
     const summary = parsed.summary ?? "";
-
-    // 고객사명
     const ai_client_name = parsed.client_name ?? null;
     let matched_client_idno: number | null = null;
     let matched_client_name: string | null = null;
 
     if (ai_client_name && !sale.clie_idno) {
-      const matched = await clientService.findBestClientMatch(ctx, { name: ai_client_name });
+      const matched = await clientService.findBestClientMatch(workerCtx, { name: ai_client_name });
       if (matched) {
         matched_client_idno = matched.clie_idno;
         matched_client_name = matched.clie_name;
       }
     }
 
-    // 금액 — final > primary 우선순위, 범위이면 min 사용
     const pricingSource = parsed.pricing?.final ?? parsed.pricing?.primary ?? null;
     const rawAmount = pricingSource?.amount ?? pricingSource?.min ?? null;
     const sale_pric = typeof rawAmount === "number" && rawAmount > 0 ? rawAmount : null;
 
-    // 담당자
     const ai_contacts = (parsed.contacts ?? [])
       .map((c) => ({
         cont_name: c.name?.trim() ?? "",
@@ -565,58 +679,46 @@ export const saleService = {
       .filter((c) => c.cont_name.length > 0);
 
     const primaryContact = ai_contacts[0] ?? null;
-    const contact_person = primaryContact?.cont_name ?? null;
 
-    // ✅ sale 업데이트
+    // sale 업데이트
     await saleRepo.update({ db }, {
-      comp_idno: ctx.comp_idno,
-      owne_idno: ctx.user_idno,
-      sale_idno,
+      comp_idno, owne_idno, sale_idno,
       data: {
         aiex_done: true,
         aiex_summ: summary,
         aiex_text: parsed as Record<string, unknown>,
         ai_status: "completed" as const,
         ...(sale_pric !== null && !sale.sale_pric ? { sale_pric: String(sale_pric) } : {}),
-        ...(contact_person && !sale.cont_name ? { cont_name: contact_person } : {}),
+        ...(primaryContact?.cont_name && !sale.cont_name ? { cont_name: primaryContact.cont_name } : {}),
         ...(primaryContact?.cont_role && !sale.cont_role ? { cont_role: primaryContact.cont_role } : {}),
         ...(primaryContact?.cont_tele && !sale.cont_tele ? { cont_tele: primaryContact.cont_tele } : {}),
         ...(primaryContact?.cont_mail && !sale.cont_mail ? { cont_mail: primaryContact.cont_mail } : {}),
       },
     });
 
-    // 연결된 고객사가 있으면 컨택 동기화
+    // 연결된 고객사 컨택 동기화
     if (sale.clie_idno && ai_contacts.length > 0) {
-      await clientService.syncContacts(ctx, {
+      await clientService.syncContacts(workerCtx, {
         clie_idno: Number(sale.clie_idno),
         contacts: ai_contacts,
       });
     }
 
-    // ✅ 일정 자동 생성 + 중복 방지 (aiex_keys)
+    // 일정 자동 생성 (aiex_keys 중복 방지)
     let schedule_idno: number | null = null;
-    const appointments = parsed.appointments ?? [];
-
-    for (const appt of appointments) {
+    for (const appt of (parsed.appointments ?? [])) {
       if (!appt.date) continue;
-
       const apptDate = new Date(appt.date);
       if (Number.isNaN(apptDate.getTime())) continue;
 
       const actn_ownr = appt.action_owner ?? "self";
       const aiex_keys = makeAiApptKey({ title: appt.title ?? "", date: appt.date, action_owner: actn_ownr });
 
-      // ✅ 이미 만들어진 동일 후속조치면 스킵
-      const existsSchedule = await saleRepo.findScheduleByAiKey(
-        { db },
-        { comp_idno: ctx.comp_idno, sale_idno, aiex_keys }
-      );
+      const existsSchedule = await saleRepo.findScheduleByAiKey({ db }, { comp_idno, sale_idno, aiex_keys });
       if (existsSchedule) continue;
 
-      const schedData = withCreateAudit(ctx, {
-        comp_idno: ctx.comp_idno,
-        owne_idno: ctx.user_idno,
-        sale_idno,
+      const schedData = withCreateAudit(workerCtx, {
+        comp_idno, owne_idno, sale_idno,
         clie_idno: sale.clie_idno ?? null,
         clie_name: (parsed.client_name ?? sale.clie_name) ?? null,
         sche_name: appt.title ?? "AI 자동 일정",
@@ -629,32 +731,12 @@ export const saleService = {
         aiex_keys,
         enab_yesn: true,
       });
-
       const created = await saleRepo.createSchedule({ db }, schedData);
       if (schedule_idno === null) schedule_idno = created.sche_idno;
     }
 
-    // 사용량 기록
-    const usage = llmResult.usage;
-    await aiService.recordUsage(db, {
-      comp_idno: ctx.comp_idno,
-      user_idno: ctx.user_idno,
-      feat_code: "llm",
-      mode_name: llmResult.model,
-      tokn_inpt: usage?.prompt_tokens ?? 0,
-      tokn_outs: usage?.completion_tokens ?? 0,
-      meta_json: { sale_idno },
-    });
-
-    // job done
-    await saleRepo.updateAudioJob({ db }, {
-      jobs_idno,
-      data: { jobs_stat: "done", aiex_sum: summary, llmd_name: llmResult.model, fini_date: new Date() },
-    });
-
-    return {
-      jobs_idno,
-      jobs_stat: "done" as const,
+    // 결과 payload → aiex_ext에 저장 (analyzeResult 엔드포인트에서 조회)
+    const resultPayload = {
       summary,
       schedule_idno,
       ai_client_name,
@@ -664,6 +746,80 @@ export const saleService = {
       ai_contact_person: primaryContact?.cont_name ?? null,
       ai_contact_phone: primaryContact?.cont_tele ?? null,
       ai_contact_email: primaryContact?.cont_mail ?? null,
+    };
+
+    // 잡 → done
+    await saleRepo.updateAudioJob({ db }, {
+      jobs_idno,
+      data: {
+        jobs_stat: "done",
+        aiex_sum: summary,
+        aiex_ext: resultPayload,
+        llmd_name: llmResult.model,
+        fini_date: new Date(),
+      },
+    });
+
+    // 사용량 기록
+    const usage = llmResult.usage;
+    await aiService.recordUsage(db, {
+      comp_idno, user_idno: owne_idno, feat_code: "llm",
+      mode_name: llmResult.model,
+      tokn_inpt: usage?.prompt_tokens ?? 0,
+      tokn_outs: usage?.completion_tokens ?? 0,
+      meta_json: { sale_idno, jobs_idno },
+    });
+  },
+
+  // #endregion
+
+  // #region getAnalyzeJobResult
+
+  /**
+   * AI 분석 결과 조회 — 워커 완료 후 클라이언트가 polling으로 호출
+   */
+  async getAnalyzeJobResult(ctx: ServiceCtx, sale_idno: number) {
+    const db = getDb();
+
+    // 사용자 접근 권한 확인
+    const isAdminOrOwner = ctx.company_role === "owner" || ctx.company_role === "admin";
+    const sale = await saleRepo.getById({ db }, {
+      comp_idno: ctx.comp_idno,
+      owne_idno: isAdminOrOwner ? undefined : ctx.user_idno,
+      sale_idno,
+    });
+    if (!sale) throwAppError({ tRPCCode: "NOT_FOUND", appCode: "SALE_NOT_FOUND", message: "영업일지를 찾을 수 없습니다.", displayType: "toast" });
+
+    const ai_status = (sale.ai_status ?? "pending") as "pending" | "processing" | "completed" | "failed";
+
+    const job = await saleRepo.getLatestDoneAnalyzeJob({ db }, { sale_idno, comp_idno: ctx.comp_idno });
+
+    type ExtPayload = {
+      summary?: string | null;
+      schedule_idno?: number | null;
+      ai_client_name?: string | null;
+      matched_client_idno?: number | null;
+      matched_client_name?: string | null;
+      ai_contacts?: Array<{ cont_name: string; cont_role?: string | null; cont_tele?: string | null; cont_mail?: string | null }>;
+      ai_contact_person?: string | null;
+      ai_contact_phone?: string | null;
+      ai_contact_email?: string | null;
+    };
+
+    const ext = job?.aiex_ext as ExtPayload | null;
+
+    return {
+      ai_status,
+      jobs_stat: job?.jobs_stat ?? null,
+      summary: ext?.summary ?? null,
+      schedule_idno: ext?.schedule_idno ?? null,
+      ai_client_name: ext?.ai_client_name ?? null,
+      matched_client_idno: ext?.matched_client_idno ?? null,
+      matched_client_name: ext?.matched_client_name ?? null,
+      ai_contacts: ext?.ai_contacts ?? [],
+      ai_contact_person: ext?.ai_contact_person ?? null,
+      ai_contact_phone: ext?.ai_contact_phone ?? null,
+      ai_contact_email: ext?.ai_contact_email ?? null,
     };
   },
 

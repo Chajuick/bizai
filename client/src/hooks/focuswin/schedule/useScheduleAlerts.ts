@@ -57,6 +57,10 @@ export function useScheduleAlerts({ list, overdueCount, imminentCount }: Args) {
   useEffect(() => {
     if (!("Notification" in window)) return;
 
+    // 이미 허용된 경우에만 알림 발송 — "default"에서 조용히 요청하지 않음
+    // (UX 없이 브라우저 팝업 띄우는 것은 권장되지 않음 — NotificationPermissionBanner 참조)
+    if (Notification.permission !== "granted") return;
+
     const now = new Date();
 
     // #region 기본 알림 (세션 1회: 임박/지연)
@@ -64,8 +68,7 @@ export function useScheduleAlerts({ list, overdueCount, imminentCount }: Args) {
       const sessionKey = "schedule-alerts-notified-basic";
       if (!sessionStorage.getItem(sessionKey)) {
         const runBasic = async () => {
-          let permission = Notification.permission;
-          if (permission === "default") permission = await Notification.requestPermission();
+          const permission = Notification.permission;
           if (permission !== "granted") return;
 
           sessionStorage.setItem(sessionKey, "1");
@@ -109,19 +112,11 @@ export function useScheduleAlerts({ list, overdueCount, imminentCount }: Args) {
     const isTue = dow === 2;
     const isFri = dow === 5;
 
-    const year = kstNow.getUTCFullYear();
-    const deadline = `${year}-03-31`;
-    const isDeadlineDay = today === deadline;
-
     const remindKey = (k: string) => `schedule-remind-${k}-${today}`;
 
-    const runPolicy = async (title: string, body: string, key: string) => {
+    const runPolicy = (title: string, body: string, key: string) => {
       if (sessionStorage.getItem(key)) return;
-
-      let permission = Notification.permission;
-      if (permission === "default") permission = await Notification.requestPermission();
-      if (permission !== "granted") return;
-
+      // 이미 granted 확인은 useEffect 최상단에서 처리됨
       sessionStorage.setItem(key, "1");
       new Notification(title, { body, tag: key });
     };
@@ -144,14 +139,6 @@ export function useScheduleAlerts({ list, overdueCount, imminentCount }: Args) {
       );
     }
 
-    // 3/31 마지노선: 그날 1회
-    if (isDeadlineDay) {
-      runPolicy(
-        "3/31 마감 리마인드",
-        "3월 마감일(3/31)입니다. 남은 일정을 꼭 체크해주세요.",
-        remindKey("deadline")
-      );
-    }
     // #endregion
   }, [list, overdueCount, imminentCount]);
 }

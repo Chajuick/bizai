@@ -24,7 +24,7 @@ export const BILLING_SUBSCRIPTION = table(
     ...auditCols(),                                            // crea_idno/crea_date/modi_idno/modi_date
   },
   (t) => [
-    index("ix_billing_sub_comp").on(t.comp_idno),                        // 회사 기준 조회
+    uniqueIndex("ux_billing_sub_comp").on(t.comp_idno),                   // 회사당 구독 1개 (DM-1)
     index("ix_billing_sub_plan").on(t.plan_idno),                         // 플랜 기준 조회
     index("ix_billing_sub_stat").on(t.comp_idno, t.subs_stat),            // 회사 + 상태 조회
     index("ix_billing_sub_comp_stat_end").on(t.comp_idno, t.subs_stat, t.ends_date), // 활성 구독 탐색 최적화

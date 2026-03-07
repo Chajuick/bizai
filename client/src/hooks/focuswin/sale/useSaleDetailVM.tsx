@@ -1,6 +1,6 @@
 // src/hooks/focuswin/sale/useSaleDetailVM.tsx
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -47,9 +47,18 @@ export function useSaleDetailVM(logId: number) {
 
   // #region Queries / Mutations
 
+  // polling: ai_status가 pending/processing일 때 3초마다 재조회
+  const [shouldPoll, setShouldPoll] = useState(false);
+
   const saleGet = trpc.crm.sale.get.useQuery(
     { sale_idno: logId },
-    { enabled: Number.isFinite(logId) }
+    { enabled: Number.isFinite(logId), refetchInterval: shouldPoll ? 3000 : false }
+  );
+
+  // analyzeResult: 워커 완료 후 모달용 데이터 조회 (수동 fetch)
+  const analyzeResult = trpc.crm.sale.analyzeResult.useQuery(
+    { sale_idno: logId },
+    { enabled: false }
   );
 
   const analyze = trpc.crm.sale.analyze.useMutation();
@@ -92,7 +101,7 @@ export function useSaleDetailVM(logId: number) {
   const visitedLabel = useMemo(() => {
     if (!log?.sale.vist_date) return "";
     return new Date(log.sale.vist_date).toLocaleString("ko-KR", {
-      timeZone: "UTC",
+      timeZone: "Asia/Seoul",
       month: "short",
       day: "numeric",
       hour: "2-digit",
@@ -204,6 +213,42 @@ export function useSaleDetailVM(logId: number) {
 
   // #endregion
 
+  // #region Effects (polling + completion detection)
+
+  const aiStatus = saleGet.data?.sale?.ai_status ?? "pending";
+
+  useEffect(() => {
+    setShouldPoll(aiStatus === "pending" || aiStatus === "processing");
+  }, [aiStatus]);
+
+  // ai_status가 pending/processing → completed 전환 시 결과 조회 + 모달/토스트
+  const prevAiStatusRef = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    const prev = prevAiStatusRef.current;
+    prevAiStatusRef.current = aiStatus;
+
+    if (
+      prev !== undefined &&
+      (prev === "pending" || prev === "processing") &&
+      aiStatus === "completed"
+    ) {
+      utils.crm.sale.list.invalidate();
+      analyzeResult.refetch().then((r) => {
+        if (!r.data) {
+          toast.success("AI 분석이 완료되었습니다.");
+          return;
+        }
+        if (r.data.schedule_idno) toast.success("AI 분석 완료. 일정이 자동 등록되었습니다.");
+        else toast.success("AI 분석이 완료되었습니다.");
+
+        aiLink.maybeOpenPostAnalyzeModal(logId, r.data, !!saleGet.data?.sale?.clie_idno);
+      });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aiStatus]);
+
+  // #endregion
+
   // #region UI Helpers
 
   const resetAnalyze = () => analyze.reset();
@@ -241,15 +286,9 @@ export function useSaleDetailVM(logId: number) {
 
   const runAnalyze = async () => {
     try {
-      const res = await analyze.mutateAsync({ sale_idno: logId });
-      await utils.crm.sale.get.invalidate({ sale_idno: logId });
-      await utils.crm.sale.list.invalidate();
-
-      if (res.schedule_idno) toast.success("AI 분석 완료. 일정이 자동 등록되었습니다.");
-      else toast.success("AI 분석이 완료되었습니다.");
-
-      const opened = aiLink.maybeOpenPostAnalyzeModal(logId, res, !!log?.sale.clie_idno);
-      if (opened) return;
+      await analyze.mutateAsync({ sale_idno: logId });
+      await utils.crm.sale.get.invalidate({ sale_idno: logId }); // → ai_status=pending 반영
+      toast.info("AI 분석을 시작했습니다. 완료되면 알려드립니다.");
     } catch (e) {
       handleApiError(e);
     }
@@ -277,13 +316,10 @@ export function useSaleDetailVM(logId: number) {
   }, [analyze.isPending, analyze.isSuccess, analyze.isError]);
 
   const bannerMessage = useMemo(() => {
-    const d = analyze.data;
-    if (!d) return undefined;
-    if (d.schedule_idno) return "AI 분석 완료. 일정이 자동 등록되었습니다.";
-    return "AI 분석이 완료되었습니다.";
+    if (!analyze.data) return undefined;
+    return "AI 분석이 시작되었습니다.";
   }, [analyze.data]);
 
-  const aiStatus = log?.sale.ai_status ?? "pending";
   const canAnalyze = aiStatus === "pending" || aiStatus === "failed";
 
   const primaryAction = isEditing
@@ -300,6 +336,14 @@ export function useSaleDetailVM(logId: number) {
           icon: analyze.isPending ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />,
           onClick: runAnalyze,
           disabled: analyze.isPending,
+          variant: "primary" as const,
+        }
+      : aiStatus === "processing"
+      ? {
+          label: "AI 분석 중...",
+          icon: <Loader2 size={16} className="animate-spin" />,
+          onClick: () => {},
+          disabled: true,
           variant: "primary" as const,
         }
       : undefined;

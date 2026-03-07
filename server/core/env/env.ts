@@ -105,6 +105,8 @@ export const ENV = {
   // --- security
   allowedAudioHosts: optional("ALLOWED_AUDIO_HOSTS"),
   allowedAudioHostsList: csv("ALLOWED_AUDIO_HOSTS"),
+  clientUrl: optional("CLIENT_URL"),   // 프로덕션 CORS 허용 Origin (예: https://app.example.com)
+  dbPoolSize: int("DB_POOL_SIZE", 20), // DB 연결 풀 크기 (기본값 20, 동시 사용자 기준 조정)
   port: int("PORT", 9000),
 } as const;
 // #endregion

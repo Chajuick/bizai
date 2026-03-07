@@ -103,8 +103,22 @@ export const TranscribeFileInput = z.object({
   language: z.string().min(2).max(10).optional(),
 });
 
+/** transcribeFile 뮤테이션 즉시 응답 (큐 등록만 확인) */
 export const TranscribeFileOutput = z.object({
-  text: z.string(),
+  jobs_idno: z.number().int().positive(),
+  jobs_stat: z.string(),
+});
+
+/** transcribeFileResult 폴링 입력 */
+export const TranscribeFileResultInput = z.object({
+  file_idno: z.number().int().positive(),
+});
+
+/** transcribeFileResult 폴링 응답 (워커 완료 후 조회) */
+export const TranscribeFileResultOutput = z.object({
+  jobs_stat: z.enum(["queued", "running", "done", "failed"]).nullable(),
+  sttx_text: z.string().nullable(),
+  fail_mess: z.string().nullable(),
 });
 // #endregion
 
@@ -113,9 +127,11 @@ export type PrepareUploadInput = z.infer<typeof PrepareUploadInput>;
 export type ConfirmUploadInput = z.infer<typeof ConfirmUploadInput>;
 export type ListByRefInput = z.infer<typeof ListByRefInput>;
 export type TranscribeFileInput = z.infer<typeof TranscribeFileInput>;
+export type TranscribeFileResultInput = z.infer<typeof TranscribeFileResultInput>;
 
 export type PrepareUploadOutput = z.infer<typeof PrepareUploadOutput>;
 export type ConfirmUploadOutput = z.infer<typeof ConfirmUploadOutput>;
 export type ListByRefOutput = z.infer<typeof ListByRefOutput>;
 export type TranscribeFileOutput = z.infer<typeof TranscribeFileOutput>;
+export type TranscribeFileResultOutput = z.infer<typeof TranscribeFileResultOutput>;
 // #endregion

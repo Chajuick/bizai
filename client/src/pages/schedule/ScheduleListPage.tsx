@@ -8,6 +8,7 @@ import SkeletonCardList from "@/components/focuswin/common/skeletons/skeleton-ca
 import PageScaffold from "@/components/focuswin/common/page/scaffold/page-scaffold";
 import ListNotice from "@/components/focuswin/page/schedule/list/ListNotice";
 import { ScheduleModals } from "@/components/focuswin/page/schedule/list/ScheduleModals";
+import NotificationPermissionBanner, { NotificationDeniedHint } from "@/components/focuswin/common/feedback/NotificationPermissionBanner";
 
 import ScheduleListHeadContent from "@/components/focuswin/page/schedule/list/Header";
 import ScheduleListEmptyCard from "@/components/focuswin/page/schedule/list/Empty";
@@ -36,7 +37,13 @@ export default function ScheduleList() {
         title="일정"
         description="후속 미팅과 할 일을 상태별로 관리하세요."
         status={vm.status}
-        notice={notice}
+        notice={
+          <>
+            <NotificationPermissionBanner />
+            <NotificationDeniedHint />
+            {notice}
+          </>
+        }
         headerChildren={<ScheduleListHeadContent vm={vm} />}
         empty={<ScheduleListEmptyCard vm={vm} />}
         loading={<SkeletonCardList count={4} variant="simple" />}

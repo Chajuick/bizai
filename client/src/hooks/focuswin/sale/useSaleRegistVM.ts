@@ -69,10 +69,8 @@ export function useSaleRegistVM() {
   }, [analyzeMutation.isPending, analyzeMutation.isSuccess, analyzeMutation.isError]);
 
   const bannerMessage = useMemo(() => {
-    const d = analyzeMutation.data;
-    if (!d) return undefined;
-    if (d.schedule_idno) return "AI 분석 완료. 일정이 자동 등록되었습니다.";
-    return "AI 분석이 완료되었습니다.";
+    if (!analyzeMutation.data) return undefined;
+    return "AI 분석이 시작되었습니다.";
   }, [analyzeMutation.data]);
 
   const canDismissBanner = bannerState === "success" || bannerState === "error";
@@ -136,30 +134,21 @@ export function useSaleRegistVM() {
         : undefined,
     });
 
-    let analyzeResult: Awaited<ReturnType<typeof analyzeMutation.mutateAsync>> | null = null;
-
     if (analyze && created.sale_idno) {
       try {
-        analyzeResult = await analyzeMutation.mutateAsync({ sale_idno: created.sale_idno });
-        if (analyzeResult.schedule_idno) toast.success("AI 분석 완료. 일정이 자동 등록되었습니다.");
-        else toast.success("AI 분석이 완료되었습니다.");
+        await analyzeMutation.mutateAsync({
+          sale_idno: created.sale_idno,
+          file_idno: audioFileIdno ?? undefined,
+        });
+        // 큐 등록만 — 실제 분석은 워커가 처리, 결과는 상세 페이지에서 폴링
       } catch (e) {
-        handleApiError(e);
+        handleApiError(e); // 토큰 부족 등 즉시 에러는 여기서 처리
       }
     }
 
     await utils.crm.sale.list.invalidate();
     await utils.crm.dashboard.stats.invalidate();
     toast.success("영업일지가 저장되었습니다.");
-
-    if (analyzeResult && created.sale_idno) {
-      const opened = aiLink.maybeOpenPostAnalyzeModal(
-        created.sale_idno,
-        analyzeResult,
-        !!clie_idno,
-      );
-      if (opened) return;
-    }
 
     goDetail(created.sale_idno);
   };

@@ -1,6 +1,7 @@
 // server/modules/ai/ai.repo.ts
 
 import { and, eq, sql, sum } from "drizzle-orm";
+
 import { AI_USAGE_EVENT, CORE_FILE } from "../../../drizzle/schema";
 import type { InsertAiUsageEvent, CoreFile } from "../../../drizzle/schema";
 import type { DbOrTx } from "../../core/db/tx";
@@ -10,11 +11,19 @@ type RepoDeps = { db: DbOrTx };
 export const aiRepo = {
   // ───── CORE_FILE ─────
 
-  async findFileById({ db }: RepoDeps, file_idno: number): Promise<CoreFile | null> {
+  async findFileById(
+    { db }: RepoDeps,
+    args: { file_idno: number; comp_idno: number }
+  ): Promise<CoreFile | null> {
     const rows = await db
       .select()
       .from(CORE_FILE)
-      .where(eq(CORE_FILE.file_idno, file_idno))
+      .where(
+        and(
+          eq(CORE_FILE.file_idno, args.file_idno),
+          eq(CORE_FILE.comp_idno, args.comp_idno),
+        )
+      )
       .limit(1);
     return rows[0] ?? null;
   },

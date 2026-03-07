@@ -237,28 +237,46 @@ export const AiContactOutput = z.object({
 });
 export type AiContactOutput = z.infer<typeof AiContactOutput>;
 
+/** analyze 뮤테이션 즉시 응답 (큐 등록만 확인) */
 export const SaleAnalyzeOutput = z.object({
   jobs_idno: z.number().int().positive(),
   jobs_stat: z.string(),
+});
 
-  summary: z.string().nullable().optional(),
-  schedule_idno: z.number().int().nullable().optional(),
+/** analyzeResult 쿼리 입력 */
+export const SaleAnalyzeResultInput = z.object({
+  sale_idno: z.number().int().positive(),
+});
 
-  ai_client_name: z.string().nullable().optional(),
-  matched_client_idno: z.number().int().nullable().optional(),
-  matched_client_name: z.string().nullable().optional(),
+/** analyzeResult 쿼리 응답 (워커 완료 후 조회) */
+export const SaleAnalyzeResultOutput = z.object({
+  ai_status: z.enum(AI_STATUSES),
+  jobs_stat: z.string().nullable(),
 
-  ai_contacts: z.array(AiContactOutput).optional(),
+  summary: z.string().nullable(),
+  schedule_idno: z.number().int().nullable(),
 
-  ai_contact_person: z.string().nullable().optional(),
-  ai_contact_phone: z.string().nullable().optional(),
-  ai_contact_email: z.string().nullable().optional(),
+  ai_client_name: z.string().nullable(),
+  matched_client_idno: z.number().int().nullable(),
+  matched_client_name: z.string().nullable(),
+
+  ai_contacts: z.array(AiContactOutput),
+
+  ai_contact_person: z.string().nullable(),
+  ai_contact_phone: z.string().nullable(),
+  ai_contact_email: z.string().nullable(),
 });
 
 export const SaleTranscribeOutput = z.object({
   jobs_idno: z.number().int().positive(),
   jobs_stat: z.string(),
-  sttx_text: z.string().nullable().optional(),
+});
+
+/** transcribeResult 쿼리 응답 (워커 완료 후 polling) */
+export const SaleTranscribeResultOutput = z.object({
+  jobs_stat: z.enum(["queued", "running", "done", "failed"]).nullable(),
+  sttx_text: z.string().nullable(),
+  fail_mess: z.string().nullable(),
 });
 
 // #endregion

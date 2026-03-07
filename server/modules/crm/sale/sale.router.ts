@@ -8,6 +8,8 @@ import { svcCtxFromTrpc } from "../../../core/svcCtx";
 import {
   SaleAnalyzeInput,
   SaleAnalyzeOutput,
+  SaleAnalyzeResultInput,
+  SaleAnalyzeResultOutput,
   SaleCreateInput,
   SaleDeleteInput,
   SaleGetOutput,
@@ -17,6 +19,7 @@ import {
   SalePatchScheduleClientInput,
   SaleTranscribeInput,
   SaleTranscribeOutput,
+  SaleTranscribeResultOutput,
   SaleUpdateInput,
 } from "./sale.dto";
 
@@ -55,12 +58,22 @@ export const saleRouter = router({
   analyze: protectedProcedure
     .input(SaleAnalyzeInput)
     .output(SaleAnalyzeOutput)
-    .mutation(({ ctx, input }) => saleService.analyzeSale(svcCtxFromTrpc(ctx), input.sale_idno, input.file_idno)),
+    .mutation(({ ctx, input }) => saleService.queueAnalyze(svcCtxFromTrpc(ctx), input.sale_idno, input.file_idno)),
+
+  analyzeResult: protectedProcedure
+    .input(SaleAnalyzeResultInput)
+    .output(SaleAnalyzeResultOutput)
+    .query(({ ctx, input }) => saleService.getAnalyzeJobResult(svcCtxFromTrpc(ctx), input.sale_idno)),
 
   transcribe: protectedProcedure
     .input(SaleTranscribeInput)
     .output(SaleTranscribeOutput)
     .mutation(({ ctx, input }) => saleService.transcribe(svcCtxFromTrpc(ctx), input)),
+
+  transcribeResult: protectedProcedure
+    .input(SaleIdInput)
+    .output(SaleTranscribeResultOutput)
+    .query(({ ctx, input }) => saleService.getTranscribeJobResult(svcCtxFromTrpc(ctx), input.sale_idno)),
 
   patchScheduleClient: protectedProcedure
     .input(SalePatchScheduleClientInput)

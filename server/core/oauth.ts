@@ -340,14 +340,15 @@ export function registerOAuthRoutes(app: Express) {
 
     try {
       const user = await userRepo.findByEmail(email);
-      if (!user || !user.passwd_hash) {
-        res.status(401).json({ error: "이메일 또는 패스워드가 옳바르지 않습니다." });
-        return;
-      }
 
-      const valid = await bcrypt.compare(password, user.passwd_hash);
-      if (!valid) {
-        res.status(401).json({ error: "이메일 또는 패스워드가 옳바르지 않습니다." });
+      // SEC-6: 타이밍 공격 방지 — 이메일 존재 여부와 무관하게 항상 bcrypt 수행
+      // 이메일이 없는 경우에도 동일한 응답 시간을 보장해 이메일 존재 추론 차단
+      const DUMMY_HASH = "$2b$12$invalidhashvaluethatnevermatchesXXXXXXXXXXXXXX";
+      const hashToCompare = user?.passwd_hash ?? DUMMY_HASH;
+      const valid = await bcrypt.compare(password, hashToCompare);
+
+      if (!user || !user.passwd_hash || !valid) {
+        res.status(401).json({ error: "이메일 또는 패스워드가 올바르지 않습니다." });
         return;
       }
 

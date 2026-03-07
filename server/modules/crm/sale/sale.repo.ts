@@ -2,7 +2,7 @@
 
 // #region Imports
 
-import { and, asc, desc, eq, like } from "drizzle-orm";
+import { and, asc, desc, eq, isNull, like, lt } from "drizzle-orm";
 import { escapeLike } from "../shared/like";
 import {
   CRM_SALE,
@@ -30,7 +30,7 @@ export type InsertSaleAudioJob = typeof CRM_SALE_AUDIO_JOB.$inferInsert;
 
 export type ListSalesArgs = {
   comp_idno: number;
-  owne_idno: number;
+  owne_idno?: number; // undefined = 전사 조회 (admin/owner용)
 
   clie_idno?: number;
   search?: string;
@@ -54,10 +54,10 @@ export const saleRepo = {
 
     const conditions = [
       eq(CRM_SALE.comp_idno, args.comp_idno),
-      eq(CRM_SALE.owne_idno, args.owne_idno),
       eq(CRM_SALE.enab_yesn, true),
     ];
 
+    if (args.owne_idno !== undefined) conditions.push(eq(CRM_SALE.owne_idno, args.owne_idno));
     if (args.clie_idno) conditions.push(eq(CRM_SALE.clie_idno, args.clie_idno));
     if (args.search) conditions.push(like(CRM_SALE.orig_memo, `%${escapeLike(args.search)}%`));
 
@@ -78,18 +78,18 @@ export const saleRepo = {
       .offset(args.offset);
   },
 
-  async getById(deps: SaleRepoDeps, args: { comp_idno: number; owne_idno: number; sale_idno: number }) {
+  async getById(deps: SaleRepoDeps, args: { comp_idno: number; owne_idno?: number; sale_idno: number }) {
+    const conditions = [
+      eq(CRM_SALE.comp_idno, args.comp_idno),
+      eq(CRM_SALE.sale_idno, args.sale_idno),
+      eq(CRM_SALE.enab_yesn, true),
+    ];
+    if (args.owne_idno !== undefined) conditions.push(eq(CRM_SALE.owne_idno, args.owne_idno));
+
     const rows = await deps.db
       .select()
       .from(CRM_SALE)
-      .where(
-        and(
-          eq(CRM_SALE.comp_idno, args.comp_idno),
-          eq(CRM_SALE.owne_idno, args.owne_idno),
-          eq(CRM_SALE.sale_idno, args.sale_idno),
-          eq(CRM_SALE.enab_yesn, true)
-        )
-      )
+      .where(and(...conditions))
       .limit(1);
 
     return rows[0] ?? null;
@@ -167,17 +167,18 @@ export const saleRepo = {
 
   // #region Audio Jobs
 
-  async getAudioJobByRef(deps: SaleRepoDeps, args: { comp_idno: number; sale_idno: number; file_idno: number }) {
+  async getAudioJobByRef(deps: SaleRepoDeps, args: { comp_idno: number; sale_idno: number; file_idno: number; jobs_type?: string }) {
+    const conditions = [
+      eq(CRM_SALE_AUDIO_JOB.comp_idno, args.comp_idno),
+      eq(CRM_SALE_AUDIO_JOB.sale_idno, args.sale_idno),
+      eq(CRM_SALE_AUDIO_JOB.file_idno, args.file_idno),
+    ];
+    if (args.jobs_type) conditions.push(eq(CRM_SALE_AUDIO_JOB.jobs_type, args.jobs_type));
+
     const rows = await deps.db
       .select()
       .from(CRM_SALE_AUDIO_JOB)
-      .where(
-        and(
-          eq(CRM_SALE_AUDIO_JOB.comp_idno, args.comp_idno),
-          eq(CRM_SALE_AUDIO_JOB.sale_idno, args.sale_idno),
-          eq(CRM_SALE_AUDIO_JOB.file_idno, args.file_idno)
-        )
-      )
+      .where(and(...conditions))
       .limit(1);
 
     return rows[0] ?? null;
@@ -190,6 +191,153 @@ export const saleRepo = {
 
   async updateAudioJob(deps: SaleRepoDeps, args: { jobs_idno: number; data: Partial<InsertSaleAudioJob> }): Promise<void> {
     await deps.db.update(CRM_SALE_AUDIO_JOB).set(args.data).where(eq(CRM_SALE_AUDIO_JOB.jobs_idno, args.jobs_idno));
+  },
+
+  async getAudioJobById(deps: SaleRepoDeps, jobs_idno: number): Promise<SaleAudioJobRow | null> {
+    const rows = await deps.db
+      .select()
+      .from(CRM_SALE_AUDIO_JOB)
+      .where(eq(CRM_SALE_AUDIO_JOB.jobs_idno, jobs_idno))
+      .limit(1);
+    return rows[0] ?? null;
+  },
+
+  /** Worker: 가장 오래된 queued 잡 조회 (태스크 타입 무관) */
+  async findNextQueuedJob(deps: SaleRepoDeps): Promise<SaleAudioJobRow | null> {
+    const rows = await deps.db
+      .select()
+      .from(CRM_SALE_AUDIO_JOB)
+      .where(eq(CRM_SALE_AUDIO_JOB.jobs_stat, "queued"))
+      .orderBy(asc(CRM_SALE_AUDIO_JOB.reqe_date))
+      .limit(1);
+    return rows[0] ?? null;
+  },
+
+  /** Worker: owne_idno 체크 없이 sale 조회 */
+  async getSaleForWorker(deps: SaleRepoDeps, args: { sale_idno: number; comp_idno: number }): Promise<SaleRow | null> {
+    const rows = await deps.db
+      .select()
+      .from(CRM_SALE)
+      .where(
+        and(
+          eq(CRM_SALE.comp_idno, args.comp_idno),
+          eq(CRM_SALE.sale_idno, args.sale_idno),
+          eq(CRM_SALE.enab_yesn, true)
+        )
+      )
+      .limit(1);
+    return rows[0] ?? null;
+  },
+
+  /** analyze_text job 재사용 조회 (file_idno 없는 분석 잡) */
+  async getLatestAnalyzeNoFileJob(deps: SaleRepoDeps, args: { comp_idno: number; sale_idno: number }): Promise<SaleAudioJobRow | null> {
+    const rows = await deps.db
+      .select()
+      .from(CRM_SALE_AUDIO_JOB)
+      .where(
+        and(
+          eq(CRM_SALE_AUDIO_JOB.comp_idno, args.comp_idno),
+          eq(CRM_SALE_AUDIO_JOB.sale_idno, args.sale_idno),
+          isNull(CRM_SALE_AUDIO_JOB.file_idno),
+        )
+      )
+      .orderBy(desc(CRM_SALE_AUDIO_JOB.reqe_date))
+      .limit(1);
+    return rows[0] ?? null;
+  },
+
+  /** file-only transcribe job 조회 (sale_idno 없는 경우) */
+  async getTranscribeJobByFile(deps: SaleRepoDeps, args: { comp_idno: number; file_idno: number }): Promise<SaleAudioJobRow | null> {
+    const rows = await deps.db
+      .select()
+      .from(CRM_SALE_AUDIO_JOB)
+      .where(
+        and(
+          eq(CRM_SALE_AUDIO_JOB.comp_idno, args.comp_idno),
+          eq(CRM_SALE_AUDIO_JOB.file_idno, args.file_idno),
+          eq(CRM_SALE_AUDIO_JOB.jobs_type, "transcribe"),
+          isNull(CRM_SALE_AUDIO_JOB.sale_idno),
+        )
+      )
+      .orderBy(desc(CRM_SALE_AUDIO_JOB.reqe_date))
+      .limit(1);
+    return rows[0] ?? null;
+  },
+
+  /** getTranscribeJobResult용: 가장 최근 transcribe 잡 조회 */
+  async getLatestTranscribeJob(deps: SaleRepoDeps, args: { sale_idno: number; comp_idno: number }): Promise<SaleAudioJobRow | null> {
+    const rows = await deps.db
+      .select()
+      .from(CRM_SALE_AUDIO_JOB)
+      .where(
+        and(
+          eq(CRM_SALE_AUDIO_JOB.comp_idno, args.comp_idno),
+          eq(CRM_SALE_AUDIO_JOB.sale_idno, args.sale_idno),
+          eq(CRM_SALE_AUDIO_JOB.jobs_type, "transcribe"),
+        )
+      )
+      .orderBy(desc(CRM_SALE_AUDIO_JOB.reqe_date))
+      .limit(1);
+    return rows[0] ?? null;
+  },
+
+  /** Worker: 완료된 분석 잡의 최신 결과 조회 */
+  async getLatestDoneAnalyzeJob(deps: SaleRepoDeps, args: { sale_idno: number; comp_idno: number }): Promise<SaleAudioJobRow | null> {
+    const rows = await deps.db
+      .select()
+      .from(CRM_SALE_AUDIO_JOB)
+      .where(
+        and(
+          eq(CRM_SALE_AUDIO_JOB.comp_idno, args.comp_idno),
+          eq(CRM_SALE_AUDIO_JOB.sale_idno, args.sale_idno),
+          eq(CRM_SALE_AUDIO_JOB.jobs_stat, "done")
+        )
+      )
+      .orderBy(desc(CRM_SALE_AUDIO_JOB.fini_date))
+      .limit(1);
+    return rows[0] ?? null;
+  },
+
+  /**
+   * Stale "running" job 복구
+   * - reqe_date가 cutoff보다 오래된 running 잡을 failed로 전환
+   * - ai_status = "failed"로도 연동 업데이트
+   */
+  async resetStaleRunningJobs(deps: SaleRepoDeps, cutoff: Date): Promise<number> {
+    const stale = await deps.db
+      .select({ jobs_idno: CRM_SALE_AUDIO_JOB.jobs_idno, sale_idno: CRM_SALE_AUDIO_JOB.sale_idno, comp_idno: CRM_SALE_AUDIO_JOB.comp_idno })
+      .from(CRM_SALE_AUDIO_JOB)
+      .where(
+        and(
+          eq(CRM_SALE_AUDIO_JOB.jobs_stat, "running"),
+          lt(CRM_SALE_AUDIO_JOB.reqe_date, cutoff),
+        )
+      );
+
+    if (!stale.length) return 0;
+
+    const now = new Date();
+    for (const job of stale) {
+      await deps.db
+        .update(CRM_SALE_AUDIO_JOB)
+        .set({ jobs_stat: "failed", fail_mess: "서버 재시작 또는 타임아웃으로 인한 자동 복구", fini_date: now })
+        .where(eq(CRM_SALE_AUDIO_JOB.jobs_idno, job.jobs_idno));
+
+      // 연결된 sale ai_status도 failed로 동기화 (file-only job은 sale_idno 없음)
+      if (job.sale_idno != null) {
+        await deps.db
+          .update(CRM_SALE)
+          .set({ ai_status: "failed" })
+          .where(
+            and(
+              eq(CRM_SALE.comp_idno, job.comp_idno),
+              eq(CRM_SALE.sale_idno, job.sale_idno),
+            )
+          );
+      }
+    }
+
+    return stale.length;
   },
 
   // #endregion

@@ -13,6 +13,8 @@ import {
   ListByRefOutput,
   TranscribeFileInput,
   TranscribeFileOutput,
+  TranscribeFileResultInput,
+  TranscribeFileResultOutput,
 } from "./file.dto";
 
 import { fileService } from "./file.service";
@@ -46,6 +48,13 @@ export const fileRouter = router({
     .input(TranscribeFileInput)
     .output(TranscribeFileOutput)
     .mutation(({ ctx, input }) => fileService.transcribeFile(svcCtxFromTrpc(ctx), input)),
+  // #endregion
+
+  // #region transcribeFileResult
+  transcribeFileResult: protectedProcedure
+    .input(TranscribeFileResultInput)
+    .output(TranscribeFileResultOutput)
+    .query(({ ctx, input }) => fileService.getTranscribeFileResult(svcCtxFromTrpc(ctx), input.file_idno)),
   // #endregion
 });
 // #endregion

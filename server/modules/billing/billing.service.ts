@@ -1,18 +1,24 @@
 // server/modules/billing/billing.service.ts
 
 // #region Imports
-import { TRPCError } from "@trpc/server";
-
 import type { ServiceCtx } from "../../core/serviceCtx";
+import { throwAppError } from "../../core/trpc/appError";
 import { getDb } from "../../core/db";
 import { billingRepo } from "./billing.repo";
 import { aiService } from "../ai/ai.service";
+import { tokenRepo } from "../ai/token/token.repo";
 // #endregion
 
 // #region Helpers
 function addDays(d: Date, days: number) {
   return new Date(d.getTime() + days * 24 * 60 * 60 * 1000);
 }
+
+/**
+ * Free Plan 만료일 — 사실상 만료 없음(영구)
+ * ends_date NOT NULL 제약으로 인해 far-future 날짜 사용
+ */
+const FREE_PLAN_ENDS_DATE = new Date("2099-12-31T00:00:00Z");
 // #endregion
 
 export const billingService = {
@@ -27,33 +33,37 @@ export const billingService = {
 
     const free = await billingRepo.findPlanByCode({ db }, "free");
     if (!free) {
-      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "무료 플랜이 DB에 존재하지 않습니다." });
+      throwAppError({ tRPCCode: "INTERNAL_SERVER_ERROR", appCode: "FREE_PLAN_NOT_FOUND", message: "무료 플랜이 DB에 존재하지 않습니다.", displayType: "toast", retryable: false });
     }
 
     const now = new Date();
-    const ends = addDays(now, 30);
 
     await billingRepo.createSubscription({ db }, {
       comp_idno,
       plan_idno: free.plan_idno,
       subs_stat: "active",
       star_date: now,
-      ends_date: ends,
+      ends_date: FREE_PLAN_ENDS_DATE, // Free Plan은 만료 없음
       crea_idno: user_idno,
       modi_idno: user_idno,
       // prov_name/prov_subs/ovrr는 null
     });
 
+    // AI 토큰 잔액 초기화 (행이 없을 때만 — INSERT IGNORE)
+    await tokenRepo.initBalance({ db }, { comp_idno, amount: free.tokn_mont });
+
     const created = await billingRepo.findCurrentSubWithPlan({ db }, comp_idno);
     if (!created) {
-      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "초기 구독 생성에 실패했습니다." });
+      throwAppError({ tRPCCode: "INTERNAL_SERVER_ERROR", appCode: "SUBSCRIPTION_CREATE_FAILED", message: "초기 구독 생성에 실패했습니다.", displayType: "toast", retryable: false });
     }
     return created;
   },
   // #endregion
 
   // #region processExpiredCancellations
-  // ✅ 기간 종료된 해지예약(canceled) → free active로 전환
+  // ✅ 기간 종료된 구독 → free active로 전환
+  // - canceled + ends_date < now: 해지예약 기간 종료
+  // - active + ends_date < now: 결제 미갱신으로 기간 종료
   // 정석: 크론/잡에서 주기적으로 호출
   async processExpiredCancellations(modi_idno: number) {
     const db = getDb();
@@ -61,20 +71,22 @@ export const billingService = {
 
     const free = await billingRepo.findPlanByCode({ db }, "free");
     if (!free) {
-      throw new TRPCError({ code: "INTERNAL_SERVER_ERROR", message: "무료 플랜이 DB에 존재하지 않습니다." });
+      throwAppError({ tRPCCode: "INTERNAL_SERVER_ERROR", appCode: "FREE_PLAN_NOT_FOUND", message: "무료 플랜이 DB에 존재하지 않습니다.", displayType: "toast", retryable: false });
     }
 
-    const targets = await billingRepo.findExpiredCanceledSubs({ db }, now);
+    const [canceledTargets, activeTargets] = await Promise.all([
+      billingRepo.findExpiredCanceledSubs({ db }, now),
+      billingRepo.findExpiredActiveSubs({ db }, now),
+    ]);
+
+    const targets = [...canceledTargets, ...activeTargets];
     if (!targets.length) return { processed: 0 };
 
     for (const t of targets) {
-      // 무료 전환 + active 복구 + 새로운 기간 설정(정책에 따라 조정 가능)
-      const star_date = now;
-      const ends_date = addDays(now, 30);
-
+      // 무료 전환 + active 복구 — Free Plan은 만료 없음(영구)
       await billingRepo.updateSubPlan(
         { db },
-        { subs_idno: t.subs_idno, plan_idno: free.plan_idno, star_date, ends_date, modi_idno },
+        { subs_idno: t.subs_idno, plan_idno: free.plan_idno, star_date: now, ends_date: FREE_PLAN_ENDS_DATE, modi_idno },
       );
 
       await billingRepo.updateSubStat(
@@ -136,16 +148,16 @@ export const billingService = {
 
     const plan = await billingRepo.findPlanByCode({ db }, plan_code);
     if (!plan) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "플랜을 찾을 수 없습니다." });
+      throwAppError({ tRPCCode: "NOT_FOUND", appCode: "PLAN_NOT_FOUND", message: "플랜을 찾을 수 없습니다.", displayType: "toast", retryable: false });
     }
 
     const sub = await billingRepo.findCurrentSubWithPlan({ db }, comp_idno);
     if (!sub) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "구독이 없습니다. (초기 구독 생성 누락)" });
+      throwAppError({ tRPCCode: "NOT_FOUND", appCode: "SUBSCRIPTION_NOT_FOUND", message: "구독이 없습니다. (초기 구독 생성 누락)", displayType: "toast", retryable: false });
     }
 
     const now = new Date();
-    const ends_date = addDays(now, 30);
+    const ends_date = plan_code === "free" ? FREE_PLAN_ENDS_DATE : addDays(now, 30);
 
     await billingRepo.updateSubPlan(
       { db },
@@ -157,6 +169,13 @@ export const billingService = {
       { db },
       { subs_idno: sub.subs_idno, subs_stat: "active", modi_idno: user_idno },
     );
+
+    // 플랜 변경 시 토큰 잔액을 새 플랜 한도로 재설정 (부족한 경우만 보충)
+    const newLimit = plan.tokn_mont;
+    const currentBalance = await tokenRepo.getBalance({ db }, comp_idno);
+    if (currentBalance < newLimit) {
+      await tokenRepo.addTokens({ db }, { comp_idno, amount: newLimit - currentBalance });
+    }
 
     return { success: true as const };
   },
@@ -175,11 +194,11 @@ export const billingService = {
 
     const sub = await billingRepo.findCurrentSubWithPlan({ db }, ctx.comp_idno);
     if (!sub) {
-      throw new TRPCError({ code: "NOT_FOUND", message: "구독을 찾을 수 없습니다." });
+      throwAppError({ tRPCCode: "NOT_FOUND", appCode: "SUBSCRIPTION_NOT_FOUND", message: "구독을 찾을 수 없습니다.", displayType: "toast", retryable: false });
     }
 
     if (sub.plan_code === "free") {
-      throw new TRPCError({ code: "BAD_REQUEST", message: "무료 플랜은 해지할 수 없습니다." });
+      throwAppError({ tRPCCode: "BAD_REQUEST", appCode: "FREE_PLAN_CANCEL_NOT_ALLOWED", message: "무료 플랜은 해지할 수 없습니다.", displayType: "toast", retryable: false });
     }
 
     if (sub.subs_stat === "canceled") {

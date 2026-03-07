@@ -106,6 +106,7 @@ bizai/
 │   │   │   └── company/           # 회사/멤버십/초대
 │   │   ├── billing/               # 플랜/구독
 │   │   └── ai/token/              # AI 토큰 차감
+│   ├── jopbs/                     # 백그라운드 작업 (billing sweep, AI worker, 파일 정리)
 │   └── storage.ts                 # R2 스토리지 (put/get/delete/presigned)
 │
 ├── drizzle/
@@ -173,10 +174,12 @@ bizai/
 | `CORE_USER` | 사용자 | 영업사원 계정 (passwd_hash 포함) |
 | `CORE_COMPANY` | 회사 | 테넌트 단위 |
 | `CORE_COMPANY_USER` | 멤버십 | 사용자↔회사 관계 + 역할(owner/admin/member) |
-| `CORE_INVITE` | 초대 | 토큰 기반 초대장 |
+| `CORE_COMPANY_INVITE` | 초대 | 토큰 기반 초대장 (SHA-256 해시 저장) |
 | `CORE_FILE` | 첨부파일 | R2 파일 메타데이터 |
+| `CORE_FILE_LINK` | 파일 연결 | 파일 ↔ 도메인 엔티티 연결 |
 | `CRM_CLIENT` | 고객사 | 거래처 정보 |
 | `CRM_SALE` | 영업일지 | 방문/활동 기록 + AI 분석 결과 |
+| `CRM_SALE_AUDIO_JOB` | AI 작업 큐 | STT/LLM 비동기 작업 (jobs_type: transcribe/analyze) |
 | `CRM_SCHEDULE` | 일정 | 후속 조치 일정 |
 | `CRM_ORDER` | 수주 | 계약/수주 정보 |
 | `CRM_SHIPMENT` | 납품 | 납품/매출 정보 |
@@ -207,7 +210,7 @@ LLM_API_URL=           # 기본값: https://api.groq.com/openai/v1
 LLM_MODEL=             # 기본값: llama-3.3-70b-versatile
 STT_API_KEY=           # Groq API key (STT)
 STT_MODEL=             # 기본값: whisper-large-v3-turbo
-PORT=                  # 서버 포트 (기본값: 3000)
+PORT=                  # 서버 포트 (기본값: 9000)
 ```
 
 ---

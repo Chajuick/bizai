@@ -1,7 +1,7 @@
 // server/modules/billing/billing.repo.ts
 
 // #region Imports
-import { and, count, desc, eq, or, lte } from "drizzle-orm";
+import { and, count, desc, eq, or, lte, ne } from "drizzle-orm";
 
 import {
   BILLING_PLAN,
@@ -85,7 +85,7 @@ export const billingRepo = {
     return rows[0] ?? null;
   },
 
-  // ✅ 만료된 해지예약 구독(기간 종료) 대상
+  // ✅ 만료된 해지예약 구독(기간 종료) 대상 — Free Plan은 제외 (만료 없음 정책)
   async findExpiredCanceledSubs({ db }: RepoDeps, now: Date) {
     return db
       .select({
@@ -95,10 +95,34 @@ export const billingRepo = {
         ends_date: BILLING_SUBSCRIPTION.ends_date,
       })
       .from(BILLING_SUBSCRIPTION)
+      .innerJoin(BILLING_PLAN, eq(BILLING_SUBSCRIPTION.plan_idno, BILLING_PLAN.plan_idno))
       .where(
         and(
           eq(BILLING_SUBSCRIPTION.subs_stat, "canceled"),
           lte(BILLING_SUBSCRIPTION.ends_date, now),
+          ne(BILLING_PLAN.plan_code, "free"), // Free Plan은 sweep 대상 제외
+        ),
+      )
+      .orderBy(desc(BILLING_SUBSCRIPTION.subs_idno));
+  },
+
+  // ✅ 결제 미갱신으로 기간 종료된 active 구독 — Free Plan은 제외
+  // 실제 결제 연동 전까지: ends_date 초과 active 구독 → free 강등
+  async findExpiredActiveSubs({ db }: RepoDeps, now: Date) {
+    return db
+      .select({
+        subs_idno: BILLING_SUBSCRIPTION.subs_idno,
+        comp_idno: BILLING_SUBSCRIPTION.comp_idno,
+        plan_idno: BILLING_SUBSCRIPTION.plan_idno,
+        ends_date: BILLING_SUBSCRIPTION.ends_date,
+      })
+      .from(BILLING_SUBSCRIPTION)
+      .innerJoin(BILLING_PLAN, eq(BILLING_SUBSCRIPTION.plan_idno, BILLING_PLAN.plan_idno))
+      .where(
+        and(
+          eq(BILLING_SUBSCRIPTION.subs_stat, "active"),
+          lte(BILLING_SUBSCRIPTION.ends_date, now),
+          ne(BILLING_PLAN.plan_code, "free"),
         ),
       )
       .orderBy(desc(BILLING_SUBSCRIPTION.subs_idno));

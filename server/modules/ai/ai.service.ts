@@ -1,12 +1,12 @@
 // server/modules/ai/ai.service.ts
 
 // #region Imports
-import { TRPCError } from "@trpc/server";
-
 import { getDb } from "../../core/db";
+import { throwAppError } from "../../core/trpc/appError";
 import type { DbOrTx } from "../../core/db/tx";
 import { billingRepo } from "../billing/billing.repo";
 import { aiRepo } from "./ai.repo";
+import { tokenRepo } from "./token/token.repo";
 import type { AI_FEATURES } from "../../../drizzle/schema";
 // #endregion
 
@@ -90,40 +90,55 @@ function resolveEffectivePlan(sub: {
 
 // #region Service
 export const aiService = {
-  // #region checkQuota
+  // #region checkAndDeductQuota
   /**
-   * ✅ 쿼터 초과 시 FORBIDDEN throw.
-   * 정석: active만 보지 말고 "current 구독"(active/canceled 포함)을 기준으로 계산해야 함.
+   * ✅ 원자적 quota 차감 (레이스 컨디션 방지)
+   *
+   * 기존 checkQuota(read → check)는 동시 요청 시 양쪽이 통과하는 race가 있었음.
+   * 이 함수는 tokenRepo.deductTokens (UPDATE WHERE bala_tokn >= amount) 로
+   * DB 행 수준 잠금에서 원자적으로 처리한다.
+   *
+   * 잔액 행이 없으면(최초 사용) 플랜 한도로 초기화 후 1회 재시도.
+   * 재시도도 실패하면 → FORBIDDEN.
    */
-  async checkQuota(comp_idno: number, estimatedTokens: number): Promise<void> {
+  async checkAndDeductQuota(comp_idno: number, estimatedTokens: number): Promise<void> {
     const db = getDb();
 
-    const sub = await billingRepo.findCurrentSubWithPlan({ db }, comp_idno);
+    let result = await tokenRepo.deductTokens({ db }, { comp_idno, amount: estimatedTokens });
 
-    // 정석 모델: comp는 항상 구독 row가 있어야 함
-    if (!sub) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "구독 정보를 찾을 수 없습니다. (초기 구독 생성 누락)",
-      });
+    if (!result.success) {
+      // 잔액이 0인 경우: 미초기화일 수 있으므로 플랜 한도로 lazy-seed 후 재시도
+      const balance = await tokenRepo.getBalance({ db }, comp_idno);
+      if (balance === 0) {
+        const sub = await billingRepo.findCurrentSubWithPlan({ db }, comp_idno);
+        if (sub) {
+          const { limit } = resolveEffectivePlan(sub);
+          await tokenRepo.initBalance({ db }, { comp_idno, amount: limit });
+          result = await tokenRepo.deductTokens({ db }, { comp_idno, amount: estimatedTokens });
+        }
+      }
     }
 
-    const { limit } = resolveEffectivePlan(sub);
-
-    const now = new Date();
-    const { total: used } = await aiRepo.getMonthlyUsage(
-      { db },
-      comp_idno,
-      now.getFullYear(),
-      now.getMonth() + 1,
-    );
-
-    if (used + estimatedTokens > limit) {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: `AI 사용량이 소진되었습니다. (사용: ${used.toLocaleString()}, 한도: ${limit.toLocaleString()} 토큰)`,
+    if (!result.success) {
+      const balance = await tokenRepo.getBalance({ db }, comp_idno);
+      throwAppError({
+        tRPCCode: "FORBIDDEN",
+        appCode: "AI_QUOTA_EXCEEDED",
+        message: `AI 사용 한도가 소진되었습니다. (잔여: ${balance.toLocaleString()} / 필요: ${estimatedTokens.toLocaleString()} 토큰)`,
+        displayType: "toast",
       });
     }
+  },
+  // #endregion
+
+  // #region refundQuota
+  /**
+   * AI 호출 실패 시 차감된 토큰을 전액 환불
+   * - checkAndDeductQuota 성공 후 AI 호출이 실패한 경우에만 호출
+   */
+  async refundQuota(comp_idno: number, amount: number): Promise<void> {
+    const db = getDb();
+    await tokenRepo.addTokens({ db }, { comp_idno, amount });
   },
   // #endregion
 
@@ -153,9 +168,11 @@ export const aiService = {
     const sub = await billingRepo.findCurrentSubWithPlan({ db }, comp_idno);
 
     if (!sub) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
+      throwAppError({
+        tRPCCode: "NOT_FOUND",
+        appCode: "SUBSCRIPTION_NOT_FOUND",
         message: "구독 정보를 찾을 수 없습니다. (초기 구독 생성 누락)",
+        displayType: "toast",
       });
     }
 

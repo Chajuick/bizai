@@ -14,15 +14,18 @@ import type {
   ListByRefOutput,
   TranscribeFileInput,
   TranscribeFileOutput,
+  TranscribeFileResultOutput,
 } from "./file.dto";
 
 import { fileRepo } from "./file.repo";
+import { logger } from "../../../core/logger";
 import { fileLinkService } from "./fileLink.service";
 
 import { buildFilePath, getExt } from "../shared/fileKey";
 import { normalizePage } from "../shared/pagination";
 import { storageGetBuffer, storageGetPutUrl, storageDelete } from "../../../storage";
 import { transcribeBuffer } from "../../../core/ai/voiceTranscription";
+import { saleRepo } from "../sale/sale.repo";
 // #endregion
 
 // #region Service
@@ -148,6 +151,7 @@ export const fileService = {
   },
   // #endregion
   // #region transcribeFile
+  /** STT 큐 등록 후 즉시 반환. 실제 처리는 Worker(processQueuedFileTranscribeJob)가 수행 */
   async transcribeFile(ctx: ServiceCtx, input: TranscribeFileInput): Promise<TranscribeFileOutput> {
     const db = getDb();
 
@@ -162,44 +166,91 @@ export const fileService = {
       });
     }
 
-    const { buffer, contentType } = await storageGetBuffer(file.file_path);
+    // 기존 queued/running job이 있으면 재사용
+    const existing = await saleRepo.getTranscribeJobByFile({ db }, {
+      comp_idno: ctx.comp_idno,
+      file_idno: input.file_idno,
+    });
+    if (existing && (existing.jobs_stat === "queued" || existing.jobs_stat === "running")) {
+      return { jobs_idno: Number(existing.jobs_idno), jobs_stat: existing.jobs_stat };
+    }
 
-    const result = await transcribeBuffer(buffer, file.mime_type ?? contentType, {
-      language: input.language ?? "ko",
+    const { jobs_idno } = await saleRepo.createAudioJob({ db }, {
+      comp_idno: ctx.comp_idno,
+      sale_idno: null,
+      file_idno: input.file_idno,
+      jobs_type: "transcribe",
+      jobs_stat: "queued",
+      meta_json: { language: input.language ?? "ko" },
+      crea_idno: ctx.user_idno,
+      modi_idno: ctx.user_idno,
     });
 
-    if ("error" in result) {
-      const isClientError = result.code === "FILE_TOO_LARGE" || result.code === "INVALID_FORMAT";
-      throwAppError({
-        tRPCCode: isClientError ? "BAD_REQUEST" : "INTERNAL_SERVER_ERROR",
-        appCode: result.code ?? "STT_ERROR",
-        message: result.details ?? result.error,
-        displayType: "toast",
-        retryable: !isClientError,
-      });
-    }
+    return { jobs_idno, jobs_stat: "queued" };
+  },
+  // #endregion
 
-    const text = result.text.trim();
-    if ((result.duration ?? 0) < 2 || text.length < 2) {
-      throwAppError({
-        tRPCCode: "BAD_REQUEST",
-        appCode: "AUDIO_TOO_SHORT",
-        message: "음성이 너무 짧거나 인식할 수 없습니다. 2초 이상 다시 녹음해 주세요.",
-        displayType: "toast",
-        retryable: true,
-      });
-    }
+  // #region processQueuedFileTranscribeJob
+  /** Worker 전용: file-only STT 처리 */
+  async processQueuedFileTranscribeJob(jobs_idno: number): Promise<void> {
+    const db = getDb();
 
-    // ✅ 여기서부터 “즉시 삭제” (STT 성공했을 때만)
-    // 1) R2 삭제
+    const job = await saleRepo.getAudioJobById({ db }, jobs_idno);
+    if (!job || job.jobs_stat !== "queued") return;
+
+    await saleRepo.updateAudioJob({ db }, { jobs_idno, data: { jobs_stat: "running" } });
+
     try {
-      await storageDelete(file.file_path);
-    } catch (e) {
-      // 삭제 실패는 텍스트 결과 자체를 실패로 만들 필요는 없음(정책 선택)
-      console.error("[transcribeFile] storageDelete failed:", e);
-    }
+      const file = await fileRepo.findById({ db }, {
+        file_idno: Number(job.file_idno),
+        comp_idno: Number(job.comp_idno),
+      });
+      if (!file) throw new Error("FILE_NOT_FOUND");
 
-    return { text };
+      const language = (job.meta_json as { language?: string } | null)?.language ?? "ko";
+      const { buffer, contentType } = await storageGetBuffer(file.file_path);
+      const result = await transcribeBuffer(buffer, file.mime_type ?? contentType, { language });
+
+      if ("error" in result) throw new Error(result.details ?? result.error);
+
+      const text = result.text.trim();
+      if ((result.duration ?? 0) < 2 || text.length < 2) throw new Error("AUDIO_TOO_SHORT");
+
+      // STT 완료 후 R2 삭제
+      try { await storageDelete(file.file_path); } catch (e) {
+        logger.error({ err: e }, "[processQueuedFileTranscribeJob] storageDelete failed");
+      }
+
+      await saleRepo.updateAudioJob({ db }, {
+        jobs_idno,
+        data: { jobs_stat: "done", sttx_text: text, fini_date: new Date() },
+      });
+    } catch (err) {
+      await saleRepo.updateAudioJob({ db }, {
+        jobs_idno,
+        data: {
+          jobs_stat: "failed",
+          fail_mess: err instanceof Error ? err.message : "알 수 없는 오류",
+          fini_date: new Date(),
+        },
+      });
+    }
+  },
+  // #endregion
+
+  // #region getTranscribeFileResult
+  /** 폴링용: file_idno 기준 가장 최근 transcribe job 결과 조회 */
+  async getTranscribeFileResult(ctx: ServiceCtx, file_idno: number): Promise<TranscribeFileResultOutput> {
+    const db = getDb();
+    const job = await saleRepo.getTranscribeJobByFile({ db }, {
+      comp_idno: ctx.comp_idno,
+      file_idno,
+    });
+    return {
+      jobs_stat: (job?.jobs_stat ?? null) as "queued" | "running" | "done" | "failed" | null,
+      sttx_text: job?.sttx_text ?? null,
+      fail_mess: job?.fail_mess ?? null,
+    };
   },
   // #endregion
 } as const;
