@@ -6,7 +6,8 @@ import express from "express";
 import http from "http";
 import cors from "cors";
 import helmet from "helmet";
-import rateLimit from "express-rate-limit";
+// import rateLimit from "express-rate-limit"; 실 서비스할 땐 이걸로
+import rateLimit, { ipKeyGenerator } from "express-rate-limit";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 
 import { ENV } from "./env/env";
@@ -27,6 +28,7 @@ async function main() {
     // #region Security Headers (Helmet)
     // 개발 환경: Vite HMR websocket/inline script 충돌 방지로 CSP 비활성화
     // 프로덕션: 전체 보안 헤더 적용
+    /* focuswin.iptime.org:9000 테스트 중엔 끄기
     if (ENV.isProduction) {
         app.use(helmet({
             contentSecurityPolicy: {
@@ -42,6 +44,17 @@ async function main() {
         }));
     } else {
         // 개발: CSP 제외, 나머지 보안 헤더만 적용
+        app.use(helmet({ contentSecurityPolicy: false }));
+    }
+    */
+    if (ENV.isProduction) {
+        app.use(helmet({
+            contentSecurityPolicy: false,
+            hsts: false,
+            crossOriginOpenerPolicy: false,
+            originAgentCluster: false,
+        }));
+    } else {
         app.use(helmet({ contentSecurityPolicy: false }));
     }
     // #endregion
@@ -82,9 +95,15 @@ async function main() {
     const aiRateLimiter = rateLimit({
         windowMs: 60 * 1000,
         limit: 10,
-        keyGenerator: (req) => {
+        /*keyGenerator: (req) => {
             const compId = req.headers["x-comp-id"];
             return (typeof compId === "string" && compId) ? `comp:${compId}` : (req.ip ?? "unknown");
+        }, 실서비스할 떈 이걸로*/
+        keyGenerator: (req) => {
+            const compId = req.headers["x-comp-id"];
+            return (typeof compId === "string" && compId)
+                ? `comp:${compId}`
+                : ipKeyGenerator(req.ip ?? "unknown");
         },
         standardHeaders: true,
         legacyHeaders: false,
