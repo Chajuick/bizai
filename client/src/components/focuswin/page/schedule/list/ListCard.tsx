@@ -6,6 +6,7 @@ import { WorkItemCard } from "@/components/focuswin/common/cards/work-item-card"
 import StatusBadge from "@/components/focuswin/common/badges/status-badge";
 import { IconButton } from "@/components/focuswin/common/ui/button";
 import Chip from "@/components/focuswin/common/ui/chip";
+import { cn } from "@/lib/utils";
 
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
@@ -30,10 +31,21 @@ export default function ScheduleListCard({
 
   const scheduleStatus: "default" | "imminent" | "overdue" = p.overdue ? "overdue" : p.imminent ? "imminent" : "default";
 
+  // 유효 상태: overdue/imminent 플래그를 stat_code보다 우선
+  const effectiveStatCode = p.overdue ? "overdue" : p.imminent ? "imminent" : p.stat_code;
+
   const iconVariant = p.overdue ? "danger" : p.imminent ? "warning" : "primary";
 
+  // 상태별 hover 강조 클래스
+  const hoverClass =
+    scheduleStatus === "overdue"
+      ? "hover:border-red-300 hover:bg-red-50/40"
+      : scheduleStatus === "imminent"
+      ? "hover:border-orange-300 hover:bg-orange-50/40"
+      : "";
+
   return (
-    <WorkItemCard interactive className="pr-3">
+    <WorkItemCard interactive className={cn("pr-3", hoverClass)}>
       {/* LEFT ICON */}
       <WorkItemCard.Icon variant={iconVariant}>
         <Calendar size={18} />
@@ -43,7 +55,7 @@ export default function ScheduleListCard({
           title={p.sche_name}
           tags={
             <div className="flex items-center gap-1">
-              <StatusBadge status={p.stat_code as EffectiveStatus} />
+              <StatusBadge status={effectiveStatCode as EffectiveStatus} />
               {p.auto_gene ? <Chip label="AI" tone="violet" /> : null}
             </div>
           }

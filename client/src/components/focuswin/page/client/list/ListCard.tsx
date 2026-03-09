@@ -61,6 +61,11 @@ export default function ClientsListCard({ client }: Props) {
         <WorkItemCard.Body>
           {/* #region Meta Row */}
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
+            {client.bizr_numb && (
+              <span className="text-slate-400 font-mono">
+                {`${client.bizr_numb.slice(0, 3)}-${client.bizr_numb.slice(3, 5)}-${client.bizr_numb.slice(5)}`}
+              </span>
+            )}
             {client.cont_name && <span className="text-slate-700 font-medium">담당: {client.cont_name}</span>}
             {client.cont_tele && <span className="text-slate-500 font-semibold">{client.cont_tele}</span>}
             {client.cont_mail && <span className="text-slate-500 truncate">{client.cont_mail}</span>}

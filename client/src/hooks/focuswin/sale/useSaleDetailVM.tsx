@@ -1,7 +1,7 @@
 // src/hooks/focuswin/sale/useSaleDetailVM.tsx
 
 import { useMemo, useState, useEffect, useRef } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { handleApiError } from "@/lib/handleApiError";
@@ -37,6 +37,7 @@ export function useSaleDetailVM(logId: number) {
   // #region Router / Utils
 
   const [, navigate] = useLocation();
+  const search = useSearch();
   const utils = trpc.useUtils();
 
   const goList = () => navigate("/sale-list");
@@ -221,7 +222,7 @@ export function useSaleDetailVM(logId: number) {
     setShouldPoll(aiStatus === "pending" || aiStatus === "processing");
   }, [aiStatus]);
 
-  // ai_status가 pending/processing → completed 전환 시 결과 조회 + 모달/토스트
+  // ai_status가 pending/processing → completed/failed 전환 시 결과 조회 + 모달/토스트
   const prevAiStatusRef = useRef<string | undefined>(undefined);
   useEffect(() => {
     const prev = prevAiStatusRef.current;
@@ -229,20 +230,25 @@ export function useSaleDetailVM(logId: number) {
 
     if (
       prev !== undefined &&
-      (prev === "pending" || prev === "processing") &&
-      aiStatus === "completed"
+      (prev === "pending" || prev === "processing")
     ) {
-      utils.crm.sale.list.invalidate();
-      analyzeResult.refetch().then((r) => {
-        if (!r.data) {
-          toast.success("AI 분석이 완료되었습니다.");
-          return;
-        }
-        if (r.data.schedule_idno) toast.success("AI 분석 완료. 일정이 자동 등록되었습니다.");
-        else toast.success("AI 분석이 완료되었습니다.");
+      if (aiStatus === "completed") {
+        analyze.reset(); // 배너 초기화 (완료 알림은 토스트로)
+        utils.crm.sale.list.invalidate();
+        analyzeResult.refetch().then((r) => {
+          if (!r.data) {
+            toast.success("AI 분석이 완료되었습니다.");
+            return;
+          }
+          if (r.data.schedule_idno) toast.success("AI 분석 완료. 일정이 자동 등록되었습니다.");
+          else toast.success("AI 분석이 완료되었습니다.");
 
-        aiLink.maybeOpenPostAnalyzeModal(logId, r.data, !!saleGet.data?.sale?.clie_idno);
-      });
+          aiLink.maybeOpenPostAnalyzeModal(logId, r.data, !!saleGet.data?.sale?.clie_idno);
+        });
+      } else if (aiStatus === "failed") {
+        analyze.reset(); // 배너 초기화
+        toast.error("AI 분석에 실패했습니다. 잠시 후 다시 시도해주세요.");
+      }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aiStatus]);
@@ -309,18 +315,34 @@ export function useSaleDetailVM(logId: number) {
   // #region Actions UI Model
 
   const bannerState: BannerState = useMemo(() => {
+    // HTTP 요청 진행 중
     if (analyze.isPending) return "pending";
-    if (analyze.isSuccess) return "success";
+    // 잡 큐 등록 완료 = 분석 진행 중 (completed 전환 시 useEffect에서 reset)
+    if (analyze.isSuccess) return "pending";
+    // 큐 등록 자체 실패
     if (analyze.isError) return "error";
     return "idle";
   }, [analyze.isPending, analyze.isSuccess, analyze.isError]);
 
+  const bannerTitle = useMemo(() => {
+    if (analyze.isPending) return "분석 요청 중...";
+    if (analyze.isSuccess) return "AI 분석 진행 중";
+    if (analyze.isError) return "AI 분석 실패";
+    return undefined;
+  }, [analyze.isPending, analyze.isSuccess, analyze.isError]);
+
   const bannerMessage = useMemo(() => {
-    if (!analyze.data) return undefined;
-    return "AI 분석이 시작되었습니다.";
-  }, [analyze.data]);
+    if (analyze.isPending) return "잠시만 기다려주세요.";
+    if (analyze.isSuccess) return "AI가 영업일지를 분석하고 있습니다...";
+    if (analyze.isError) return "AI 분석에 실패했습니다. 잠시 후 다시 시도해주세요.";
+    return undefined;
+  }, [analyze.isPending, analyze.isSuccess, analyze.isError]);
 
   const canAnalyze = aiStatus === "pending" || aiStatus === "failed";
+
+  // 등록 페이지에서 "AI 저장" 후 이동 시 (?analyzing=1) → 분석 완료까지 overlay 유지
+  const isFromAnalyze = useMemo(() => new URLSearchParams(search).has("analyzing"), [search]);
+  const showAnalysisOverlay = isFromAnalyze && (aiStatus === "pending" || aiStatus === "processing");
 
   const primaryAction = isEditing
     ? {
@@ -433,8 +455,12 @@ export function useSaleDetailVM(logId: number) {
 
     // banner
     bannerState,
+    bannerTitle,
     bannerMessage,
     resetAnalyze,
+
+    // analysis overlay (등록→상세 이동 시 분석 완료까지 표시)
+    showAnalysisOverlay,
 
     // actions
     startEdit,

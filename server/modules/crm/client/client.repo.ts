@@ -391,4 +391,24 @@ export const clientRepo = {
     return row ?? null;
   },
   // #endregion
+
+  // #region findByBizrNumb — 사업자번호 기준 조회 (엑셀 업로드 upsert 용)
+  async findByBizrNumb(
+    { db }: RepoDeps,
+    params: { comp_idno: number; bizr_numb: string }
+  ): Promise<ClientRow | null> {
+    const [row] = await db
+      .select()
+      .from(CRM_CLIENT)
+      .where(
+        and(
+          eq(CRM_CLIENT.comp_idno, params.comp_idno),
+          eq(CRM_CLIENT.bizr_numb, params.bizr_numb)
+        )
+      )
+      .limit(1);
+
+    return row ?? null;
+  },
+  // #endregion
 } as const;

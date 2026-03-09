@@ -9,7 +9,7 @@ export default function ListNotice({
 }: {
   children: React.ReactNode;
   icon?: boolean;
-  tone?: "muted" | "primary" | "warning";
+  tone?: "muted" | "primary" | "warning" | "danger";
   className?: string;
 }) {
   const styles =
@@ -24,6 +24,12 @@ export default function ListNotice({
           bg: "rgba(249,115,22,0.08)",
           bd: "rgba(249,115,22,0.16)",
           fg: "rgb(234,88,12)",
+        }
+      : tone === "danger"
+      ? {
+          bg: "rgba(220,38,38,0.06)",
+          bd: "rgba(220,38,38,0.14)",
+          fg: "rgb(185,28,28)",
         }
       : {
           bg: "rgba(15,23,42,0.04)",

@@ -1,7 +1,7 @@
 // src/components/focuswin/client/detail/MetaCard.tsx
 
 // #region Imports
-import { Building2, MapPin } from "lucide-react";
+import { Building2, Hash, MapPin } from "lucide-react";
 import { Card } from "@/components/focuswin/common/ui/card";
 import MetaItem from "@/components/focuswin/common/ui/meta-item";
 
@@ -17,7 +17,7 @@ type Props = {
 export default function ClientDetailMetaCard({ client }: Props) {
   if (!client) return null;
 
-  const hasMeta = client.clie_name || client.indu_type || client.clie_addr || client.clie_memo;
+  const hasMeta = client.clie_name || client.bizr_numb || client.indu_type || client.clie_addr || client.clie_memo;
 
   if (!hasMeta) return null;
 
@@ -26,10 +26,19 @@ export default function ClientDetailMetaCard({ client }: Props) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {client.clie_name && <MetaItem icon={Building2} label="고객사" value={client.clie_name} tone="blue" />}
 
+        {client.bizr_numb && (
+          <MetaItem
+            icon={Hash}
+            label="사업자번호"
+            value={`${client.bizr_numb.slice(0, 3)}-${client.bizr_numb.slice(3, 5)}-${client.bizr_numb.slice(5)}`}
+            tone="slate"
+          />
+        )}
+
         {client.indu_type && <MetaItem icon={Building2} label="업종" value={client.indu_type} tone="sky" />}
 
         {client.clie_addr && (
-          <div className="sm:col-span-2">
+          <div>
             <MetaItem icon={MapPin} label="주소" value={client.clie_addr} tone="violet" />
           </div>
         )}

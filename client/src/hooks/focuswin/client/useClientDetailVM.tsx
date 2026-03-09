@@ -25,6 +25,7 @@ type ClientContactRow = RouterOutputs["crm"]["client"]["contact"]["list"][number
 const emptyClientDraft = (): ClientDraft => ({
   clie_idno: undefined,
   clie_name: "",
+  bizr_numb: "",
   indu_type: "",
   clie_addr: "",
   clie_memo: "",
@@ -145,6 +146,7 @@ export function useClientDetailVM() {
     setClientForm({
       clie_idno: client.clie_idno,
       clie_name: client.clie_name ?? "",
+      bizr_numb: client.bizr_numb ?? "",
       indu_type: client.indu_type ?? "",
       clie_addr: client.clie_addr ?? "",
       clie_memo: client.clie_memo ?? "",
@@ -166,6 +168,7 @@ export function useClientDetailVM() {
       setClientForm({
         clie_idno: client.clie_idno,
         clie_name: client.clie_name ?? "",
+        bizr_numb: client.bizr_numb ?? "",
         indu_type: client.indu_type ?? "",
         clie_addr: client.clie_addr ?? "",
         clie_memo: client.clie_memo ?? "",
@@ -251,6 +254,11 @@ export function useClientDetailVM() {
       return;
     }
 
+    if (clientForm.bizr_numb && !/^\d{10}$/.test(clientForm.bizr_numb)) {
+      toast.error("사업자번호는 숫자 10자리여야 합니다.");
+      return;
+    }
+
     const aliveContacts = contactsDraft.filter((c) => c._state !== "delete");
     for (const c of aliveContacts) {
       if (!c.cont_name.trim()) {
@@ -266,6 +274,7 @@ export function useClientDetailVM() {
         client: {
           clie_idno: clientId,
           clie_name: clientForm.clie_name,
+          bizr_numb: clientForm.bizr_numb || null,
           indu_type: clientForm.indu_type,
           clie_addr: clientForm.clie_addr,
           clie_memo: clientForm.clie_memo,

@@ -1,13 +1,24 @@
 // client/src/hooks/focuswin/clients/useClientListVM.ts
 
 // #region Imports
-import { useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState, useRef } from "react";
 import { useLocation } from "wouter";
 
 import { trpc } from "@/lib/trpc";
+import { toast } from "sonner";
+import { handleApiError } from "@/lib/handleApiError";
 
 import type { PageStatus } from "@/components/focuswin/common/page/scaffold/page-scaffold";
-// import type { TabPill } from "@/components/focuswin/common/ui/tab-pills"; // 필요해지면 추가
+import type { RouterOutputs } from "@/types/router";
+// #endregion
+
+// #region Types
+type UploadResult = RouterOutputs["crm"]["client"]["upload"];
+type ClientItem = RouterOutputs["crm"]["client"]["list"]["items"][number];
+// #endregion
+
+// #region Constants
+const PAGE_LIMIT = 20;
 // #endregion
 
 // #region Utils
@@ -29,19 +40,66 @@ export function useClientListVM() {
 
   // #endregion
 
+  // #region Pagination state
+
+  const [offset, setOffset] = useState(0);
+  const [accRows, setAccRows] = useState<ClientItem[]>([]);
+
+  // #endregion
+
   // #region Data fetching
 
-  const listQuery = trpc.crm.client.list.useQuery({
-    search: search || undefined,
-  });
+  const listQuery = trpc.crm.client.list.useQuery(
+    { search: search || undefined, page: { limit: PAGE_LIMIT, offset } },
+    { placeholderData: (prev) => prev, staleTime: 10_000 }
+  );
 
-  const items = listQuery.data?.items ?? [];
+  const uploadMutation = trpc.crm.client.upload.useMutation();
+  const utils = trpc.useUtils();
+
+  // #endregion
+
+  // #region Merge pages (검색어 변경 시 교체, 더보기 시 누적)
+
+  useEffect(() => {
+    const items = listQuery.data?.items ?? [];
+
+    if (offset === 0) {
+      setAccRows(items);
+      return;
+    }
+
+    setAccRows((prev) => {
+      const map = new Map<number, ClientItem>();
+      for (const r of prev) map.set(r.clie_idno, r);
+      for (const r of items) map.set(r.clie_idno, r);
+      return Array.from(map.values());
+    });
+  }, [listQuery.data, offset]);
+
+  // #endregion
+
+  // #region Paging flags / actions
+
+  const hasMore = !!listQuery.data?.page?.hasMore;
+  const isLoading = listQuery.isLoading && offset === 0;
+  const isLoadingMore = listQuery.isFetching && offset > 0;
+
+  const loadMore = useCallback(() => {
+    if (!hasMore || listQuery.isFetching) return;
+    setOffset((v) => v + PAGE_LIMIT);
+  }, [hasMore, listQuery.isFetching]);
+
+  const resetPaging = useCallback(() => {
+    setAccRows([]);
+    setOffset(0);
+  }, []);
 
   // #endregion
 
   // #region Empty state
 
-  const hasData = items.length > 0;
+  const hasData = accRows.length > 0;
 
   const emptyTitle = search.trim() ? "검색 결과가 없어요" : "아직 고객사가 없어요";
   const emptyDesc = search.trim()
@@ -52,7 +110,6 @@ export function useClientListVM() {
 
   // #region Status
 
-  const isLoading = listQuery.isLoading;
   const status: PageStatus = isLoading ? "loading" : hasData ? "ready" : "empty";
 
   // #endregion
@@ -60,6 +117,7 @@ export function useClientListVM() {
   // #region Actions
 
   const handleSearch = (value: string) => {
+    resetPaging();
     const q = value.trim();
     navigate(q ? `/clie-list?search=${encodeURIComponent(q)}` : "/clie-list", {
       replace: true,
@@ -67,13 +125,80 @@ export function useClientListVM() {
   };
 
   const handleClear = () => {
+    resetPaging();
     navigate("/clie-list", { replace: true });
   };
 
-  const refresh = async () => {
-    await listQuery.refetch();
+  const refresh = useCallback(async () => {
+    resetPaging();
+    await utils.crm.client.list.invalidate();
+  }, [resetPaging, utils]);
+
+  // #endregion
+
+  // #region Template Download
+  const downloadTemplate = () => {
+    const headers = ["고객사명", "사업자번호", "업종", "주소", "담당자명", "연락처", "이메일"];
+    const example = ["예시회사", "1234567890", "제조업", "서울시 강남구 테헤란로 123", "홍길동", "010-1234-5678", "example@company.com"];
+
+    const csv = [headers, example]
+      .map((row) => row.map((cell) => `"${cell}"`).join(","))
+      .join("\r\n");
+
+    // BOM: Excel에서 한글 UTF-8 깨짐 방지
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "고객사_업로드_양식.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+  // #endregion
+
+  // #region Upload
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadResult, setUploadResult] = useState<UploadResult | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [showUploadGuide, setShowUploadGuide] = useState(false);
+
+  const openUploadGuide = () => setShowUploadGuide(true);
+  const closeUploadGuide = () => setShowUploadGuide(false);
+
+  const openUploadPicker = () => {
+    setShowUploadGuide(false);
+    fileInputRef.current?.click();
   };
 
+  const handleUploadFile = async (file: File) => {
+    if (!file) return;
+    setIsUploading(true);
+    try {
+      const base64 = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve((reader.result as string).split(",")[1] ?? "");
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+
+      const result = await uploadMutation.mutateAsync({ fileBase64: base64, fileName: file.name });
+      setUploadResult(result);
+
+      // 업로드 후 첫 페이지부터 다시 로드
+      await refresh();
+
+      if (result.failed === 0) {
+        toast.success(`고객사 업로드 완료: 신규 ${result.inserted}건, 업데이트 ${result.updated}건`);
+      }
+    } catch (e) {
+      handleApiError(e);
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const clearUploadResult = () => setUploadResult(null);
   // #endregion
 
   // #region Public API
@@ -83,12 +208,12 @@ export function useClientListVM() {
     search,
 
     // data
-    items,
+    items: accRows,
 
-    // ─── 통일 페이지네이션 인터페이스 ───────────────────────────
-    hasMore: false as boolean,
-    isLoadingMore: false as boolean,
-    loadMore: () => {},
+    // pagination
+    hasMore,
+    isLoadingMore,
+    loadMore,
 
     // status
     isLoading,
@@ -108,8 +233,19 @@ export function useClientListVM() {
     handleClear,
     refresh,
 
-    // raw query (필요하면)
-    listQuery,
+    // upload guide modal
+    showUploadGuide,
+    openUploadGuide,
+    closeUploadGuide,
+
+    // upload
+    fileInputRef,
+    uploadResult,
+    isUploading,
+    openUploadPicker,
+    handleUploadFile,
+    clearUploadResult,
+    downloadTemplate,
   };
 
   // #endregion

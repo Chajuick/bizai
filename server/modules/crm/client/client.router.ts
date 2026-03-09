@@ -26,6 +26,8 @@ import {
   ClientSyncContactInput,
   ClientSyncContactsInput,
   ClientUpdateInput,
+  ClientUploadInput,
+  ClientUploadOutput,
 } from "./client.dto";
 
 import { clientService } from "./client.service";
@@ -123,6 +125,15 @@ export const clientRouter = router({
     .input(ClientSyncContactsInput)
     .mutation(({ ctx, input }) =>
       clientService.syncContacts(svcCtxFromTrpc(ctx), input)
+    ),
+  // #endregion
+
+  // #region upload — 엑셀 기반 고객사 일괄 업로드 (사업자번호 upsert)
+  upload: protectedProcedure
+    .input(ClientUploadInput)
+    .output(ClientUploadOutput)
+    .mutation(({ ctx, input }) =>
+      clientService.uploadClients(svcCtxFromTrpc(ctx), input)
     ),
   // #endregion
 

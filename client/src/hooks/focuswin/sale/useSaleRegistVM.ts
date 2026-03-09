@@ -11,6 +11,7 @@ import type { PageStatus } from "@/components/focuswin/common/page/scaffold/page
 import type { PreSaveState, SaleFormState } from "@/types/sale";
 
 import { useSaleAiClientLinkFlow } from "./useSaleAiClientLinkFlow";
+import { useProcessingOverlay } from "@/hooks/useProcessingOverlay";
 
 export function useSaleRegistVM() {
   // #region Router / Utils
@@ -44,6 +45,9 @@ export function useSaleRegistVM() {
   // ✅ 공용 훅: AI 분석 후 고객사 연결 플로우
   const aiLink = useSaleAiClientLinkFlow();
 
+  // ✅ 공용 훅: 처리 중 오버레이
+  const { showOverlay, hideOverlay, overlayProps } = useProcessingOverlay();
+
   // #endregion
 
   // #region Queries / Mutations
@@ -63,17 +67,20 @@ export function useSaleRegistVM() {
 
   const bannerState: "idle" | "pending" | "success" | "error" = useMemo(() => {
     if (analyzeMutation.isPending) return "pending";
-    if (analyzeMutation.isSuccess) return "success";
+    // isSuccess = 잡 큐 등록 완료 → 분석 진행 중 (완료 아님)
+    if (analyzeMutation.isSuccess) return "pending";
     if (analyzeMutation.isError) return "error";
     return "idle";
   }, [analyzeMutation.isPending, analyzeMutation.isSuccess, analyzeMutation.isError]);
 
   const bannerMessage = useMemo(() => {
-    if (!analyzeMutation.data) return undefined;
-    return "AI 분석이 시작되었습니다.";
-  }, [analyzeMutation.data]);
+    if (analyzeMutation.isPending) return "AI가 영업일지를 분석하고 있습니다...";
+    if (analyzeMutation.isSuccess) return "AI 분석이 시작되었습니다. 결과는 상세 페이지에서 확인하세요.";
+    if (analyzeMutation.isError) return "AI 분석에 실패했습니다. 잠시 후 다시 시도해주세요.";
+    return undefined;
+  }, [analyzeMutation.isPending, analyzeMutation.isSuccess, analyzeMutation.isError]);
 
-  const canDismissBanner = bannerState === "success" || bannerState === "error";
+  const canDismissBanner = bannerState === "error";
   const dismissBanner = () => analyzeMutation.reset();
 
   // #endregion
@@ -134,15 +141,21 @@ export function useSaleRegistVM() {
         : undefined,
     });
 
+    let analyzeQueued = false;
+
     if (analyze && created.sale_idno) {
+      showOverlay("영업일지를 분석 중입니다...");
       try {
         await analyzeMutation.mutateAsync({
           sale_idno: created.sale_idno,
           file_idno: audioFileIdno ?? undefined,
         });
         // 큐 등록만 — 실제 분석은 워커가 처리, 결과는 상세 페이지에서 폴링
+        analyzeQueued = true;
       } catch (e) {
         handleApiError(e); // 토큰 부족 등 즉시 에러는 여기서 처리
+      } finally {
+        hideOverlay();
       }
     }
 
@@ -150,7 +163,12 @@ export function useSaleRegistVM() {
     await utils.crm.dashboard.stats.invalidate();
     toast.success("영업일지가 저장되었습니다.");
 
-    goDetail(created.sale_idno);
+    // 분석이 큐에 등록된 경우 → 상세 페이지에서 overlay 유지를 위해 ?analyzing=1 전달
+    if (analyzeQueued) {
+      navigate(`/sale-list/${created.sale_idno}?analyzing=1`);
+    } else {
+      goDetail(created.sale_idno);
+    }
   };
 
   /**
@@ -285,5 +303,8 @@ export function useSaleRegistVM() {
 
     // modal props → SaleRegistModals 컴포넌트에 spread
     modalProps,
+
+    // overlay props → ProcessingOverlay 렌더 (AI 저장 중 전체 화면 차단)
+    overlayProps,
   };
 }

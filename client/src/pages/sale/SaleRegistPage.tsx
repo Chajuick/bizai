@@ -6,6 +6,7 @@ import PageScaffold from "@/components/focuswin/common/page/scaffold/page-scaffo
 import SaleRegistContent from "@/components/focuswin/page/sale/regist/Content";
 import SaleRegistAnalysisBanner from "@/components/focuswin/page/sale/regist/AnalysisBanner";
 import { SaleRegistModals } from "@/components/focuswin/page/sale/regist/SaleRegistModals";
+import ProcessingOverlay from "@/components/focuswin/common/overlays/processing-overlay";
 
 export default function SaleRegistPage() {
   const vm = useSaleRegistVM();
@@ -21,6 +22,9 @@ export default function SaleRegistPage() {
 
   return (
     <>
+      {/* AI 저장 진행 중 오버레이 */}
+      <ProcessingOverlay {...vm.overlayProps} />
+
       {/* 모달 조립: VM의 상태/핸들러를 받아 렌더 */}
       <SaleRegistModals {...vm.modalProps} />
 

@@ -3,51 +3,82 @@
 import { useClientRegistVM } from "@/hooks/focuswin/client/useClientRegistVM";
 import ContactEditor from "@/components/focuswin/page/client/common/ContactEditor";
 
+import { TextField, TextAreaField } from "@/components/focuswin/common/form";
+import BusinessNumberField from "@/components/focuswin/common/form/business-number-field";
+
 type Props = { vm: ReturnType<typeof useClientRegistVM> };
 
 export default function ClientRegistContent({ vm }: Props) {
+  const bizNoError =
+    vm.clientForm.bizr_numb.length > 0 && vm.clientForm.bizr_numb.length !== 10
+      ? "사업자번호는 숫자 10자리여야 합니다."
+      : undefined;
+
   return (
     <div className="flex flex-col gap-6">
       {/* 고객사 기본정보 */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <input
-          disabled={vm.isSaving}
+      <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <TextField
+          label="고객사명"
+          required
           value={vm.clientForm.clie_name}
-          onChange={(e) => vm.setClientForm((p) => ({ ...p, clie_name: e.target.value }))}
-          placeholder="고객사명 *"
-          className="focuswin-input sm:col-span-2"
+          onChange={v => vm.setClientForm(p => ({ ...p, clie_name: v }))}
+          className="sm:col-span-2"
+          inputProps={{
+            disabled: vm.isSaving,
+            placeholder: "고객사명 입력",
+            maxLength: 200,
+            required: true,
+          }}
         />
-        <input
-          disabled={vm.isSaving}
+
+        <BusinessNumberField
+          value={vm.clientForm.bizr_numb}
+          onChange={(v) => vm.setClientForm((p) => ({ ...p, bizr_numb: v }))}
+          error={bizNoError}
+          inputProps={{
+            disabled: vm.isSaving,
+          }}
+        />
+
+        <TextField
+          label="업종"
           value={vm.clientForm.indu_type}
-          onChange={(e) => vm.setClientForm((p) => ({ ...p, indu_type: e.target.value }))}
-          placeholder="업종"
-          className="focuswin-input"
+          onChange={v => vm.setClientForm(p => ({ ...p, indu_type: v }))}
+          inputProps={{
+            disabled: vm.isSaving,
+            placeholder: "업종 입력",
+            maxLength: 100,
+          }}
         />
-        <input
-          disabled={vm.isSaving}
+
+        <TextField
+          label="주소"
           value={vm.clientForm.clie_addr}
-          onChange={(e) => vm.setClientForm((p) => ({ ...p, clie_addr: e.target.value }))}
-          placeholder="주소"
-          className="focuswin-input"
+          onChange={v => vm.setClientForm(p => ({ ...p, clie_addr: v }))}
+          className={"sm:col-span-2"}
+          inputProps={{
+            disabled: vm.isSaving,
+            placeholder: "주소 입력",
+            maxLength: 300,
+          }}
         />
-        <textarea
-          disabled={vm.isSaving}
+
+        <TextAreaField
+          label="메모"
           value={vm.clientForm.clie_memo}
-          onChange={(e) => vm.setClientForm((p) => ({ ...p, clie_memo: e.target.value }))}
-          placeholder="메모"
-          className="focuswin-textarea sm:col-span-2"
-          rows={4}
+          onChange={v => vm.setClientForm(p => ({ ...p, clie_memo: v }))}
+          className={"sm:col-span-2"}
+          textareaProps={{
+            disabled: vm.isSaving,
+            placeholder: "메모 입력",
+            rows: 4,
+          }}
         />
       </section>
+
       {/* 담당자 */}
-      <ContactEditor
-        contacts={vm.contactsDraft}
-        onAdd={vm.addContact}
-        onChange={vm.updateContact}
-        onRemove={vm.removeContact}
-        disabled={vm.isSaving}
-      />
+      <ContactEditor contacts={vm.contactsDraft} onAdd={vm.addContact} onChange={vm.updateContact} onRemove={vm.removeContact} disabled={vm.isSaving} />
     </div>
   );
 }

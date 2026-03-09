@@ -9,7 +9,7 @@ import { getDb } from "../../../core/db";
 import { normalizePage } from "../shared/pagination";
 import { withCreateAudit, withUpdateAudit } from "../shared/audit";
 
-import type { AiContactItem, ClientContactCreatePayload, ClientContactUpdatePayload, ClientCreatePayload, ClientListInputType, ClientSort, ClientUpdatePayload } from "./client.dto";
+import type { AiContactItem, ClientContactCreatePayload, ClientContactUpdatePayload, ClientCreatePayload, ClientListInputType, ClientSort, ClientUpdatePayload, ClientUploadOutput } from "./client.dto";
 import { ClientCreateWithContactsInput, ClientSaveWithContactsInput } from "./client.dto";
 import { clientRepo } from "./client.repo";
 import { tx } from "../../../core/db/tx";
@@ -545,6 +545,170 @@ export const clientService = {
       }
       throw err;
     }
+  },
+  // #endregion
+
+  // #region uploadClients — 엑셀 기반 고객사 일괄 업로드 (사업자번호 upsert)
+  async uploadClients(ctx: ServiceCtx, input: { fileBase64: string; fileName: string }): Promise<ClientUploadOutput> {
+    // xlsx를 동적 import (서버 사이드 전용, 번들 분리)
+    const XLSX = await import("xlsx");
+
+    // base64 → Buffer → workbook
+    const buffer = Buffer.from(input.fileBase64, "base64");
+    const workbook = XLSX.read(buffer, { type: "buffer" });
+    const sheetName = workbook.SheetNames[0];
+    if (!sheetName) {
+      return { inserted: 0, updated: 0, failed: 0, errors: [] };
+    }
+    const sheet = workbook.Sheets[sheetName];
+    if (!sheet) {
+      return { inserted: 0, updated: 0, failed: 0, errors: [] };
+    }
+
+    // JSON 변환 (헤더 행 포함)
+    const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
+    if (rows.length === 0) {
+      return { inserted: 0, updated: 0, failed: 0, errors: [] };
+    }
+
+    // 컬럼 헤더 정규화 매핑 (대소문자/공백 무시)
+    const normalize = (s: string) => s.replace(/\s+/g, "").toLowerCase();
+
+    function pickCol(row: Record<string, unknown>, candidates: string[]): string {
+      for (const key of Object.keys(row)) {
+        if (candidates.some((c) => normalize(c) === normalize(key))) {
+          return String(row[key] ?? "").trim();
+        }
+      }
+      return "";
+    }
+
+    // 사업자번호 정규화: 하이픈 제거 → 10자리 숫자 문자열 검증
+    function normalizeBizrNumb(raw: string): string | null {
+      const cleaned = raw.replace(/-/g, "").trim();
+      if (/^\d{10}$/.test(cleaned)) return cleaned;
+      return null;
+    }
+
+    const db = getDb();
+    let inserted = 0;
+    let updated = 0;
+    const errors: ClientUploadOutput["errors"] = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      const rowNo = i + 1; // 1-based, 헤더 제외
+      const row = rows[i]!;
+
+      const clie_name = pickCol(row, ["고객사명", "회사명", "업체명"]);
+      const bizr_raw  = pickCol(row, ["사업자번호", "사업자 번호", "bizr"]);
+      const indu_type = pickCol(row, ["업종", "업태"]) || undefined;
+      const clie_addr = pickCol(row, ["주소", "소재지"]) || undefined;
+      const cont_name = pickCol(row, ["담당자명", "담당자"]) || undefined;
+      const cont_tele = pickCol(row, ["연락처", "전화번호"]) || undefined;
+      const cont_mail = pickCol(row, ["이메일"]) || undefined;
+
+      // Validate
+      if (!clie_name) {
+        errors.push({ row: rowNo, reason: "고객사명이 비어있습니다." });
+        continue;
+      }
+      if (!bizr_raw) {
+        errors.push({ row: rowNo, reason: "사업자번호가 비어있습니다." });
+        continue;
+      }
+      const bizr_numb = normalizeBizrNumb(bizr_raw);
+      if (!bizr_numb) {
+        errors.push({ row: rowNo, reason: "사업자번호가 10자리 숫자가 아닙니다." });
+        continue;
+      }
+
+      // Upsert: 사업자번호 기준
+      try {
+        const existing = await clientRepo.findByBizrNumb({ db }, { comp_idno: ctx.comp_idno, bizr_numb });
+
+        if (existing) {
+          // UPDATE — CRM_CLIENT 캐시 갱신
+          await clientRepo.update(
+            { db },
+            {
+              comp_idno: ctx.comp_idno,
+              clie_idno: existing.clie_idno,
+              data: withUpdateAudit(ctx, {
+                clie_name,
+                indu_type: indu_type ?? null,
+                clie_addr: clie_addr ?? null,
+                cont_name: cont_name ?? null,
+                cont_tele: cont_tele ?? null,
+                cont_mail: cont_mail ?? null,
+              }),
+            }
+          );
+
+          // UPDATE — CRM_CLIENT_CONT: 대표 담당자 없을 때만 추가 (수동 입력 보호)
+          if (cont_name) {
+            const mainContact = await clientRepo.getMainContact(
+              { db },
+              { comp_idno: ctx.comp_idno, clie_idno: existing.clie_idno }
+            );
+            if (!mainContact) {
+              await clientRepo.createContact(
+                { db },
+                withCreateAudit(ctx, {
+                  comp_idno: ctx.comp_idno,
+                  clie_idno: existing.clie_idno,
+                  cont_name,
+                  cont_tele: cont_tele ?? null,
+                  cont_mail: cont_mail ?? null,
+                  main_yesn: true,
+                  enab_yesn: true,
+                })
+              );
+            }
+          }
+
+          updated++;
+        } else {
+          // INSERT — CRM_CLIENT 생성
+          const created = await clientRepo.create(
+            { db },
+            withCreateAudit(ctx, {
+              comp_idno: ctx.comp_idno,
+              clie_name,
+              bizr_numb,
+              indu_type: indu_type ?? null,
+              clie_addr: clie_addr ?? null,
+              cont_name: cont_name ?? null,
+              cont_tele: cont_tele ?? null,
+              cont_mail: cont_mail ?? null,
+              enab_yesn: true,
+            })
+          );
+
+          // INSERT — CRM_CLIENT_CONT: 담당자명 있으면 대표 담당자 생성
+          if (cont_name) {
+            await clientRepo.createContact(
+              { db },
+              withCreateAudit(ctx, {
+                comp_idno: ctx.comp_idno,
+                clie_idno: created.clie_idno,
+                cont_name,
+                cont_tele: cont_tele ?? null,
+                cont_mail: cont_mail ?? null,
+                main_yesn: true,
+                enab_yesn: true,
+              })
+            );
+          }
+
+          inserted++;
+        }
+      } catch (_err) {
+        // clie_name unique 충돌 등 예외
+        errors.push({ row: rowNo, reason: "저장 중 오류가 발생했습니다." });
+      }
+    }
+
+    return { inserted, updated, failed: errors.length, errors };
   },
   // #endregion
 } as const;

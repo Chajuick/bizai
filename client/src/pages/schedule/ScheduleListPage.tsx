@@ -20,7 +20,7 @@ export default function ScheduleList() {
   // notice: VM은 숫자만 제공, JSX 조립은 Page에서
   const notice =
     vm.overdueInList > 0 || vm.imminentInList > 0 ? (
-      <ListNotice tone={vm.overdueInList > 0 ? "warning" : "primary"}>
+      <ListNotice tone={vm.overdueInList > 0 ? "danger" : "warning"}>
         {vm.overdueInList > 0 ? `지연 ${vm.overdueInList}건` : null}
         {vm.overdueInList > 0 && vm.imminentInList > 0 ? " · " : null}
         {vm.imminentInList > 0 ? `임박 ${vm.imminentInList}건` : null}이 있어요.

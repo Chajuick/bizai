@@ -9,7 +9,12 @@ export const CRM_CLIENT = table(
     ...companyCols(),                                           // comp_idno (회사 키)
 
     clie_name: varchar("clie_name", { length: 200 }).notNull(), // 고객사명
+    bizr_numb: varchar("bizr_numb", { length: 10 }),            // 사업자번호 (숫자 10자리, nullable)
     indu_type: varchar("indu_type", { length: 100 }),           // 업종
+
+    clie_type: varchar("clie_type", { length: 16 })             // 고객사 타입
+      .default("sales")
+      .notNull(),                                               // 'sales'|'purchase'|'both'
 
     cont_name: varchar("cont_name", { length: 100 }),           // 대표 담당자명 (캐시)
     cont_tele: varchar("cont_tele", { length: 50 }),            // 대표 담당자 연락처 (캐시)
@@ -25,6 +30,7 @@ export const CRM_CLIENT = table(
   (t) => [
     index("ix_client_comp").on(t.comp_idno),                               // 회사 기준 조회
     uniqueIndex("ux_client_comp_name").on(t.comp_idno, t.clie_name),      // 회사 내 고객명 중복 방지
+    uniqueIndex("ux_client_comp_bizr").on(t.comp_idno, t.bizr_numb),      // 회사 내 사업자번호 중복 방지 (null 허용)
   ]
 );
 

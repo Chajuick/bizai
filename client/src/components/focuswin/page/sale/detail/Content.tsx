@@ -30,7 +30,12 @@ export default function SaleDetailContent({ vm }: Props) {
   return (
     <>
       <Section>
-        <StatusBanner state={vm.bannerState} message={vm.bannerMessage} onDismiss={vm.bannerState === "success" || vm.bannerState === "error" ? vm.resetAnalyze : undefined} />
+        <StatusBanner
+          state={vm.bannerState}
+          title={vm.bannerTitle}
+          message={vm.bannerMessage}
+          onDismiss={vm.bannerState === "error" ? vm.resetAnalyze : undefined}
+        />
       </Section>
 
       {vm.isEditing ? (
