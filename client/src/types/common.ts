@@ -3,7 +3,7 @@
 export type ConfirmIntent = "delete" | "cancel" | "complete";
 
 export type ConfirmMeta = {
-  label: string;               // "고객사", "상태", "금액"...
+  label: string;               // "거래처", "상태", "금액"...
   value: string;               // "우진테크", "대기", "590만원"
   tone?: "default" | "muted" | "danger" | "primary";
 };

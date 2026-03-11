@@ -12,8 +12,8 @@ export const CRM_SCHEDULE = table(
 
     owne_idno: int("owne_idno").notNull(),                          // 소유자/담당자 user_idno
     sale_idno: int("sale_idno"),                                    // 연결 영업일지(옵션)
-    clie_idno: int("clie_idno"),                                    // 연결 고객(옵션)
-    clie_name: varchar("clie_name", { length: 200 }),               // 고객명 스냅샷/자유입력
+    clie_idno: int("clie_idno"),                                    // 연결 거래처(옵션)
+    clie_name: varchar("clie_name", { length: 200 }),               // 거래처명 스냅샷/자유입력
 
     sche_name: varchar("sche_name", { length: 300 }).notNull(),     // 제목
     sche_desc: text("sche_desc"),                                   // 설명
@@ -37,7 +37,7 @@ export const CRM_SCHEDULE = table(
     // 담당자 기준 일정 타임라인(회사 내)
     index("ix_sche_comp_owne_date").on(t.comp_idno, t.owne_idno, t.sche_date),
 
-    // 고객 기준 일정 조회(회사 내) - clie_idno를 실제로 쓸 거면 강추
+    // 거래처 기준 일정 조회(회사 내) - clie_idno를 실제로 쓸 거면 강추
     index("ix_sche_comp_clie_date").on(t.comp_idno, t.clie_idno, t.sche_date),
 
     // 대시보드 upcoming/overdue/imminent (stat_code='scheduled' + sche_date 범위)

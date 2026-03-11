@@ -368,7 +368,7 @@ export const saleRepo = {
       .orderBy(asc(CRM_SCHEDULE.sche_date), asc(CRM_SCHEDULE.sche_idno));
   },
 
-  /** ✅ sale에 연결된 고객사 확정 후 일정들의 clie_idno 일괄 보정 */
+  /** ✅ sale에 연결된 거래처 확정 후 일정들의 clie_idno 일괄 보정 */
   async patchSchedulesClientBySale(
     deps: SaleRepoDeps,
     args: { comp_idno: number; sale_idno: number; clie_idno: number; clie_name?: string | null }

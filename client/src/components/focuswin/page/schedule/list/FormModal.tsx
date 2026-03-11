@@ -53,9 +53,9 @@ export default function ScheduleListFormModal({
 
         <form onSubmit={onSubmit} className="space-y-4">
           <div className="grid grid-cols-1 gap-3">
-            {/* 고객사 (선택) */}
+            {/* 거래처 (선택) */}
             <ClientNameField
-              label="고객사"
+              label="거래처"
               value={form.clie_name}
               clientId={form.clie_idno}
               onChange={(name, id) => setForm((f) => ({ ...f, clie_name: name, clie_idno: id }))}

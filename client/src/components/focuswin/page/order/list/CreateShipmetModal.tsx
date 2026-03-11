@@ -39,7 +39,7 @@ export default function CreateShipmetModal({
 
           {selectedOrder ? (
             <p className="mt-2 text-sm text-slate-600">
-              고객사: <span className="font-bold text-slate-900">{selectedOrder.clie_name}</span>
+              거래처: <span className="font-bold text-slate-900">{selectedOrder.clie_name}</span>
             </p>
           ) : null}
         </DialogHeader>

@@ -10,10 +10,10 @@ export const CRM_ORDER = table(
     ...companyCols(),                                                // comp_idno (회사 키)
 
     owne_idno: int("owne_idno").notNull(),                           // 담당자 user_idno
-    clie_idno: int("clie_idno"),                                     // 고객 ID(옵션)
+    clie_idno: int("clie_idno"),                                     // 거래처 ID(옵션)
     sale_idno: int("sale_idno"),                                     // 영업일지 ID(옵션)
 
-    clie_name: varchar("clie_name", { length: 200 }).notNull(),      // 고객명(스냅샷/자유입력) *필수
+    clie_name: varchar("clie_name", { length: 200 }).notNull(),      // 거래처명(스냅샷/자유입력) *필수
     prod_serv: varchar("prod_serv", { length: 300 }).notNull(),      // 제품/서비스명
     orde_pric: decimal("orde_pric", { precision: 15, scale: 2 }).notNull(), // 수주 금액
 

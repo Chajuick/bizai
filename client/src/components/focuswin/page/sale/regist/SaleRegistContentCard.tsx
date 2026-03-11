@@ -10,7 +10,7 @@ export default function SaleRegistContentCard({
   onChangeRaw: (v: string) => void;
 }) {
   return (
-    <InfoCard title="내용" desc="텍스트로 기록하면 AI가 고객/일정/금액/다음 액션을 자동 추출해요." icon={Brain}>
+    <InfoCard title="내용" desc="텍스트로 기록하면 AI가 거래처/일정/금액/다음 액션을 자동 추출해요." icon={Brain}>
       <Textarea
         value={rawContent}
         onChange={(e) => onChangeRaw(e.target.value)}

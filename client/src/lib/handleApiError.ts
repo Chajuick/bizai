@@ -1,10 +1,4 @@
 // client/src/lib/handleApiError.ts
-//
-// 서버 tRPC errorFormatter가 내려주는 구조화된 에러 메타를 읽어
-// toast / inline / silent 여부를 결정한다.
-//
-// 브라우저 전용 에러(마이크 권한, MediaRecorder, 파일 선택 취소 등)는
-// 이 함수를 거치지 않고 호출부에서 직접 toast.error()로 처리한다.
 
 import { toast } from "sonner";
 import { TRPCClientError } from "@trpc/client";
@@ -19,24 +13,54 @@ type TRPCData = {
 };
 
 export type ApiErrorMeta = {
-  /** 서버가 내려준 도메인 에러 코드. null이면 일반 에러. */
   appCode: string | null;
-  /** 클라이언트가 어떻게 표시할지 */
   displayType: "toast" | "inline" | "silent";
-  /** 재시도 가능 여부 */
   retryable: boolean;
-  /** 사용자에게 보여줄 메시지 */
   message: string;
 };
 // #endregion
 
+// #region Helpers
+const DEFAULT_ERROR_MESSAGE = "처리 중 오류가 발생했습니다.";
+
+function isUnsafeRawMessage(message: string): boolean {
+  const m = message.toLowerCase();
+
+  return (
+    m.includes("failed query:") ||
+    m.includes("insert into") ||
+    m.includes("update ") ||
+    m.includes("delete from") ||
+    m.includes("select ") ||
+    m.includes("sql") ||
+    m.includes("mysql") ||
+    m.includes("drizzle") ||
+    m.includes("no procedure found on path") ||
+    m.includes("trpc") ||
+    m.includes("stack") ||
+    m.includes("internal_server_error")
+  );
+}
+
+function toSafeClientMessage(params: {
+  appCode: string | null;
+  rawMessage?: string;
+}): string {
+  const { appCode, rawMessage } = params;
+
+  if (!rawMessage?.trim()) return DEFAULT_ERROR_MESSAGE;
+
+  // 서버가 throwAppError로 명시적으로 만든 앱 에러만 메시지 신뢰
+  if (appCode) {
+    return isUnsafeRawMessage(rawMessage) ? DEFAULT_ERROR_MESSAGE : rawMessage;
+  }
+
+  // 앱 에러가 아니면 내부 에러일 가능성이 높으니 raw message 노출 금지
+  return DEFAULT_ERROR_MESSAGE;
+}
+// #endregion
+
 // #region parseApiError
-/**
- * parseApiError
- * - tRPC 에러면 shape.data에서 메타 추출
- * - AbortError면 displayType: "silent" 반환 (취소는 별도 처리)
- * - 그 외 알 수 없는 에러는 toast + 기본 메시지
- */
 export function parseApiError(e: unknown): ApiErrorMeta {
   if ((e as { name?: string })?.name === "AbortError") {
     return {
@@ -49,11 +73,16 @@ export function parseApiError(e: unknown): ApiErrorMeta {
 
   if (e instanceof TRPCClientError) {
     const data = e.data as TRPCData | undefined;
+    const appCode = data?.appCode ?? null;
+
     return {
-      appCode: data?.appCode ?? null,
+      appCode,
       displayType: data?.displayType ?? "toast",
       retryable: data?.retryable ?? false,
-      message: e.message,
+      message: toSafeClientMessage({
+        appCode,
+        rawMessage: e.message,
+      }),
     };
   }
 
@@ -61,20 +90,12 @@ export function parseApiError(e: unknown): ApiErrorMeta {
     appCode: null,
     displayType: "toast",
     retryable: false,
-    message: "처리 중 오류가 발생했습니다.",
+    message: DEFAULT_ERROR_MESSAGE,
   };
 }
 // #endregion
 
 // #region handleApiError
-/**
- * handleApiError
- * - displayType === "toast" → toast.error(message)
- * - displayType === "silent" → 아무것도 하지 않음 (호출부에서 추가 처리 가능)
- * - displayType === "inline" → toast 없음, 호출부에서 parseApiError()로 직접 렌더링
- *
- * @returns ApiErrorMeta — 호출부가 추가 처리(inline 렌더 등)에 쓸 수 있도록 반환
- */
 export function handleApiError(e: unknown): ApiErrorMeta {
   const meta = parseApiError(e);
 
@@ -86,5 +107,4 @@ export function handleApiError(e: unknown): ApiErrorMeta {
 }
 // #endregion
 
-// TRPCClientError 타입 가드 (AppRouter 기반, 필요한 곳에서 import)
 export type AppTRPCError = TRPCClientError<AppRouter>;

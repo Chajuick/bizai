@@ -8,7 +8,7 @@ export const CRM_CLIENT_CONT = table(
     cont_idno: int("cont_idno").autoincrement().primaryKey(), // 담당자 PK
     ...companyCols(), // comp_idno
 
-    clie_idno: int("clie_idno").notNull(), // 고객사 PK(FK 논리키)
+    clie_idno: int("clie_idno").notNull(), // 거래처 PK(FK 논리키)
 
     cont_name: varchar("cont_name", { length: 100 }).notNull(), // 담당자명
     cont_role: varchar("cont_role", { length: 100 }),           // 업무/직책

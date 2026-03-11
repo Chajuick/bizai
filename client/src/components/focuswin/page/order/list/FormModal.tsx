@@ -42,9 +42,9 @@ export default function OrderListFormDModal({
         </DialogHeader>
 
         <form onSubmit={onSubmit} className="space-y-4">
-          {/* 고객사 */}
+          {/* 거래처 */}
           <ClientNameField
-            label="고객사"
+            label="거래처"
             required
             value={form.clie_name}
             clientId={form.clie_idno}

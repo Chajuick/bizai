@@ -1,6 +1,6 @@
 // components/focuswin/page/sale/form/client-name-field.tsx
 //
-// 고객사명 입력 + 자동완성 드롭다운 + 유사 고객사 제안(확정/추가)
+// 거래처명 입력 + 자동완성 드롭다운 + 유사 거래처 제안(확정/추가)
 //
 // ✅ 토스 Underline 스타일 반영 포인트
 // - Input: underline 기반(이미 Input 컴포넌트가 토스 스타일이면 className 최소만 추가)
@@ -49,7 +49,7 @@ type ClientNameFieldProps = {
 
 // #region Component
 export default function ClientNameField({
-  label = "고객사",
+  label = "거래처",
   hint,
   error,
   required,
@@ -162,10 +162,10 @@ export default function ClientNameField({
       // 목록 캐시 갱신
       await utils.crm.client.list.invalidate();
 
-      // 생성된 고객사 id 반영
+      // 생성된 거래처 id 반영
       onChange(value, (result as any).clie_idno);
 
-      toast.success(`'${value}' 고객사가 추가되었습니다.`);
+      toast.success(`'${value}' 거래처가 추가되었습니다.`);
     } catch (e) {
       handleApiError(e);
     } finally {
@@ -250,8 +250,8 @@ export default function ClientNameField({
                 {isFetching
                   ? "검색 중…"
                   : value
-                  ? "일치하는 고객사 없음"
-                  : "등록된 고객사 없음"}
+                  ? "일치하는 거래처 없음"
+                  : "등록된 거래처 없음"}
               </div>
             ) : (
               <div className="p-1.5">

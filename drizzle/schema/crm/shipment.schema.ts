@@ -11,8 +11,8 @@ export const CRM_SHIPMENT = table(
 
     owne_idno: int("owne_idno").notNull(),                           // 담당자 user_idno
     orde_idno: int("orde_idno").notNull(),                           // 수주 ID(필수)
-    clie_idno: int("clie_idno"),                                     // 고객사 ID(스냅샷)
-    clie_name: varchar("clie_name", { length: 200 }).notNull(),      // 고객명 스냅샷
+    clie_idno: int("clie_idno"),                                     // 거래처 ID(스냅샷)
+    clie_name: varchar("clie_name", { length: 200 }).notNull(),      // 거래처명 스냅샷
 
     stat_code: shipStatusEnum.default("pending").notNull(),          // 상태(pending/delivered/invoiced/paid)
     ship_date: timestamp("ship_date"),                               // 납품일(옵션)

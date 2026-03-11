@@ -26,7 +26,7 @@ export default function SaleDetailMetaCard({ clientName, contactPerson, clientPh
   return (
     <Card>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {clientName && <MetaItem icon={Building2} label="고객사" value={clientName} tone="blue" />}
+        {clientName && <MetaItem icon={Building2} label="거래처" value={clientName} tone="blue" />}
         {contactPerson && <MetaItem icon={User} label="담당자" value={contactPerson} tone="sky" />}
 
         {clientPhone && <MetaItem icon={Phone} label="연락처" value={clientPhone} tone="slate" href={`tel:${clientPhone}`} />}

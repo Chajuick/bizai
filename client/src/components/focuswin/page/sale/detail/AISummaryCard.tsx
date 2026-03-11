@@ -42,7 +42,7 @@ function formatKST(date: string) {
 
 function ownerLabel(owner: AiActionUI["action_owner"]) {
   if (owner === "self") return "자사 과제";
-  if (owner === "client") return "고객사 과제";
+  if (owner === "client") return "거래처 과제";
   return "공동 과제";
 }
 

@@ -50,7 +50,7 @@ function PreviewCard({
         {/* 🔹 설명 */}
         {desc ? <div className="text-xs text-slate-600 line-clamp-2">{desc}</div> : null}
 
-        {/* 🔹 고객사 등 아이템 */}
+        {/* 🔹 거래처 등 아이템 */}
         {items ? <div className="space-y-1">{items}</div> : null}
       </div>
     </div>

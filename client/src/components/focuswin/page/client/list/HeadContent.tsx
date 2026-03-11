@@ -10,7 +10,7 @@ export default function ClientListHeadContent({ vm }: Props) {
       debounceMs={200}
       onChange={vm.handleSearch}
       onClear={vm.handleClear}
-      placeholder="고객사명, 담당자로 검색…"
+      placeholder="거래처명, 담당자로 검색…"
     />
   );
 }

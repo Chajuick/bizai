@@ -27,15 +27,15 @@ export default function ClientDetailEditFormCard({ form, setForm }: Props) {
       <p className="text-xs font-extrabold tracking-[0.14em] text-slate-400 uppercase mb-4">편집 모드</p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* 고객사 (1줄 전체) */}
+        {/* 거래처 (1줄 전체) */}
         <div className="sm:col-span-2">
           <TextField
-            label="고객사"
+            label="거래처"
             required
             value={form.clie_name}
             onChange={v => setForm(f => ({ ...f, clie_name: v }))}
             inputProps={{
-              placeholder: "고객사명",
+              placeholder: "거래처명",
               maxLength: 200,
             }}
           />

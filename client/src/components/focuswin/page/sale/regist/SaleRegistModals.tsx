@@ -9,12 +9,12 @@ import PostAnalyzeClientModal from "@/components/focuswin/page/sale/common/PostA
 // #region Types
 
 export type SaleRegistModalsProps = {
-  // ─── 프리세이브 고객사 확인 다이얼로그 ──────────────────────────────────
+  // ─── 프리세이브 거래처 확인 다이얼로그 ──────────────────────────────────
   preSaveState: PreSaveState | null;
   onPreSaveConfirm: () => Promise<void>;
   onPreSaveDeny: () => Promise<void>;
 
-  // ─── AI 분석 후 고객사 연결 모달 ──────────────────────────────────────
+  // ─── AI 분석 후 거래처 연결 모달 ──────────────────────────────────────
   postAnalyzeClientState: PostAnalyzeClientState;
   onPostAnalyzeConfirm: () => Promise<void>;
   onPostAnalyzeDeny: () => Promise<void>;

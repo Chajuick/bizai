@@ -66,7 +66,7 @@ export function useSaleDetailVM(logId: number) {
   const del = trpc.crm.sale.delete.useMutation();
   const update = trpc.crm.sale.update.useMutation();
 
-  // 공용 훅: AI 분석 후 고객사 연결 플로우
+  // 공용 훅: AI 분석 후 거래처 연결 플로우
   const aiLink = useSaleAiClientLinkFlow();
 
   // #endregion
@@ -385,7 +385,7 @@ export function useSaleDetailVM(logId: number) {
                 id: log.sale.sale_idno,
                 title: "해당 일지",
                 metas: [
-                  { label: "고객사", value: log.sale.clie_name || "-" },
+                  { label: "거래처", value: log.sale.clie_name || "-" },
                   { label: "방문일", value: log.sale.vist_date ? new Date(log.sale.vist_date).toLocaleDateString("ko-KR") : "-" },
                 ],
               })

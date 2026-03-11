@@ -62,4 +62,10 @@ export const CancelSubscriptionOutput = z.object({
   ends_date: IsoDateTime,
   message: z.string(),
 });
+
+export const ResumeSubscriptionOutput = z.object({
+  success: z.literal(true),
+  message: z.string(),
+});
+
 // #endregion

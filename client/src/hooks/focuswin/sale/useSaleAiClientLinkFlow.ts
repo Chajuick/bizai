@@ -42,7 +42,7 @@ export function useSaleAiClientLinkFlow() {
   // #region Helpers
 
   /**
-   * AI가 추출한 연락처를 고객사로 동기화합니다.
+   * AI가 추출한 연락처를 거래처로 동기화합니다.
    * - 연락처 동기화 실패는 주요 플로우를 막지 않도록 조용히 무시합니다.
    */
   const syncContactsToClient = async (clie_idno: number, contacts: AiContact[]) => {
@@ -64,8 +64,8 @@ export function useSaleAiClientLinkFlow() {
   // #region Decision
 
   /**
-   * analyze 결과를 보고 "고객사 연결 모달"을 띄울지 결정합니다.
-   * - 이미 고객사(clie_idno)가 연결된 경우: 열지 않음
+   * analyze 결과를 보고 "거래처 연결 모달"을 띄울지 결정합니다.
+   * - 이미 거래처(clie_idno)가 연결된 경우: 열지 않음
    * - ai_client_name이 없는 경우: 열지 않음
    * - 조건 만족 시: 모달 state 세팅 후 true 반환
    */
@@ -95,8 +95,8 @@ export function useSaleAiClientLinkFlow() {
 
   /**
    * 모달: "맞아요"
-   * - 매칭 고객사가 있으면: 해당 고객사로 연결
-   * - 없으면: 신규 고객사 생성 후 연결
+   * - 매칭 거래처가 있으면: 해당 거래처로 연결
+   * - 없으면: 신규 거래처 생성 후 연결
    */
   const confirmPostAnalyze = async () => {
     if (!postAnalyzeClientState || !pendingSaleId) return;
@@ -120,7 +120,7 @@ export function useSaleAiClientLinkFlow() {
         });
 
         await syncContactsToClient(state.matched_idno, state.ai_contacts);
-        toast.success(`고객사 '${state.matched_name}'에 연결되었습니다.`);
+        toast.success(`거래처 '${state.matched_name}'에 연결되었습니다.`);
         return saleId;
       }
 
@@ -140,7 +140,7 @@ export function useSaleAiClientLinkFlow() {
 
       await syncContactsToClient(client.clie_idno, state.ai_contacts);
       await utils.crm.client.list.invalidate();
-      toast.success(`'${client.clie_name}'을(를) 신규 고객사로 등록하고 연결했습니다.`);
+      toast.success(`'${client.clie_name}'을(를) 신규 거래처로 등록하고 연결했습니다.`);
 
       return saleId;
     } catch (e) {
@@ -164,7 +164,7 @@ export function useSaleAiClientLinkFlow() {
 
     try {
       if (!state.matched_idno) {
-        toast.info("고객사 연결을 건너뛰었습니다.");
+        toast.info("거래처 연결을 건너뛰었습니다.");
         return saleId;
       }
 
@@ -184,7 +184,7 @@ export function useSaleAiClientLinkFlow() {
 
       await syncContactsToClient(client.clie_idno, state.ai_contacts);
       await utils.crm.client.list.invalidate();
-      toast.success(`'${client.clie_name}'을(를) 신규 고객사로 등록하고 연결했습니다.`);
+      toast.success(`'${client.clie_name}'을(를) 신규 거래처로 등록하고 연결했습니다.`);
 
       return saleId;
     } catch (e) {

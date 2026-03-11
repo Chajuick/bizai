@@ -15,7 +15,7 @@ export default function ClientListPage() {
   return (
     <>
       {/* 업로드 처리 중 오버레이 */}
-      <ProcessingOverlay visible={vm.isUploading} message="고객사를 업로드하고 있습니다..." />
+      <ProcessingOverlay visible={vm.isUploading} message="거래처를 업로드하고 있습니다..." />
 
       {/* 업로드 가이드 모달 */}
       <ClientUploadGuideModal
@@ -42,9 +42,9 @@ export default function ClientListPage() {
 
       <PageScaffold
         kicker="CLIENTS"
-        title="고객사"
-        description="고객사/담당자 정보를 빠르게 찾고 관리해요."
-        primaryAction={{ label: "고객사 추가", icon: <Plus size={16} />, onClick: vm.goRegist }}
+        title="거래처"
+        description="거래처/담당자 정보를 빠르게 찾고 관리해요."
+        primaryAction={{ label: "거래처 추가", icon: <Plus size={16} />, onClick: vm.goRegist }}
         actions={[
           {
             label: "엑셀 업로드",
@@ -57,7 +57,7 @@ export default function ClientListPage() {
         status={vm.status}
         headerChildren={<ClientListHeadContent vm={vm} />}
         empty={<ClientListEmptyCard vm={vm} />}
-        fab={{ label: "고객사 추가", onClick: vm.goRegist, icon: <Plus size={24} /> }}
+        fab={{ label: "거래처 추가", onClick: vm.goRegist, icon: <Plus size={24} /> }}
       >
         <ClientListContent vm={vm} />
       </PageScaffold>

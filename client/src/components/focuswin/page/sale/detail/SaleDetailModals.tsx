@@ -15,7 +15,7 @@ export type SaleDetailModalsProps = {
   setConfirm: Dispatch<SetStateAction<ConfirmState>>;
   onConfirm: (c: NonNullable<ConfirmState>) => Promise<void>;
 
-  // ─── AI 분석 후 고객사 연결 모달 ──────────────────────────────────────
+  // ─── AI 분석 후 거래처 연결 모달 ──────────────────────────────────────
   postAnalyzeClientState: PostAnalyzeClientState;
   onPostAnalyzeConfirm: () => Promise<void>;
   onPostAnalyzeDeny: () => Promise<void>;

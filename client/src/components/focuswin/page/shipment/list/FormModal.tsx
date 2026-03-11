@@ -78,9 +78,9 @@ export default function ShipmentListFormModal({
             />
           ) : null}
 
-          {/* 고객사 */}
+          {/* 거래처 */}
           <TextField
-            label="고객사"
+            label="거래처"
             required
             value={form.clie_name}
             onChange={(v) => setForm((f) => ({ ...f, clie_name: v }))}

@@ -116,7 +116,7 @@ export function useClientRegistVM() {
 
   const submit = useCallback(async () => {
     if (!clientForm.clie_name.trim()) {
-      toast.error("고객사명을 입력해주세요.");
+      toast.error("거래처명을 입력해주세요.");
       return;
     }
 
@@ -143,7 +143,7 @@ export function useClientRegistVM() {
         contacts: contactsDraft,
       });
 
-      toast.success("고객사를 등록했어요.");
+      toast.success("거래처를 등록했어요.");
       await utils.crm.client.list.invalidate();
       goDetail(res.clie_idno);
     } catch (e) {

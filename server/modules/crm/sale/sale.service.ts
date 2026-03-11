@@ -29,6 +29,123 @@ import { makeAiApptKey, toAiCore } from "../../ai/ai.util";
 
 // #region Helpers
 
+function sanitizeAiTitle(title: string): string {
+  if (!title) return "후속 일정";
+
+  let v = title.trim();
+
+  // 자주 튀는 혼합 표기 보정
+  v = v
+    .replace(/比較표/g, "비교표")
+    .replace(/比較/g, "비교")
+    .replace(/見積서/g, "견적서")
+    .replace(/提案서/g, "제안서")
+    .replace(/發送/g, "발송")
+    .replace(/確認/g, "확인");
+
+  // 한자 제거
+  v = v.replace(/[\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]/g, "");
+
+  // 한글/영문/숫자/공백만 허용
+  v = v.replace(/[^가-힣a-zA-Z0-9\s]/g, "");
+
+  // 공백 정리
+  v = v.replace(/\s+/g, " ").trim();
+
+  if (!v) return "후속 일정";
+
+  return v.slice(0, 15);
+}
+
+function inferBetterTitle(title: string, desc?: string | null): string {
+  const raw = `${title ?? ""} ${desc ?? ""}`;
+  const safe = sanitizeAiTitle(title);
+
+  // 자료 발송류는 하나의 표현으로 통일
+  if (/견적서|제안서|사양서|소개 자료|기능 소개|비교표|비교 자료|자료 발송|메일 발송/.test(raw)) {
+    return "자료 발송";
+  }
+
+  // 결재/검토/회신 추적
+  if (/결재|내부 결재|검토 결과|회신|피드백/.test(raw)) {
+    return "결과 확인";
+  }
+
+  // 미팅/방문/회의
+  if (/미팅|회의|방문|데모|발표|협의/.test(raw)) {
+    return "후속 미팅";
+  }
+
+  return safe || "후속 일정";
+}
+
+type AiAppointment = {
+  title?: string;
+  date?: string | null;
+  date_adjusted?: boolean;
+  adjust_reason?: string;
+  desc?: string;
+  action_owner?: "self" | "client" | "shared";
+};
+
+function normalizeAiAppointments(appts?: AiAppointment[] | null): AiAppointment[] {
+  if (!appts?.length) return [];
+
+  const normalized = appts.map((appt) => {
+    const title = inferBetterTitle(appt.title ?? "", appt.desc ?? null);
+
+    return {
+      ...appt,
+      title,
+      desc: appt.desc?.trim() ?? "",
+      action_owner: appt.action_owner ?? "self",
+      date_adjusted: !!appt.date_adjusted,
+      adjust_reason: appt.adjust_reason ?? "",
+    };
+  });
+
+  // 같은 날짜 + 같은 action_owner + 같은 "자료 발송"류는 하나로 합치기
+  const mergedMap = new Map<string, AiAppointment>();
+
+  for (const appt of normalized) {
+    const title = appt.title ?? "후속 일정";
+    const date = appt.date ?? "null";
+    const owner = appt.action_owner ?? "self";
+
+    const isMaterialSend = title === "자료 발송";
+    const mergeKey = isMaterialSend
+      ? `material|${date}|${owner}`
+      : `${title}|${date}|${owner}`;
+
+    const existing = mergedMap.get(mergeKey);
+
+    if (!existing) {
+      mergedMap.set(mergeKey, { ...appt });
+      continue;
+    }
+
+    // desc 합치기
+    const descParts = [existing.desc ?? "", appt.desc ?? ""]
+      .map((v) => v.trim())
+      .filter(Boolean);
+
+    const uniqueDesc = Array.from(new Set(descParts));
+    existing.desc = uniqueDesc.join(" / ");
+
+    // 보정 여부는 하나라도 true면 true
+    existing.date_adjusted = !!existing.date_adjusted || !!appt.date_adjusted;
+
+    // adjust_reason도 합치기
+    const reasonParts = [existing.adjust_reason ?? "", appt.adjust_reason ?? ""]
+      .map((v) => v.trim())
+      .filter(Boolean);
+
+    existing.adjust_reason = Array.from(new Set(reasonParts)).join(" / ");
+  }
+
+  return Array.from(mergedMap.values());
+}
+
 function parseDateOrThrow(v: string | number, errMsg: string) {
   const d = new Date(v);
   if (Number.isNaN(d.getTime())) throwAppError({ tRPCCode: "BAD_REQUEST", appCode: "INVALID_DATE", message: errMsg, displayType: "toast" });
@@ -134,7 +251,7 @@ export const saleService = {
 
     const attachments = await saleRepo.listAttachments({ db }, { comp_idno: ctx.comp_idno, sale_idno });
 
-    // 연결된 고객사의 공식 연락처 조회
+    // 연결된 거래처의 공식 연락처 조회
     let client_contact: {
       cont_name: string | null;
       cont_tele: string | null;
@@ -652,6 +769,9 @@ export const saleService = {
       parsed = { summary: contentStr };
     }
 
+    const normalizedAppointments = normalizeAiAppointments(parsed.appointments ?? []);
+    parsed.appointments = normalizedAppointments;
+
     const summary = parsed.summary ?? "";
     const ai_client_name = parsed.client_name ?? null;
     let matched_client_idno: number | null = null;
@@ -696,7 +816,7 @@ export const saleService = {
       },
     });
 
-    // 연결된 고객사 컨택 동기화
+    // 연결된 거래처 컨택 동기화
     if (sale.clie_idno && ai_contacts.length > 0) {
       await clientService.syncContacts(workerCtx, {
         clie_idno: Number(sale.clie_idno),
@@ -706,7 +826,7 @@ export const saleService = {
 
     // 일정 자동 생성 (aiex_keys 중복 방지)
     let schedule_idno: number | null = null;
-    for (const appt of (parsed.appointments ?? [])) {
+    for (const appt of normalizedAppointments) {
       if (!appt.date) continue;
       const apptDate = new Date(appt.date);
       if (Number.isNaN(apptDate.getTime())) continue;
@@ -721,7 +841,7 @@ export const saleService = {
         comp_idno, owne_idno, sale_idno,
         clie_idno: sale.clie_idno ?? null,
         clie_name: (parsed.client_name ?? sale.clie_name) ?? null,
-        sche_name: appt.title ?? "AI 자동 일정",
+        sche_name: sanitizeAiTitle(appt.title ?? "AI 자동 일정"),
         sche_desc: appt.desc ?? null,
         sche_pric: sale_pric !== null ? String(sale_pric) : null,
         sche_date: apptDate,
@@ -899,7 +1019,7 @@ Analyze the sales meeting note or voice transcript below, then return ONLY valid
 
 ## Output JSON schema
 {
-  "summary": "한 문단 요약 (Korean, 3-5 sentences). 핵심 논의 내용, 고객 요구사항, 협의 결과, 그리고 모든 후속 조치 항목(발송 요청, 확인 요청, 자료 준비 등)을 빠짐없이 포함하세요.",
+  "summary": "한 문단 요약 (Korean, 3-5 sentences). 핵심 논의 내용, 거래처 요구사항, 협의 결과, 그리고 모든 후속 조치 항목(발송 요청, 확인 요청, 자료 준비 등)을 빠짐없이 포함하세요.",
   "appointments": [
     {
       "title": "행동 중심 제목 (Korean, 15자 이내)",
@@ -910,7 +1030,7 @@ Analyze the sales meeting note or voice transcript below, then return ONLY valid
       "action_owner": "self | client | shared"
     }
   ],
-  "client_name": "고객사 공식 명칭 (법인명 또는 브랜드명). 개인명만 있고 회사명이 없으면 null.",
+  "client_name": "거래처 공식 명칭 (법인명 또는 브랜드명). 개인명만 있고 회사명이 없으면 null.",
   "contacts": [
     {
       "name": "담당자 이름 (직책 포함 가능, e.g. '홍길동 부장')",
@@ -951,13 +1071,13 @@ Determine who is responsible for performing the action:
 
 - "self" — 우리(영업사원/우리 회사)가 수행해야 하는 작업
   - 자료 발송, 견적서 전달, 이메일/문자 회신, 확인 후 연락
-  - 고객이 요청한 작업 중 우리가 이행해야 하는 것
-  - 고객의 회신/결과를 기다리다가 추적해야 하는 팔로업
-  - Examples: "견적서 발송", "데이터 이전 확인 메일", "고객 회신 확인", "내부 검토 결과 확인"
+  - 거래처이 요청한 작업 중 우리가 이행해야 하는 것
+  - 거래처의 회신/결과를 기다리다가 추적해야 하는 팔로업
+  - Examples: "견적서 발송", "데이터 이전 확인 메일", "거래처 회신 확인", "내부 검토 결과 확인"
 
-- "client" — 고객이 수행해야 하는 작업 (우리는 결과를 기다리는 입장)
-  - 고객의 내부 결재, 내부 검토, 고객이 자료/연락을 보내주기로 한 것
-  - Examples: "내부 결재 진행", "샘플 파일 전달", "고객 내부 검토"
+- "client" — 거래처이 수행해야 하는 작업 (우리는 결과를 기다리는 입장)
+  - 거래처의 내부 결재, 내부 검토, 거래처이 자료/연락을 보내주기로 한 것
+  - Examples: "내부 결재 진행", "샘플 파일 전달", "거래처 내부 검토"
 
 - "shared" — 양측이 함께 참여하는 공동 활동
   - 미팅, 발표, 데모, 협의, 계약 체결
@@ -966,12 +1086,16 @@ Determine who is responsible for performing the action:
 ### Title rules (CRITICAL)
 - Titles MUST be action-oriented and clear. 15 characters or fewer.
 - BAD: "우진테크와의 후속 회신", "삼성과 관련된 다음 단계"
-- GOOD: "견적서 발송", "고객 회신 확인", "내부 검토 결과 확인", "제안 미팅"
+- GOOD: "견적서 발송", "거래처 회신 확인", "내부 검토 결과 확인", "제안 미팅"
 - For client-owned tasks that we need to track: use "확인" or "대기" suffix
   - "내부 검토 후 연락 주겠다" → title: "내부 검토 결과 확인" (action_owner: "self")
   - "결재 후 진행하겠다" → title: "결재 완료 확인" (action_owner: "self")
 - For our own tasks: use direct action verbs
   - "자료 보내드리겠습니다" → title: "기능 소개 자료 발송" (action_owner: "self")
+  - Titles must be written in natural Korean only.
+- Do not use Chinese characters, Japanese characters, or mixed-script words.
+- Forbidden examples: "比較표 발송", "見積서 전달"
+- Preferred examples: "비교표 발송", "견적서 발송", "자료 발송", "결과 확인"
 
 ### desc rules
 - desc must preserve the original context and nuance from the meeting note.
@@ -1146,7 +1270,7 @@ Output:
       "action_owner": "self"
     },
     {
-      "title": "고객 회신 확인",
+      "title": "거래처 회신 확인",
       "date": "2026-03-06T09:00:00+09:00",
       "date_adjusted": false,
       "adjust_reason": "",

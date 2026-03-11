@@ -23,7 +23,7 @@ export default function ClientUploadGuideModal({
           <FileSpreadsheet size={18} className="text-blue-600" />
         </div>
         <div>
-          <p className="text-base font-black text-slate-900">엑셀로 고객사 일괄 등록</p>
+          <p className="text-base font-black text-slate-900">엑셀로 거래처 일괄 등록</p>
           <p className="text-xs text-slate-500 mt-0.5">
             많은 거래처를 엑셀로 편하게 업로드할 수 있어요.
           </p>
@@ -35,7 +35,7 @@ export default function ClientUploadGuideModal({
         <Step
           number={1}
           title="양식 다운로드"
-          desc="아래 [양식 다운로드] 버튼으로 양식을 받아 고객사 정보를 입력하세요."
+          desc="아래 [양식 다운로드] 버튼으로 양식을 받아 거래처 정보를 입력하세요."
         />
         <Step
           number={2}
@@ -52,7 +52,7 @@ export default function ClientUploadGuideModal({
         </div>
         <ul className="flex flex-col gap-1.5">
           {[
-            "고객사명 + 사업자번호(10자리)가 있는 행만 등록돼요.",
+            "거래처명 + 사업자번호(10자리)가 있는 행만 등록돼요.",
             "같은 사업자번호가 있으면 정보가 업데이트돼요. (중복 등록 없음)",
             "업로드 중 브라우저를 닫으면 결과를 확인하지 못할 수 있어요.",
             "지원 형식: .xlsx  .xls  .csv",

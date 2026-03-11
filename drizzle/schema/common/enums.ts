@@ -119,7 +119,7 @@ export const SHIP_STATUSES = [
  */
 export const FILE_REF_TYPES = [
   "sale_info", // 영업일지
-  "client",    // 고객
+  "client",    // 거래처
   "promise",   // 일정/약속
   "order",     // 수주
   "delivery",  // 납품/매출

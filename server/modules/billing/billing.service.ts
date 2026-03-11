@@ -222,6 +222,60 @@ export const billingService = {
   },
   // #endregion
 
+  // #region resumeSubscription
+  async resumeSubscription(ctx: ServiceCtx) {
+    const db = getDb();
+
+    const sub = await billingRepo.findCurrentSubWithPlan({ db }, ctx.comp_idno);
+    if (!sub) {
+      throwAppError({
+        tRPCCode: "NOT_FOUND",
+        appCode: "SUBSCRIPTION_NOT_FOUND",
+        message: "구독을 찾을 수 없습니다.",
+        displayType: "toast",
+        retryable: false,
+      });
+    }
+
+    if (sub.plan_code === "free") {
+      throwAppError({
+        tRPCCode: "BAD_REQUEST",
+        appCode: "FREE_PLAN_RESUME_NOT_ALLOWED",
+        message: "무료 플랜은 해지 예약 상태가 아닙니다.",
+        displayType: "toast",
+        retryable: false,
+      });
+    }
+
+    if (sub.subs_stat === "active") {
+      return {
+        success: true as const,
+        message: "이미 정상 구독 상태입니다.",
+      };
+    }
+
+    if (sub.subs_stat !== "canceled") {
+      throwAppError({
+        tRPCCode: "BAD_REQUEST",
+        appCode: "SUBSCRIPTION_RESUME_NOT_ALLOWED",
+        message: "해지 예약 상태의 구독만 취소할 수 있습니다.",
+        displayType: "toast",
+        retryable: false,
+      });
+    }
+
+    await billingRepo.updateSubStat(
+      { db },
+      { subs_idno: sub.subs_idno, subs_stat: "active", modi_idno: ctx.user_idno },
+    );
+
+    return {
+      success: true as const,
+      message: "해지 예약이 취소되었습니다.",
+    };
+  },
+  // #endregion
+
   // #region getUsageSummary
   async getUsageSummary(ctx: ServiceCtx) {
     return aiService.getUsageSummary(ctx.comp_idno);

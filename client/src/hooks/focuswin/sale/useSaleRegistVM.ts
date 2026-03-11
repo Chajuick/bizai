@@ -42,7 +42,7 @@ export function useSaleRegistVM() {
   const [preSaveState, setPreSaveState] = useState<PreSaveState | null>(null);
   const [isCheckingClient, setIsCheckingClient] = useState(false);
 
-  // ✅ 공용 훅: AI 분석 후 고객사 연결 플로우
+  // ✅ 공용 훅: AI 분석 후 거래처 연결 플로우
   const aiLink = useSaleAiClientLinkFlow();
 
   // ✅ 공용 훅: 처리 중 오버레이
@@ -115,7 +115,7 @@ export function useSaleRegistVM() {
   /**
    * 영업일지 저장(선택적으로 AI 분석까지)
    * - 저장 성공 후 list/stats invalidate
-   * - AI 분석 성공 시 고객사 자동 연결 모달 조건 검사
+   * - AI 분석 성공 시 거래처 자동 연결 모달 조건 검사
    * - 모달을 띄운 경우: 상세 이동은 보류(모달에서 처리)
    */
   const doSave = async ({
@@ -173,7 +173,7 @@ export function useSaleRegistVM() {
 
   /**
    * 저장 버튼 진입점
-   * - 고객사명이 입력되었는데 id가 없으면: 유사 고객사 매칭 검사 → 프리세이브 모달
+   * - 거래처명이 입력되었는데 id가 없으면: 유사 거래처 매칭 검사 → 프리세이브 모달
    * - 그 외: 바로 저장
    */
   const submit = async (analyze: boolean) => {

@@ -15,7 +15,7 @@ export default function SaleListHeader({ vm, className }: Props) {
         debounceMs={250}
         onChange={vm.handleSearch}
         onClear={vm.handleClear}
-        placeholder="고객사, 담당자, 내용으로 검색…"
+        placeholder="거래처, 담당자, 내용으로 검색…"
       />
 
       <div className="mt-3">

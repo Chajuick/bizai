@@ -107,7 +107,7 @@ export function useShipmentListVM() {
         id: row.ship_idno,
         title: "해당 납품",
         metas: [
-          { label: "고객사", value: row.clie_name || "-" },
+          { label: "거래처", value: row.clie_name || "-" },
           { label: "납품일", value: row.ship_date ? new Date(row.ship_date).toLocaleDateString("ko-KR") : "미입력" },
           { label: "금액", value: formatKRW(Number(row.ship_pric || 0)) }
         ]

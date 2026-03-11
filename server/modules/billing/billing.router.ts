@@ -9,6 +9,7 @@ import {
   CancelSubscriptionOutput,
   ChangePlanInput,
   PlanItemOutput,
+  ResumeSubscriptionOutput,
   UsageSummaryOutput,
 } from "./billing.dto";
 import { billingService } from "./billing.service";
@@ -45,5 +46,11 @@ export const billingRouter = router({
   cancelSubscription: companyAdminProcedure
     .output(CancelSubscriptionOutput)
     .mutation(({ ctx }) => billingService.cancelSubscription(svcCtxFromTrpc(ctx))),
+  // #endregion
+
+  // #region resume 
+  resumeSubscription: companyAdminProcedure
+    .output(ResumeSubscriptionOutput)
+    .mutation(({ ctx }) => billingService.resumeSubscription(svcCtxFromTrpc(ctx))),
   // #endregion
 });

@@ -101,10 +101,10 @@ export function useClientListVM() {
 
   const hasData = accRows.length > 0;
 
-  const emptyTitle = search.trim() ? "검색 결과가 없어요" : "아직 고객사가 없어요";
+  const emptyTitle = search.trim() ? "검색 결과가 없어요" : "아직 거래처가 없어요";
   const emptyDesc = search.trim()
     ? "검색어를 바꿔서 다시 시도해보세요."
-    : "고객사를 등록하면 영업/수주 기록을 빠르게 연결할 수 있어요.";
+    : "거래처를 등록하면 영업/수주 기록을 빠르게 연결할 수 있어요.";
 
   // #endregion
 
@@ -138,7 +138,7 @@ export function useClientListVM() {
 
   // #region Template Download
   const downloadTemplate = () => {
-    const headers = ["고객사명", "사업자번호", "업종", "주소", "담당자명", "연락처", "이메일"];
+    const headers = ["거래처명", "사업자번호", "업종", "주소", "담당자명", "연락처", "이메일"];
     const example = ["예시회사", "1234567890", "제조업", "서울시 강남구 테헤란로 123", "홍길동", "010-1234-5678", "example@company.com"];
 
     const csv = [headers, example]
@@ -150,7 +150,7 @@ export function useClientListVM() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "고객사_업로드_양식.csv";
+    a.download = "거래처_업로드_양식.csv";
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -188,7 +188,7 @@ export function useClientListVM() {
       await refresh();
 
       if (result.failed === 0) {
-        toast.success(`고객사 업로드 완료: 신규 ${result.inserted}건, 업데이트 ${result.updated}건`);
+        toast.success(`거래처 업로드 완료: 신규 ${result.inserted}건, 업데이트 ${result.updated}건`);
       }
     } catch (e) {
       handleApiError(e);

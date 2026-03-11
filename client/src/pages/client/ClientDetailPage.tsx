@@ -17,7 +17,7 @@ export default function ClientDetailPage() {
       <PageScaffold
         kicker="CLIENT DETAIL"
         title={vm.title}
-        description="고객사 정보와 담당자를 관리하세요."
+        description="거래처 정보와 담당자를 관리하세요."
         status={vm.status}
         onBack={vm.goList}
         primaryAction={vm.primaryAction}

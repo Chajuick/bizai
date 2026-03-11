@@ -110,7 +110,7 @@ export function useClientDetailVM() {
   const client = clientGet.data ?? null;
   const isLoading = clientGet.isLoading;
 
-  const title = useMemo(() => client?.clie_name || "고객사", [client?.clie_name]);
+  const title = useMemo(() => client?.clie_name || "거래처", [client?.clie_name]);
   const status: PageStatus = isLoading ? "loading" : !client ? "empty" : "ready";
 
   const invalidState = useMemo(() => {
@@ -119,7 +119,7 @@ export function useClientDetailVM() {
     return {
       replacePage: true,
       icon: <BookMarked size={24} />,
-      title: "고객사",
+      title: "거래처",
       actions: [{ label: "목록으로", icon: <List size={16} />, onClick: goList }],
     } satisfies PageInvalidState;
   }, [isLoading, client, goList]);
@@ -250,7 +250,7 @@ export function useClientDetailVM() {
 
   const submit = useCallback(async () => {
     if (!clientForm.clie_name.trim()) {
-      toast.error("고객사명을 입력해주세요.");
+      toast.error("거래처명을 입력해주세요.");
       return;
     }
 
@@ -306,8 +306,8 @@ export function useClientDetailVM() {
       buildDeleteConfirm({
         kind: "client",
         id: client.clie_idno,
-        title: client.clie_name || "해당 고객사",
-        metas: [{ label: "고객사", value: client.clie_name || "-" }],
+        title: client.clie_name || "해당 거래처",
+        metas: [{ label: "거래처", value: client.clie_name || "-" }],
       })
     );
   };
@@ -316,7 +316,7 @@ export function useClientDetailVM() {
     if (c.intent !== "delete") return;
 
     await deleteClient.mutateAsync({ clie_idno: c.target.id });
-    toast.success("고객사를 삭제했어요.");
+    toast.success("거래처를 삭제했어요.");
     setConfirm(null);
     await utils.crm.client.list.invalidate();
     goList();

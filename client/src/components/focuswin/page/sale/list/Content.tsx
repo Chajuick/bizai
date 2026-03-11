@@ -15,7 +15,7 @@ export default function SaleListContent({ vm }: Props) {
         <Link key={log.sale_idno} href={`/sale-list/${log.sale_idno}`} className="block">
           <SaleListCard
             log={log}
-            title={log.clie_name || "고객사 미지정"}
+            title={log.clie_name || "거래처 미지정"}
             subtitle={log.cont_name ? `· ${log.cont_name}` : undefined}
             description={log.aiex_summ || log.orig_memo}
           />

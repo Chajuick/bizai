@@ -40,7 +40,7 @@ type SlotProps = {
 type IconProps = {
   children: React.ReactNode;
   className?: string;
-  variant?: "primary" | "warning" | "danger" | "slate";
+  variant?: "primary" | "warning" | "danger" | "slate" | "success";
   iconClassName?: string;
 };
 
@@ -85,21 +85,12 @@ function isFromInteractiveElement(target: EventTarget | null) {
   if (!el) return false;
 
   // 기본 인터랙티브 요소 + role/button + 커스텀 가드용 data attribute
-  return !!el.closest(
-    "button, a, input, textarea, select, [role='button'], [data-card-interactive]"
-  );
+  return !!el.closest("button, a, input, textarea, select, [role='button'], [data-card-interactive]");
 }
 // #endregion
 
 // #region Root
-function Root({
-  children,
-  className,
-  interactive,
-  onClick,
-  onDoubleClick,
-  preventInteractiveClick = true,
-}: WorkItemCardRootProps) {
+function Root({ children, className, interactive, onClick, onDoubleClick, preventInteractiveClick = true }: WorkItemCardRootProps) {
   const clickable = !!onClick;
   const dblClickable = !!onDoubleClick;
 
@@ -113,17 +104,17 @@ function Root({
     <div
       role={clickable ? "button" : undefined}
       tabIndex={clickable ? 0 : undefined}
-      onClick={(e) => {
+      onClick={e => {
         if (!onClick) return;
         if (preventInteractiveClick && isFromInteractiveElement(e.target)) return;
         onClick();
       }}
-      onDoubleClick={(e) => {
+      onDoubleClick={e => {
         if (!onDoubleClick) return;
         if (preventInteractiveClick && isFromInteractiveElement(e.target)) return;
         onDoubleClick();
       }}
-      onKeyDown={(e) => {
+      onKeyDown={e => {
         if (!clickable) return;
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
@@ -140,15 +131,13 @@ function Root({
         "[box-shadow:var(--fowin-shadow-card)]",
 
         // ✅ hover 효과는 스타일 인터랙티브면 적용
-        stylingInteractive &&
-          "hover:border-[color:var(--fowin-border-hover)] hover:[box-shadow:var(--fowin-shadow-card-hover)] hover:-translate-y-[1px]",
+        stylingInteractive && "hover:border-[color:var(--fowin-border-hover)] hover:[box-shadow:var(--fowin-shadow-card-hover)] hover:-translate-y-[1px]",
 
         // ✅ 커서 포인터는 “진짜 클릭 가능”할 때만
         pointerInteractive && "cursor-pointer",
 
         // focus ring은 클릭 가능할 때만
-        clickable &&
-          "focus-visible:outline-none focus-visible:[box-shadow:var(--fowin-shadow-card),var(--fowin-ring)]",
+        clickable && "focus-visible:outline-none focus-visible:[box-shadow:var(--fowin-shadow-card),var(--fowin-ring)]",
 
         className
       )}
@@ -172,25 +161,23 @@ function Icon({ children, className, variant = "primary", iconClassName }: IconP
             base: "bg-orange-50 border-orange-200 text-orange-600",
             hover: "group-hover:border-orange-300",
           }
-        : variant === "slate"
+        : variant === "success"
           ? {
-              base: "bg-muted border-border text-muted-foreground",
-              hover: "group-hover:border-slate-300 dark:group-hover:border-slate-600",
+              base: "bg-emerald-50 border-emerald-200 text-emerald-600",
+              hover: "group-hover:border-emerald-300",
             }
-          : {
-              base: "bg-blue-50 border-blue-200 text-blue-600",
-              hover: "group-hover:border-blue-300",
-            };
+          : variant === "slate"
+            ? {
+                base: "bg-muted border-border text-muted-foreground",
+                hover: "group-hover:border-slate-300 dark:group-hover:border-slate-600",
+              }
+            : {
+                base: "bg-blue-50 border-blue-200 text-blue-600",
+                hover: "group-hover:border-blue-300",
+              };
 
   return (
-    <div
-      className={cn(
-        "w-10 h-10 rounded-2xl border flex items-center justify-center shrink-0 mt-0.5 transition",
-        v.base,
-        v.hover,
-        className
-      )}
-    >
+    <div className={cn("w-10 h-10 rounded-2xl border flex items-center justify-center shrink-0 mt-0.5 transition", v.base, v.hover, className)}>
       <span className={cn("text-current", iconClassName)}>{children}</span>
     </div>
   );
@@ -210,11 +197,7 @@ function Header({ title, tags, actions, className }: HeaderProps) {
         </div>
       </div>
 
-      {actions ? (
-        <div className="shrink-0 sm:min-w-[88px] flex justify-end text-right">{actions}</div>
-      ) : (
-        <div className="shrink-0 sm:min-w-[88px]" />
-      )}
+      {actions ? <div className="shrink-0 sm:min-w-[88px] flex justify-end text-right">{actions}</div> : <div className="shrink-0 sm:min-w-[88px]" />}
     </div>
   );
 }
@@ -242,13 +225,7 @@ function Footer({ left, right, className }: FooterProps) {
 // #region Meta
 function Meta({ icon, label, value, tone = "muted", className }: MetaProps) {
   return (
-    <div
-      className={cn(
-        "flex items-center gap-2 text-xs",
-        tone === "muted" ? "text-muted-foreground" : "text-foreground/80",
-        className
-      )}
-    >
+    <div className={cn("flex items-center gap-2 text-xs", tone === "muted" ? "text-muted-foreground" : "text-foreground/80", className)}>
       {icon ? <span className="text-muted-foreground/70">{icon}</span> : null}
       {label ? <span className="text-muted-foreground/70">{label}</span> : null}
       <span className="truncate">{value}</span>
@@ -268,28 +245,13 @@ function StagePill({ children, variant = "slate", className }: StagePillProps) {
           ? "bg-red-50 border-red-100 text-red-700"
           : "bg-muted border-border text-muted-foreground";
 
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center px-2 py-0.5 rounded-full border text-[11px] font-black",
-        v,
-        className
-      )}
-    >
-      {children}
-    </span>
-  );
+  return <span className={cn("inline-flex items-center px-2 py-0.5 rounded-full border text-[11px] font-black", v, className)}>{children}</span>;
 }
 // #endregion
 
 // #region ScheduleMeta
 function ScheduleMeta({ value, status = "default", icon, className }: ScheduleMetaProps) {
-  const color =
-    status === "overdue"
-      ? "text-red-500"
-      : status === "imminent"
-        ? "text-orange-600"
-        : "text-blue-600";
+  const color = status === "overdue" ? "text-red-500" : status === "imminent" ? "text-orange-600" : "text-blue-600";
 
   return (
     <div className={cn("text-xs font-semibold flex items-center gap-1", color, className)}>

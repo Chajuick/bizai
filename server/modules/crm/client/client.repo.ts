@@ -244,7 +244,7 @@ export const clientRepo = {
   },
   // #endregion
 
-  // #region listContacts — 고객사 담당자 목록
+  // #region listContacts — 거래처 담당자 목록
   async listContacts(
     { db }: RepoDeps,
     params: { comp_idno: number; clie_idno: number }

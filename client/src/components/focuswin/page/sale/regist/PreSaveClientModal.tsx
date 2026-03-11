@@ -24,7 +24,7 @@ export default function SaleRegistPreSaveClientDialog({
       open
       onOpenChange={() => {}}
       requireChoice
-      kicker="고객사 확인"
+      kicker="거래처 확인"
       title={
         <div className="flex items-start gap-3">
           <div className="w-12 h-12 rounded-2xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-700 shrink-0">
@@ -33,7 +33,7 @@ export default function SaleRegistPreSaveClientDialog({
 
           <div className="min-w-0">
             <p className="text-base font-black text-slate-900 leading-snug">
-              혹시 고객사에 등록된{" "}
+              혹시 거래처에 등록된{" "}
               <span
                 className="text-blue-700 inline-block max-w-[18rem] align-bottom truncate"
                 title={matched}
@@ -55,7 +55,7 @@ export default function SaleRegistPreSaveClientDialog({
           </div>
 
           <div className="flex items-start gap-2">
-            <span className="text-slate-400 w-20 shrink-0">등록된 고객사</span>
+            <span className="text-slate-400 w-20 shrink-0">등록된 거래처</span>
             <span className="min-w-0 flex-1 font-black text-blue-700 truncate" title={matched}>
               {matched}
             </span>

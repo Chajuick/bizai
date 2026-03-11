@@ -198,7 +198,7 @@ export const clientService = {
   },
   // #endregion
 
-  // #region syncContact — AI 추출 연락처를 고객사에 반영 (빈 필드만, 단일)
+  // #region syncContact — AI 추출 연락처를 거래처에 반영 (빈 필드만, 단일)
   async syncContact(
     ctx: ServiceCtx,
     input: { clie_idno: number; cont_name?: string; cont_tele?: string; cont_mail?: string }
@@ -216,7 +216,7 @@ export const clientService = {
   },
   // #endregion
 
-  // #region syncContacts — AI 추출 복수 담당자를 고객사에 upsert (이름 기준 중복 방지)
+  // #region syncContacts — AI 추출 복수 담당자를 거래처에 upsert (이름 기준 중복 방지)
   async syncContacts(ctx: ServiceCtx, input: { clie_idno: number; contacts: AiContactItem[] }) {
     const db = getDb();
 
@@ -383,7 +383,7 @@ export const clientService = {
   },
   // #endregion
 
-  // #region createWithContacts — 고객사 + 담당자 트랜잭션 생성
+  // #region createWithContacts — 거래처 + 담당자 트랜잭션 생성
   async createWithContacts(
     ctx: ServiceCtx,
     payload: z.infer<typeof ClientCreateWithContactsInput>
@@ -426,82 +426,103 @@ export const clientService = {
   },
   // #endregion
 
-  // #region saveWithContacts — 고객사 + 담당자 트랜잭션 저장 (diff 기반)
+  // #region saveWithContacts — 거래처 + 담당자 트랜잭션 저장 (diff 기반)
   async saveWithContacts(
     ctx: ServiceCtx,
     payload: z.infer<typeof ClientSaveWithContactsInput>
   ): Promise<void> {
-    const { client, contacts = [] } = payload;
-    await tx(async (trx) => {
-      const { clie_idno, ...patch } = client;
+    try {
+      const { client, contacts = [] } = payload;
 
-      await clientRepo.update(
-        { db: trx },
-        { comp_idno: ctx.comp_idno, clie_idno, data: withUpdateAudit(ctx, patch) }
-      );
+      await tx(async (trx) => {
+        const { clie_idno, ...patch } = client;
 
-      // 대표 담당자 변경 시 먼저 전체 해제
-      const hasMainChange = contacts.some((c) => c.main_yesn && c._state !== "delete");
-      if (hasMainChange) {
-        await clientRepo.clearMainContact({ db: trx }, { comp_idno: ctx.comp_idno, clie_idno });
-      }
+        await clientRepo.update(
+          { db: trx },
+          { comp_idno: ctx.comp_idno, clie_idno, data: withUpdateAudit(ctx, patch) }
+        );
 
-      for (const c of contacts) {
-        if (c._state === "new") {
-          await clientRepo.createContact(
-            { db: trx },
-            withCreateAudit(ctx, {
-              comp_idno: ctx.comp_idno,
-              clie_idno,
-              cont_name: c.cont_name,
-              cont_role: c.cont_role ?? null,
-              cont_tele: c.cont_tele ?? null,
-              cont_mail: c.cont_mail || null,
-              cont_memo: c.cont_memo ?? null,
-              main_yesn: c.main_yesn ?? false,
-              enab_yesn: true,
-            })
-          );
-        } else if (c._state === "update" && c.cont_idno) {
-          await clientRepo.updateContact(
-            { db: trx },
-            {
-              comp_idno: ctx.comp_idno,
-              cont_idno: c.cont_idno,
-              data: withUpdateAudit(ctx, {
+        const hasMainChange = contacts.some((c) => c.main_yesn && c._state !== "delete");
+        if (hasMainChange) {
+          await clientRepo.clearMainContact({ db: trx }, { comp_idno: ctx.comp_idno, clie_idno });
+        }
+
+        for (const c of contacts) {
+          if (c._state === "new") {
+            await clientRepo.createContact(
+              { db: trx },
+              withCreateAudit(ctx, {
+                comp_idno: ctx.comp_idno,
+                clie_idno,
                 cont_name: c.cont_name,
                 cont_role: c.cont_role ?? null,
                 cont_tele: c.cont_tele ?? null,
                 cont_mail: c.cont_mail || null,
                 cont_memo: c.cont_memo ?? null,
-                main_yesn: c.main_yesn,
-              }),
-            }
-          );
-        } else if (c._state === "delete" && c.cont_idno) {
-          await clientRepo.disableContact(
-            { db: trx },
-            { comp_idno: ctx.comp_idno, cont_idno: c.cont_idno, modi_idno: ctx.user_idno }
-          );
+                main_yesn: c.main_yesn ?? false,
+                enab_yesn: true,
+              })
+            );
+          } else if (c._state === "update" && c.cont_idno) {
+            await clientRepo.updateContact(
+              { db: trx },
+              {
+                comp_idno: ctx.comp_idno,
+                cont_idno: c.cont_idno,
+                data: withUpdateAudit(ctx, {
+                  cont_name: c.cont_name,
+                  cont_role: c.cont_role ?? null,
+                  cont_tele: c.cont_tele ?? null,
+                  cont_mail: c.cont_mail || null,
+                  cont_memo: c.cont_memo ?? null,
+                  main_yesn: c.main_yesn,
+                }),
+              }
+            );
+          } else if (c._state === "delete" && c.cont_idno) {
+            await clientRepo.disableContact(
+              { db: trx },
+              { comp_idno: ctx.comp_idno, cont_idno: c.cont_idno, modi_idno: ctx.user_idno }
+            );
+          }
         }
+
+        const aliveAfter = contacts.filter((c) => c._state !== "delete");
+        if (aliveAfter.length > 0 && !aliveAfter.some((c) => c.main_yesn)) {
+          const first = aliveAfter[0];
+          if (first?.cont_idno) {
+            await clientRepo.updateContact(
+              { db: trx },
+              {
+                comp_idno: ctx.comp_idno,
+                cont_idno: first.cont_idno,
+                data: { main_yesn: true, modi_idno: ctx.user_idno },
+              }
+            );
+          }
+        }
+      });
+    } catch (err) {
+      console.error("[crm.client.saveWithContacts] failed", {
+        message: (err as any)?.message,
+        code: (err as any)?.code,
+        errno: (err as any)?.errno,
+        sqlMessage: (err as any)?.sqlMessage ?? (err as any)?.cause?.sqlMessage,
+        cause: (err as any)?.cause,
+      });
+
+      if (isDupKeyErr(err)) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "이미 등록된 담당자 정보입니다.",
+        });
       }
 
-      // 살아있는 담당자 중 대표가 없으면 첫 번째를 대표로 보정
-      const aliveAfter = contacts.filter((c) => c._state !== "delete");
-      if (aliveAfter.length > 0 && !aliveAfter.some((c) => c.main_yesn)) {
-        const first = aliveAfter[0];
-        if (first?.cont_idno) {
-          await clientRepo.updateContact(
-            { db: trx },
-            {
-              comp_idno: ctx.comp_idno,
-              cont_idno: first.cont_idno,
-              data: { main_yesn: true, modi_idno: ctx.user_idno },
-            }
-          );
-        }
-      }
-    });
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "담당자 저장 중 오류가 발생했습니다.",
+      });
+    }
   },
   // #endregion
 
@@ -548,7 +569,7 @@ export const clientService = {
   },
   // #endregion
 
-  // #region uploadClients — 엑셀 기반 고객사 일괄 업로드 (사업자번호 upsert)
+  // #region uploadClients — 엑셀 기반 거래처 일괄 업로드 (사업자번호 upsert)
   async uploadClients(ctx: ServiceCtx, input: { fileBase64: string; fileName: string }): Promise<ClientUploadOutput> {
     // xlsx를 동적 import (서버 사이드 전용, 번들 분리)
     const XLSX = await import("xlsx");
@@ -599,8 +620,8 @@ export const clientService = {
       const rowNo = i + 1; // 1-based, 헤더 제외
       const row = rows[i]!;
 
-      const clie_name = pickCol(row, ["고객사명", "회사명", "업체명"]);
-      const bizr_raw  = pickCol(row, ["사업자번호", "사업자 번호", "bizr"]);
+      const clie_name = pickCol(row, ["거래처명", "회사명", "업체명"]);
+      const bizr_raw = pickCol(row, ["사업자번호", "사업자 번호", "bizr"]);
       const indu_type = pickCol(row, ["업종", "업태"]) || undefined;
       const clie_addr = pickCol(row, ["주소", "소재지"]) || undefined;
       const cont_name = pickCol(row, ["담당자명", "담당자"]) || undefined;
@@ -609,7 +630,7 @@ export const clientService = {
 
       // Validate
       if (!clie_name) {
-        errors.push({ row: rowNo, reason: "고객사명이 비어있습니다." });
+        errors.push({ row: rowNo, reason: "거래처명이 비어있습니다." });
         continue;
       }
       if (!bizr_raw) {

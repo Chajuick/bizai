@@ -25,6 +25,26 @@ const DELIVERY_STEP_STYLES = {
   paid: { text: "text-sky-500", ring: "ring-sky-200", line: "bg-sky-200", labelCurrent: "text-sky-700", labelDone: "text-slate-600" },
 } satisfies Partial<Record<Stage, import("@/components/focuswin/common/progress/step-progress").StepStyle>>;
 
+/** 단계별 아이콘 */
+const DELIVERY_ICON_MAP = {
+  pending: {
+    icon: TrendingUp,
+    variant: "slate",
+  },
+  delivered: {
+    icon: Package,
+    variant: "primary",
+  },
+  invoiced: {
+    icon: FileText,
+    variant: "primary",
+  },
+  paid: {
+    icon: BadgeCheck,
+    variant: "success",
+  },
+} as const;
+
 function nextStage(stage: Stage): Stage | null {
   if (stage === "pending") return "delivered";
   if (stage === "delivered") return "invoiced";
@@ -59,12 +79,13 @@ export default function ShipmentListItemCard({
   const stage = d.stat_code as Stage;
   const next = nextStage(stage);
   const nextAction = getNextAction(stage);
-  const iconVariant = stage === "paid" ? "slate" : "primary";
+  const iconConfig = DELIVERY_ICON_MAP[stage];
+  const Icon = iconConfig.icon;
 
   return (
     <WorkItemCard interactive>
-      <WorkItemCard.Icon variant={iconVariant}>
-        <TrendingUp size={16} />
+      <WorkItemCard.Icon variant={iconConfig.variant}>
+        <Icon size={16} />
       </WorkItemCard.Icon>
 
       <div className="min-w-0 flex-1">
@@ -81,7 +102,10 @@ export default function ShipmentListItemCard({
 
               <DropdownMenuContent align="end" className="rounded-2xl p-1">
                 <DropdownMenuItem
-                  onClick={e => { e.stopPropagation(); onEdit(d); }}
+                  onClick={e => {
+                    e.stopPropagation();
+                    onEdit(d);
+                  }}
                   className="rounded-xl flex items-center gap-2"
                 >
                   <Pencil size={14} className="text-slate-700" />
@@ -91,7 +115,10 @@ export default function ShipmentListItemCard({
                 <DropdownMenuSeparator />
 
                 <DropdownMenuItem
-                  onClick={e => { e.stopPropagation(); onAskDelete(d); }}
+                  onClick={e => {
+                    e.stopPropagation();
+                    onAskDelete(d);
+                  }}
                   className="rounded-xl flex items-center gap-2 text-red-600 focus:text-red-600"
                 >
                   <Trash2 size={14} />

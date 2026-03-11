@@ -39,7 +39,7 @@ const navItems = [
   { path: "/sche-list", label: "일정", icon: Calendar, shortLabel: "일정" },
   { path: "/orde-list", label: "수주", icon: ShoppingCart, shortLabel: "수주" },
   { path: "/ship-list", label: "납품/매출", icon: TrendingUp, shortLabel: "매출" },
-  { path: "/clie-list", label: "고객사", icon: Users, shortLabel: "고객" },
+  { path: "/clie-list", label: "거래처", icon: Users, shortLabel: "거래처" },
 ];
 
 // ─── Plan badge styles ───────────────────────────────────────────────────────

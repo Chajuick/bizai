@@ -23,8 +23,8 @@ export default function SaleDetailEditFormCard({ form, setForm }: Props) {
       <p className="text-xs font-extrabold tracking-[0.14em] text-slate-400 uppercase mb-4">편집 모드</p>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {/* 고객사 */}
-        <ClientNameField label="고객사" value={form.clie_name} clientId={form.clie_idno} onChange={(name, id) => setForm(f => ({ ...f, clie_name: name, clie_idno: id }))} placeholder="(주)포커스윈" />
+        {/* 거래처 */}
+        <ClientNameField label="거래처" value={form.clie_name} clientId={form.clie_idno} onChange={(name, id) => setForm(f => ({ ...f, clie_name: name, clie_idno: id }))} placeholder="(주)포커스윈" />
 
         {/* 담당자 */}
         <TextField label="담당자" value={form.cont_name ?? ""} onChange={v => setForm(f => ({ ...f, cont_name: v }))} inputProps={{ placeholder: "홍길동 부장", maxLength: 100 }} />

@@ -10,8 +10,8 @@ export const CRM_SALE = table(
     ...companyCols(),                                              // comp_idno (회사 키)
 
     owne_idno: int("owne_idno").notNull(),                         // 작성자 user_idno
-    clie_idno: int("clie_idno"),                                   // 고객 ID(옵션)
-    clie_name: varchar("clie_name", { length: 200 }),              // 고객명(자유입력 or CLIENT 연동)
+    clie_idno: int("clie_idno"),                                   // 거래처 ID(옵션)
+    clie_name: varchar("clie_name", { length: 200 }),              // 거래처명(자유입력 or CLIENT 연동)
     cont_name: varchar("cont_name", { length: 100 }),              // 담당자명(스냅샷)
     cont_role: varchar("cont_role", { length: 100 }),              // 업무/직책
     cont_tele: varchar("cont_tele", { length: 50 }),               // 연락처
@@ -35,7 +35,7 @@ export const CRM_SALE = table(
   (t) => [
     index("ix_sale_comp_vist").on(t.comp_idno, t.vist_date),                   // 회사별 타임라인
     index("ix_sale_comp_owne_vist").on(t.comp_idno, t.owne_idno, t.vist_date), // 작성자별 타임라인
-    index("ix_sale_comp_clie_vist").on(t.comp_idno, t.clie_idno, t.vist_date), // 고객별 타임라인
+    index("ix_sale_comp_clie_vist").on(t.comp_idno, t.clie_idno, t.vist_date), // 거래처별 타임라인
     index("ix_sale_comp_cont").on(t.comp_idno, t.cont_name),                   // 담당자별 타임라인
   ]
 );

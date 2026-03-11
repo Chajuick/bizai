@@ -95,7 +95,7 @@ export const clientRouter = router({
     ),
   // #endregion
 
-  // #region createWithContacts — 고객사 + 담당자 트랜잭션 생성
+  // #region createWithContacts — 거래처 + 담당자 트랜잭션 생성
   createWithContacts: protectedProcedure
     .input(ClientCreateWithContactsInput)
     .output(ClientCreateOutput)
@@ -104,7 +104,7 @@ export const clientRouter = router({
     ),
   // #endregion
 
-  // #region saveWithContacts — 고객사 + 담당자 트랜잭션 저장
+  // #region saveWithContacts — 거래처 + 담당자 트랜잭션 저장
   saveWithContacts: protectedProcedure
     .input(ClientSaveWithContactsInput)
     .mutation(({ ctx, input }) =>
@@ -112,7 +112,7 @@ export const clientRouter = router({
     ),
   // #endregion
 
-  // #region syncContact — AI 추출 연락처를 고객사 빈 필드에 반영 (단일)
+  // #region syncContact — AI 추출 연락처를 거래처 빈 필드에 반영 (단일)
   syncContact: protectedProcedure
     .input(ClientSyncContactInput)
     .mutation(({ ctx, input }) =>
@@ -128,7 +128,7 @@ export const clientRouter = router({
     ),
   // #endregion
 
-  // #region upload — 엑셀 기반 고객사 일괄 업로드 (사업자번호 upsert)
+  // #region upload — 엑셀 기반 거래처 일괄 업로드 (사업자번호 upsert)
   upload: protectedProcedure
     .input(ClientUploadInput)
     .output(ClientUploadOutput)

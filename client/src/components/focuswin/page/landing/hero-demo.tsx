@@ -53,7 +53,7 @@ const RESULT = {
   actions: [
     { id: 1, title: "견적서/제안서 발송", when: "3월 10일(화) 오전 09:00", owner: "자사 과제" },
     { id: 2, title: "비교표(교체 사유) 정리", when: "3월 10일(화) 오전 09:00", owner: "자사 과제" },
-    { id: 3, title: "내부 결재 일정 체크", when: "3월 31일(화) 오후 05:00", owner: "고객 과제" },
+    { id: 3, title: "내부 결재 일정 체크", when: "3월 31일(화) 오후 05:00", owner: "거래처 과제" },
   ],
 };
 // #endregion
@@ -403,7 +403,7 @@ export default function DemoSalesLogLoop({
                         <div>
                           <p className="text-sm font-black text-slate-900">내용</p>
                           <p className="text-xs text-slate-500 mt-1">
-                            텍스트로 기록하면 AI가 고객/일정/금액/다음 액션을 자동 추출해요.
+                            텍스트로 기록하면 AI가 거래처/일정/금액/다음 액션을 자동 추출해요.
                           </p>
                         </div>
                       </div>
@@ -459,7 +459,7 @@ export default function DemoSalesLogLoop({
                   {/* Meta */}
                   <div className="mt-4 rounded-3xl border border-slate-100 bg-white p-4">
                     <div className="grid grid-cols-2 gap-3">
-                      <Meta icon={<Building2 size={15} className="text-blue-600" />} label="고객사" value={RESULT.company} />
+                      <Meta icon={<Building2 size={15} className="text-blue-600" />} label="거래처" value={RESULT.company} />
                       <Meta icon={<User size={15} className="text-blue-600" />} label="담당자" value={RESULT.person} />
                       <Meta icon={<Mail size={15} className="text-blue-600" />} label="이메일" value={RESULT.email} />
                       <Meta icon={<Coins size={15} className="text-amber-600" />} label="금액" value={RESULT.amount} />

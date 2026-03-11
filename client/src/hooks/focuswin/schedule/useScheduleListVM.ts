@@ -121,7 +121,7 @@ export function useScheduleListVM() {
         metas: [
           { label: "일정명", value: p.sche_name },
           { label: "날짜", value: new Date(p.sche_date).toLocaleDateString("ko-KR") },
-          { label: "고객사", value: p.clie_name || "-" },
+          { label: "거래처", value: p.clie_name || "-" },
         ],
       })
     );
@@ -136,7 +136,7 @@ export function useScheduleListVM() {
         metas: [
           { label: "일정명", value: p.sche_name },
           { label: "날짜", value: new Date(p.sche_date).toLocaleDateString("ko-KR") },
-          { label: "고객사", value: p.clie_name || "-" },
+          { label: "거래처", value: p.clie_name || "-" },
         ],
       })
     );

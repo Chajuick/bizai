@@ -16,17 +16,17 @@ export default function ClientRegistContent({ vm }: Props) {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* 고객사 기본정보 */}
+      {/* 거래처 기본정보 */}
       <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <TextField
-          label="고객사명"
+          label="거래처명"
           required
           value={vm.clientForm.clie_name}
           onChange={v => vm.setClientForm(p => ({ ...p, clie_name: v }))}
           className="sm:col-span-2"
           inputProps={{
             disabled: vm.isSaving,
-            placeholder: "고객사명 입력",
+            placeholder: "거래처명 입력",
             maxLength: 200,
             required: true,
           }}

@@ -10,8 +10,8 @@ export default function ClientRegistPage() {
   return (
     <PageScaffold
       kicker="CLIENTS"
-      title="고객사 등록"
-      description="고객사와 담당자 정보를 입력하세요."
+      title="거래처 등록"
+      description="거래처와 담당자 정보를 입력하세요."
       status={vm.status}
       onBack={vm.goList}
       primaryAction={vm.primaryAction}

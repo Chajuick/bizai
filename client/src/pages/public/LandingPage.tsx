@@ -12,7 +12,7 @@ export default function LandingPage() {
 
   const features = [
     { icon: Mic, title: "음성 기록", desc: "현장에서 바로 녹음으로 입력" },
-    { icon: Brain, title: "AI 자동 분석", desc: "고객·금액·다음 액션 추출" },
+    { icon: Brain, title: "AI 자동 분석", desc: "거래처·금액·다음 액션 추출" },
     { icon: BookOpen, title: "영업일지", desc: "기록이 보고서처럼 정리됩니다" },
     { icon: Calendar, title: "일정 자동 생성", desc: "영업일지를 일정으로 자동 등록" },
     { icon: ShoppingCart, title: "수주 상태 추적", desc: "제안→협상→확정 흐름 관리" },
@@ -29,8 +29,8 @@ export default function LandingPage() {
       a: "기록(텍스트/녹음)만 간단하게 남겨주세요. 남겨둔 기록을 바탕으로, AI가 분석을 통해 데이터를 정리합니다.",
     },
     {
-      q: "AI가 고객사를 잘못 인식하면 어떻게 되나요?",
-      a: "AI 결과는 항상 사용자가 최종 확인합니다. 기존 고객사와 유사한 이름이 있으면 항상 사용자에게 먼저 물어봐요.",
+      q: "AI가 거래처를 잘못 인식하면 어떻게 되나요?",
+      a: "AI 결과는 항상 사용자가 최종 확인합니다. 기존 거래처와 유사한 이름이 있으면 항상 사용자에게 먼저 물어봐요.",
     },
     {
       q: "내 데이터는 안전하게 관리되나요?",
@@ -80,7 +80,7 @@ export default function LandingPage() {
               </h1>
 
               <p className="mt-4 text-slate-600 leading-relaxed">
-                음성 데이터를 통해<span className="font-semibold text-slate-800"> 고객·영업일지·일정</span>까지 자동으로 정리.
+                음성 데이터를 통해<span className="font-semibold text-slate-800"> 거래처·영업일지·일정</span>까지 자동으로 정리.
                 <br className="hidden sm:block" />
                 보고/관리용 데이터가 자연스럽게 쌓이는 영업 도구
               </p>
@@ -142,7 +142,7 @@ export default function LandingPage() {
           <div className="mt-6">
             <div className="grid gap-3 lg:grid-cols-3">
               <FlowCard step="STEP 1" title="현장 기록" desc="음성 녹음 또는 텍스트 입력" icon={Mic} />
-              <FlowCard step="STEP 2" title="AI 구조화" desc="고객/금액/일정/다음 액션 자동 추출" icon={Brain} />
+              <FlowCard step="STEP 2" title="AI 구조화" desc="거래처/금액/일정/다음 액션 자동 추출" icon={Brain} />
               <FlowCard step="STEP 3" title="자동 등록 & 추적" desc="일정 생성 + 수주/납품/매출 흐름 관리" icon={Workflow} />
             </div>
 

@@ -41,7 +41,7 @@ export type SaleEditForm = {
   edit_text?: string;
 };
 
-/** 저장 전 고객사 매칭 확인 상태 */
+/** 저장 전 거래처 매칭 확인 상태 */
 export type PreSaveState = {
   typedName: string;
   matchedId: number;

@@ -148,7 +148,7 @@ export function useOrderListVM() {
         id: order.orde_idno,
         title: order.prod_serv || "해당 수주",
         metas: [
-          { label: "고객사", value: order.clie_name || "-" },
+          { label: "거래처", value: order.clie_name || "-" },
           { label: "품목", value: order.prod_serv || "-" },
           { label: "금액", value: formatKRW(Number(order.orde_pric || 0)) }
         ]

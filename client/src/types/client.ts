@@ -1,9 +1,9 @@
 import type { RouterOutputs } from "./router";
 
-/** tRPC 응답에서 추론한 고객사 행 타입 */
+/** tRPC 응답에서 추론한 거래처 행 타입 */
 export type ClientRow = RouterOutputs["crm"]["client"]["list"]["items"][number];
 
-/** 고객사 생성/수정 폼 상태 */
+/** 거래처 생성/수정 폼 상태 */
 export type ClientFormState = {
   clie_name: string;
   indu_type: string;

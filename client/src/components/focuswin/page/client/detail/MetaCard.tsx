@@ -24,7 +24,7 @@ export default function ClientDetailMetaCard({ client }: Props) {
   return (
     <Card>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {client.clie_name && <MetaItem icon={Building2} label="고객사" value={client.clie_name} tone="blue" />}
+        {client.clie_name && <MetaItem icon={Building2} label="거래처" value={client.clie_name} tone="blue" />}
 
         {client.bizr_numb && (
           <MetaItem

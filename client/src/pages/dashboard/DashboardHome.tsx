@@ -396,7 +396,7 @@ export default function DashboardHome() {
                         />
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold text-[color:var(--blueprint-text)] truncate">
-                            {log.clie_name || "고객사 미지정"}
+                            {log.clie_name || "거래처 미지정"}
                           </p>
                           <p className="text-xs truncate text-[color:var(--blueprint-text-dim)]">
                             {log.orig_memo.slice(0, 60)}...

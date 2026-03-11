@@ -25,7 +25,7 @@ export default function ClientDetailContent({ vm }: Props) {
   return (
     <div className="flex flex-col gap-6">
 
-      {/* 고객사 정보 */}
+      {/* 거래처 정보 */}
       {isEditing ? (
         <ClientDetailEditFormCard
           form={vm.clientForm}
