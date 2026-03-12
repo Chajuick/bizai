@@ -5,6 +5,7 @@
 import { useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
+import { trpcClient } from "@/lib/trpcClient";
 import { handleApiError } from "@/lib/handleApiError";
 
 // #endregion
@@ -14,22 +15,19 @@ import { handleApiError } from "@/lib/handleApiError";
 /**
  * STT 결과 polling
  *
+ * - trpcClient.query() 직접 호출 → React Query 캐시 완전 우회, 매 호출마다 실제 네트워크 요청
  * - intervalMs 간격으로 결과 조회
  * - done → 즉시 반환
  * - failed → 즉시 에러 반환
  * - maxAttempts 초과 시 timeout 처리
  */
 async function pollTranscribeResult(
-  fetchFn: (args: { file_idno: number }) => Promise<{
-    jobs_stat: "queued" | "running" | "done" | "failed" | null;
-    sttx_text: string | null;
-    fail_mess: string | null;
-  }>,
   file_idno: number,
   opts: { intervalMs: number; maxAttempts: number }
 ): Promise<{ sttx_text: string | null; fail_mess: string | null }> {
   for (let i = 0; i < opts.maxAttempts; i++) {
-    const data = await fetchFn({ file_idno });
+    // utils.fetch 대신 trpcClient 직접 호출 — React Query 캐시를 거치지 않아 항상 최신 응답
+    const data = await trpcClient.crm.files.transcribeFileResult.query({ file_idno });
 
     if (data.jobs_stat === "done") {
       return { sttx_text: data.sttx_text, fail_mess: null };
@@ -55,8 +53,6 @@ export function useVoiceUploadTranscribe() {
   const prepareUpload = trpc.crm.files.prepareUpload.useMutation();
   const confirmUpload = trpc.crm.files.confirmUpload.useMutation();
   const transcribeFile = trpc.crm.files.transcribeFile.useMutation();
-
-  const utils = trpc.useUtils();
 
   // #region Abort
 
@@ -158,13 +154,14 @@ export function useVoiceUploadTranscribe() {
 
         // #endregion
 
-        // #region 5. Immediate Result Check (핵심 개선)
+        // #region 5. Immediate Result Check
 
         /**
          * worker가 이미 끝난 경우
          * polling 기다리지 않고 즉시 결과 반영
+         * trpcClient 직접 호출 → 캐시 우회
          */
-        const first = await utils.crm.files.transcribeFileResult.fetch({
+        const first = await trpcClient.crm.files.transcribeFileResult.query({
           file_idno: fileId,
         });
 
@@ -184,13 +181,12 @@ export function useVoiceUploadTranscribe() {
 
         // #endregion
 
-        // #region 6. Polling (속도 개선)
+        // #region 6. Polling
 
         const result = await pollTranscribeResult(
-          (args) => utils.crm.files.transcribeFileResult.fetch(args),
           fileId,
           {
-            intervalMs: 700, // 🔥 기존 3000 → 700ms
+            intervalMs: 700,
             maxAttempts: 20,
           }
         );
@@ -216,7 +212,7 @@ export function useVoiceUploadTranscribe() {
         onFinally?.();
       }
     },
-    [prepareUpload, confirmUpload, transcribeFile, utils]
+    [prepareUpload, confirmUpload, transcribeFile]
   );
 
   // #endregion
