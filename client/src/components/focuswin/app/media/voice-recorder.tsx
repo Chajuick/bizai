@@ -223,7 +223,7 @@ export default function VoiceRecorder({
         });
       };
 
-      mr.start(1000);
+      mr.start(250);
       setState("recording");
       setDuration(0);
       timerRef.current = setInterval(() => setDuration((d) => d + 1), 1000);

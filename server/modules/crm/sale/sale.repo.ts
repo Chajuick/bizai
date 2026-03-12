@@ -193,6 +193,20 @@ export const saleRepo = {
     await deps.db.update(CRM_SALE_AUDIO_JOB).set(args.data).where(eq(CRM_SALE_AUDIO_JOB.jobs_idno, args.jobs_idno));
   },
 
+  async markJobFailed(
+    deps: SaleRepoDeps,
+    args: { jobs_idno: number; fail_mess: string }
+  ): Promise<void> {
+    await deps.db
+      .update(CRM_SALE_AUDIO_JOB)
+      .set({
+        jobs_stat: "failed",
+        fail_mess: args.fail_mess,
+        fini_date: new Date(),
+      })
+      .where(eq(CRM_SALE_AUDIO_JOB.jobs_idno, args.jobs_idno));
+  },
+
   async getAudioJobById(deps: SaleRepoDeps, jobs_idno: number): Promise<SaleAudioJobRow | null> {
     const rows = await deps.db
       .select()
