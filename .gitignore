@@ -112,3 +112,6 @@ docs/
 .webdev/
 .out
 .storybook-out
+
+
+drizzle/migrations/
