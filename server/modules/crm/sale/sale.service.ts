@@ -5,6 +5,7 @@
 import type { ServiceCtx } from "../../../core/serviceCtx";
 import { throwAppError } from "../../../core/trpc/appError";
 import { getDb } from "../../../core/db";
+import { logger } from "../../../core/logger";
 
 import { withCreateAudit, withUpdateAudit } from "../shared/audit";
 import { normalizePage } from "../shared/pagination";
@@ -461,7 +462,16 @@ export const saleService = {
 
     const job = await saleRepo.getAudioJobById({ db }, jobs_idno);
     if (!job || job.jobs_stat !== "queued") return;
-    if (job.sale_idno == null) return; // file-only job은 processQueuedFileTranscribeJob이 처리
+
+    // sale_idno 없는 transcribe job은 processQueuedFileTranscribeJob이 처리해야 함
+    // 여기에 잘못 라우팅된 경우 queued 상태로 방치하면 무한루프 — failed로 마킹
+    if (job.sale_idno == null) {
+      await saleRepo.updateAudioJob({ db }, {
+        jobs_idno,
+        data: { jobs_stat: "failed", fail_mess: "잘못된 라우팅: sale_idno 없는 transcribe job", fini_date: new Date() },
+      });
+      return;
+    }
 
     await saleRepo.updateAudioJob({ db }, { jobs_idno, data: { jobs_stat: "running" } });
 
@@ -539,21 +549,31 @@ export const saleService = {
       data: { jobs_stat: "done", sttx_text, sttx_name: "whisper", fini_date: new Date() },
     });
 
-    await aiService.recordUsage(db, {
-      comp_idno,
-      user_idno: Number(job.crea_idno),
-      feat_code: "stt",
-      mode_name: "whisper",
-      tokn_inpt: 0,
-      tokn_outs: estimate,
-      meta_json: { file_idno, dura_secs: fileRow.dura_secs },
-    });
+    // 후처리: 실패해도 job은 이미 done — 별도 try-catch로 상태 보호
+    try {
+      await aiService.recordUsage(db, {
+        comp_idno,
+        user_idno: Number(job.crea_idno),
+        feat_code: "stt",
+        mode_name: "whisper",
+        tokn_inpt: 0,
+        tokn_outs: estimate,
+        meta_json: { file_idno, dura_secs: fileRow.dura_secs },
+      });
+    } catch (err) {
+      logger.error({ err, jobs_idno }, "[transcribe] recordUsage 실패 (non-fatal, job은 done 유지)");
+    }
   },
 
   // #endregion
 
-  // #region getTranscribeJobResult
+  // #region getTranscribeJobResult (deprecated)
 
+  /**
+   * @deprecated sale_idno 기준으로 "가장 최신 transcribe job"을 반환하므로
+   * 파일이 여러 개인 경우 엉뚱한 job 상태를 반환할 수 있음.
+   * 대신 getTranscribeJobResultById(jobs_idno) 를 사용할 것.
+   */
   async getTranscribeJobResult(ctx: ServiceCtx, sale_idno: number) {
     const db = getDb();
 
@@ -571,6 +591,31 @@ export const saleService = {
       jobs_stat: (job?.jobs_stat ?? null) as "queued" | "running" | "done" | "failed" | null,
       sttx_text: job?.sttx_text ?? null,
       fail_mess: job?.fail_mess ?? null,
+    };
+  },
+
+  // #endregion
+
+  // #region getTranscribeJobResultById
+
+  /**
+   * STT 결과 조회 — jobs_idno 기준 (transcribe 뮤테이션이 반환한 값으로 polling)
+   * - 파일이 여러 개인 경우에도 정확한 job을 반환
+   */
+  async getTranscribeJobResultById(ctx: ServiceCtx, jobs_idno: number) {
+    const db = getDb();
+
+    const job = await saleRepo.getAudioJobById({ db }, jobs_idno);
+
+    // 존재 여부 + 본인 회사 job인지 확인
+    if (!job || Number(job.comp_idno) !== ctx.comp_idno) {
+      throwAppError({ tRPCCode: "NOT_FOUND", appCode: "JOB_NOT_FOUND", message: "작업을 찾을 수 없습니다.", displayType: "toast" });
+    }
+
+    return {
+      jobs_stat: job.jobs_stat as "queued" | "running" | "done" | "failed",
+      sttx_text: job.sttx_text ?? null,
+      fail_mess: job.fail_mess ?? null,
     };
   },
 
@@ -605,11 +650,24 @@ export const saleService = {
       targetFileId = atts[0]?.file_idno;
     }
 
-    // 잡 생성/재사용 — 기존 잡이 있으면 queued 상태로 리셋
+    // 잡 생성/재사용
     let jobs_idno: number;
     if (targetFileId) {
       const exists = await saleRepo.getAudioJobByRef({ db }, { comp_idno: ctx.comp_idno, sale_idno, file_idno: targetFileId, jobs_type: "analyze" });
       if (exists) {
+        const existStat = exists.jobs_stat;
+
+        // running 중이면 재요청 차단 — 워커가 LLM 호출 중인 job을 되돌리면 이중 처리 발생
+        if (existStat === "running") {
+          throwAppError({ tRPCCode: "CONFLICT", appCode: "JOB_ALREADY_RUNNING", message: "AI 분석이 이미 진행 중입니다. 잠시 후 다시 시도해주세요.", displayType: "toast" });
+        }
+
+        // 이미 queued — 토큰 차감 없이 기존 job 반환
+        if (existStat === "queued") {
+          return { jobs_idno: Number(exists.jobs_idno), jobs_stat: "queued" as const };
+        }
+
+        // done / failed — 재실행: 초기화 후 이어서 토큰 차감
         jobs_idno = Number(exists.jobs_idno);
         await saleRepo.updateAudioJob({ db }, {
           jobs_idno,
@@ -627,9 +685,22 @@ export const saleService = {
         jobs_idno = created.jobs_idno;
       }
     } else {
-      // file 없는 분석 — 기존 job 재사용 (중복 토큰 차감 방지)
+      // file 없는 분석 — 기존 job 재사용
       const existingNoFile = await saleRepo.getLatestAnalyzeNoFileJob({ db }, { comp_idno: ctx.comp_idno, sale_idno });
       if (existingNoFile) {
+        const existStat = existingNoFile.jobs_stat;
+
+        // running 중이면 재요청 차단
+        if (existStat === "running") {
+          throwAppError({ tRPCCode: "CONFLICT", appCode: "JOB_ALREADY_RUNNING", message: "AI 분석이 이미 진행 중입니다. 잠시 후 다시 시도해주세요.", displayType: "toast" });
+        }
+
+        // 이미 queued — 토큰 차감 없이 기존 job 반환
+        if (existStat === "queued") {
+          return { jobs_idno: Number(existingNoFile.jobs_idno), jobs_stat: "queued" as const };
+        }
+
+        // done / failed — 재실행: 초기화 후 이어서 토큰 차감
         jobs_idno = Number(existingNoFile.jobs_idno);
         await saleRepo.updateAudioJob({ db }, {
           jobs_idno,
@@ -681,7 +752,15 @@ export const saleService = {
 
     const job = await saleRepo.getAudioJobById({ db }, jobs_idno);
     if (!job || job.jobs_stat !== "queued") return;
-    if (job.sale_idno == null) return; // file-only job은 처리 대상 아님
+
+    // sale_idno 없는 analyze job은 데이터 오류 — queued 방치 시 무한루프 발생하므로 failed 처리
+    if (job.sale_idno == null) {
+      await saleRepo.updateAudioJob({ db }, {
+        jobs_idno,
+        data: { jobs_stat: "failed", fail_mess: "잘못된 데이터: analyze job에 sale_idno가 없습니다.", fini_date: new Date() },
+      });
+      return;
+    }
 
     const comp_idno = job.comp_idno;
     const sale_idno = job.sale_idno;
@@ -880,15 +959,19 @@ export const saleService = {
       },
     });
 
-    // 사용량 기록
-    const usage = llmResult.usage;
-    await aiService.recordUsage(db, {
-      comp_idno, user_idno: owne_idno, feat_code: "llm",
-      mode_name: llmResult.model,
-      tokn_inpt: usage?.prompt_tokens ?? 0,
-      tokn_outs: usage?.completion_tokens ?? 0,
-      meta_json: { sale_idno, jobs_idno },
-    });
+    // 후처리: 실패해도 job은 이미 done — 별도 try-catch로 상태 보호
+    try {
+      const usage = llmResult.usage;
+      await aiService.recordUsage(db, {
+        comp_idno, user_idno: owne_idno, feat_code: "llm",
+        mode_name: llmResult.model,
+        tokn_inpt: usage?.prompt_tokens ?? 0,
+        tokn_outs: usage?.completion_tokens ?? 0,
+        meta_json: { sale_idno, jobs_idno },
+      });
+    } catch (err) {
+      logger.error({ err, jobs_idno }, "[analyze] recordUsage 실패 (non-fatal, job은 done 유지)");
+    }
   },
 
   // #endregion
