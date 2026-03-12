@@ -48,7 +48,7 @@ export function useSaleDetailVM(logId: number) {
 
   // #region Queries / Mutations
 
-  // polling: ai_status가 pending/processing일 때 3초마다 재조회
+  // polling: aiex_stat가 pending/processing일 때 3초마다 재조회
   const [shouldPoll, setShouldPoll] = useState(false);
 
   const saleGet = trpc.crm.sale.get.useQuery(
@@ -216,13 +216,13 @@ export function useSaleDetailVM(logId: number) {
 
   // #region Effects (polling + completion detection)
 
-  const aiStatus = saleGet.data?.sale?.ai_status ?? "pending";
+  const aiStatus = saleGet.data?.sale?.aiex_stat ?? "pending";
 
   useEffect(() => {
     setShouldPoll(aiStatus === "pending" || aiStatus === "processing");
   }, [aiStatus]);
 
-  // ai_status가 pending/processing → completed/failed 전환 시 결과 조회 + 모달/토스트
+  // aiex_stat가 pending/processing → completed/failed 전환 시 결과 조회 + 모달/토스트
   const prevAiStatusRef = useRef<string | undefined>(undefined);
   useEffect(() => {
     const prev = prevAiStatusRef.current;
@@ -293,7 +293,7 @@ export function useSaleDetailVM(logId: number) {
   const runAnalyze = async () => {
     try {
       await analyze.mutateAsync({ sale_idno: logId });
-      await utils.crm.sale.get.invalidate({ sale_idno: logId }); // → ai_status=pending 반영
+      await utils.crm.sale.get.invalidate({ sale_idno: logId }); // → aiex_stat=pending 반영
       toast.info("AI 분석을 시작했습니다. 완료되면 알려드립니다.");
     } catch (e) {
       handleApiError(e);

@@ -15,7 +15,7 @@ import type { PageStatus } from "@/components/focuswin/common/page/scaffold/page
 // #region Helpers
 const emptyClient = (): ClientDraft => ({
   clie_name: "",
-  bizr_numb: "",
+  bizn_numb: "",
   indu_type: "",
   clie_addr: "",
   clie_memo: "",
@@ -120,7 +120,7 @@ export function useClientRegistVM() {
       return;
     }
 
-    if (clientForm.bizr_numb && !/^\d{10}$/.test(clientForm.bizr_numb)) {
+    if (clientForm.bizn_numb && !/^\d{10}$/.test(clientForm.bizn_numb)) {
       toast.error("사업자번호는 숫자 10자리여야 합니다.");
       return;
     }
@@ -138,7 +138,7 @@ export function useClientRegistVM() {
       const res = await createWithContacts.mutateAsync({
         client: {
           ...clientForm,
-          bizr_numb: clientForm.bizr_numb || undefined,
+          bizn_numb: clientForm.bizn_numb || undefined,
         },
         contacts: contactsDraft,
       });

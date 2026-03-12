@@ -14,7 +14,7 @@ export const CRM_SHIPMENT = table(
     clie_idno: int("clie_idno"),                                     // 거래처 ID(스냅샷)
     clie_name: varchar("clie_name", { length: 200 }).notNull(),      // 거래처명 스냅샷
 
-    stat_code: shipStatusEnum.default("pending").notNull(),          // 상태(pending/delivered/invoiced/paid)
+    ship_stat: shipStatusEnum.default("pending").notNull(),          // 상태(pending/delivered/invoiced/paid)
     ship_date: timestamp("ship_date"),                               // 납품일(옵션)
     invc_date: timestamp("invc_date"),                               // 청구일(청구 상태로 변경 시 기록)
     paid_date: timestamp("paid_date"),                               // 수금일(수금 상태로 변경 시 기록)
@@ -28,10 +28,10 @@ export const CRM_SHIPMENT = table(
   (t) => [
     index("ix_ship_comp").on(t.comp_idno),                                      // 회사 기준 조회(기본)
     index("ix_ship_comp_orde").on(t.comp_idno, t.orde_idno),                   // 회사+수주 기준 조회
-    index("ix_ship_comp_stat").on(t.comp_idno, t.stat_code),                   // 회사+상태 필터
+    index("ix_ship_comp_stat").on(t.comp_idno, t.ship_stat),                   // 회사+상태 필터
     index("ix_ship_comp_owne").on(t.comp_idno, t.owne_idno),                   // 회사+담당자 필터
     index("ix_ship_comp_date").on(t.comp_idno, t.ship_date),                   // 회사+납품일 정렬/조회
-    index("ix_ship_comp_stat_paid").on(t.comp_idno, t.stat_code, t.paid_date), // 대시보드 월매출 + 추세(stat='paid' + paid_date 범위)
+    index("ix_ship_comp_stat_paid").on(t.comp_idno, t.ship_stat, t.paid_date), // 대시보드 월매출 + 추세(stat='paid' + paid_date 범위)
   ]
 );
 

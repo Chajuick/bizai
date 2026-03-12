@@ -7,14 +7,9 @@ type HeaderActionBase = {
   key?: string;
   label: string;
   icon?: React.ReactNode;
-
-  //  단순: 5개만 (필요한 것만)
   variant?: "primary" | "secondary" | "outline" | "ghost" | "success" | "danger";
-
   disabled?: boolean;
   ariaLabel?: string;
-
-  //  ghost에서만 “삭제 빨강” 같은 포인트 처리
   danger?: boolean;
 };
 
@@ -22,26 +17,28 @@ export type HeaderAction =
   | (HeaderActionBase & { onClick: () => void })
   | (HeaderActionBase & { href: string });
 
-function SolidAction({ action }: { action: HeaderAction }) {
+function SolidAction({
+  action,
+  mobileFull = false,
+}: {
+  action: HeaderAction;
+  mobileFull?: boolean;
+}) {
   const v = action.variant ?? "primary";
 
-  const base =
-    "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap " +
-    "transition active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed " +
-    "rounded-2xl text-sm font-bold px-3 py-2 sm:px-4";
+  const base = cn(
+    "inline-flex shrink-0 items-center justify-center gap-2 whitespace-nowrap",
+    "transition active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed",
+    "rounded-2xl text-sm font-bold px-3 py-2 sm:px-4",
+    mobileFull && "w-full"
+  );
 
   const cls =
     v === "primary" || v === "success" || v === "danger"
       ? cn(base, "text-white")
       : v === "secondary"
-      ? cn(
-          base,
-          "text-slate-700 bg-slate-50 border border-slate-200 hover:bg-slate-100"
-        )
-      : cn(
-          base,
-          "text-slate-700 bg-white border border-slate-200 hover:bg-slate-50"
-        );
+      ? cn(base, "text-slate-700 bg-slate-50 border border-slate-200 hover:bg-slate-100")
+      : cn(base, "text-slate-700 bg-white border border-slate-200 hover:bg-slate-50");
 
   const style =
     v === "primary"
@@ -98,28 +95,50 @@ function SolidAction({ action }: { action: HeaderAction }) {
   );
 }
 
-function GhostAction({ action }: { action: HeaderAction }) {
+function GhostAction({
+  action,
+  mobileFull = false,
+}: {
+  action: HeaderAction;
+  mobileFull?: boolean;
+}) {
   const title = action.ariaLabel ?? action.label;
-  const dangerCls = action.danger
-    ? "border-red-200 text-red-600 hover:bg-red-50"
-    : "";
+  const dangerCls = action.danger ? "border-red-200 text-red-600 hover:bg-red-50" : "";
 
-  // 헤더에서 ghost href는 잘 안 쓰지만, 있어도 동작하게만 유지
+  const cls = cn(
+    mobileFull
+      ? "w-full h-11 rounded-2xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition flex items-center justify-center gap-2 px-3 text-sm font-bold"
+      : "w-9 h-9 rounded-2xl border border-slate-200 text-slate-600 hover:bg-slate-50 transition flex items-center justify-center",
+    dangerCls,
+    action.disabled && "pointer-events-none opacity-50"
+  );
+
+  const content = (
+    <>
+      {action.icon}
+      {mobileFull ? <span>{action.label}</span> : null}
+    </>
+  );
+
   if ("href" in action) {
     return (
-      <a
-        href={action.href}
-        aria-label={title}
-        title={title}
-        className={cn(
-          "w-9 h-9 rounded-2xl border border-slate-200 text-slate-600",
-          "hover:bg-slate-50 transition flex items-center justify-center",
-          dangerCls,
-          action.disabled && "pointer-events-none opacity-50"
-        )}
-      >
-        {action.icon}
+      <a href={action.href} aria-label={title} title={title} className={cls}>
+        {content}
       </a>
+    );
+  }
+
+  if (mobileFull) {
+    return (
+      <button
+        type="button"
+        onClick={action.onClick}
+        disabled={action.disabled}
+        aria-label={title}
+        className={cls}
+      >
+        {content}
+      </button>
     );
   }
 
@@ -136,10 +155,16 @@ function GhostAction({ action }: { action: HeaderAction }) {
   );
 }
 
-function ActionButton({ action }: { action: HeaderAction }) {
+function ActionButton({
+  action,
+  mobileFull = false,
+}: {
+  action: HeaderAction;
+  mobileFull?: boolean;
+}) {
   const v = action.variant ?? "primary";
-  if (v === "ghost") return <GhostAction action={action} />;
-  return <SolidAction action={action} />;
+  if (v === "ghost") return <GhostAction action={action} mobileFull={mobileFull} />;
+  return <SolidAction action={action} mobileFull={mobileFull} />;
 }
 
 export default function PageHeader({
@@ -159,6 +184,11 @@ export default function PageHeader({
   actions?: HeaderAction[];
   children?: React.ReactNode;
 }) {
+  const allActions = [
+    ...actions.map((a) => ({ ...a, variant: a.variant ?? "ghost" as const })),
+    ...(primaryAction ? [primaryAction] : []),
+  ];
+
   return (
     <div
       className="sticky top-0 z-20 -mx-4 lg:-mx-6 px-4 lg:px-6 pt-3 pb-4 border-b"
@@ -168,50 +198,101 @@ export default function PageHeader({
         backdropFilter: "blur(18px)",
       }}
     >
-      <div className="flex items-end justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start gap-2">
-            {onBack ? <div className="shrink-0 -ml-2">          
+      {/* mobile */}
+      <div className="sm:hidden">
+        <div className="flex items-start gap-2">
+          {onBack ? (
+            <div className="shrink-0 -ml-2">
               <button
                 onClick={onBack}
                 className="p-2 rounded-xl hover:bg-slate-50 transition text-slate-700"
                 aria-label="뒤로"
               >
                 <ArrowLeft size={18} />
-              </button></div> : null}
-
-            <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-extrabold tracking-[0.18em] text-slate-400 uppercase">
-                {kicker}
-              </p>
-
-              <h1 className="text-base sm:text-lg font-black text-slate-900 min-w-0">
-                {title}
-              </h1>
-
-              {description ? (
-                <p className="mt-1 text-sm text-slate-500">{description}</p>
-              ) : null}
+              </button>
             </div>
+          ) : null}
+
+          <div className="min-w-0 flex-1 pr-1">
+            <p className="text-[11px] font-extrabold tracking-[0.18em] text-slate-400 uppercase">
+              {kicker}
+            </p>
+
+            <h1 className="mt-0.5 text-[22px] leading-tight font-black text-slate-900 break-keep">
+              {title}
+            </h1>
+
+            {description ? (
+              <p className="mt-2 text-sm leading-6 text-slate-500 break-keep">
+                {description}
+              </p>
+            ) : null}
           </div>
         </div>
 
-        {primaryAction || actions.length > 0 ? (
-          <div className="flex items-center gap-2 shrink-0">
-            {actions.map((a) => (
+        {allActions.length > 0 ? (
+          <div className="mt-4 grid grid-cols-2 gap-2">
+            {allActions.map((a) => (
               <ActionButton
                 key={a.key ?? a.label}
-                action={{ ...a, variant: a.variant ?? "ghost" }}
+                action={a}
+                mobileFull
               />
             ))}
-            {primaryAction ? (
-              <ActionButton action={primaryAction} />
-            ) : null}
           </div>
         ) : null}
+
+        {children ? <div className="mt-3">{children}</div> : null}
       </div>
 
-      {children ? <div className="mt-3">{children}</div> : null}
+      {/* desktop */}
+      <div className="hidden sm:block">
+        <div className="flex items-end justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start gap-2">
+              {onBack ? (
+                <div className="shrink-0 -ml-2">
+                  <button
+                    onClick={onBack}
+                    className="p-2 rounded-xl hover:bg-slate-50 transition text-slate-700"
+                    aria-label="뒤로"
+                  >
+                    <ArrowLeft size={18} />
+                  </button>
+                </div>
+              ) : null}
+
+              <div className="min-w-0 flex-1">
+                <p className="text-[11px] font-extrabold tracking-[0.18em] text-slate-400 uppercase">
+                  {kicker}
+                </p>
+
+                <h1 className="text-base sm:text-lg font-black text-slate-900 min-w-0">
+                  {title}
+                </h1>
+
+                {description ? (
+                  <p className="mt-1 text-sm text-slate-500">{description}</p>
+                ) : null}
+              </div>
+            </div>
+          </div>
+
+          {primaryAction || actions.length > 0 ? (
+            <div className="flex items-center gap-2 shrink-0">
+              {actions.map((a) => (
+                <ActionButton
+                  key={a.key ?? a.label}
+                  action={{ ...a, variant: a.variant ?? "ghost" }}
+                />
+              ))}
+              {primaryAction ? <ActionButton action={primaryAction} /> : null}
+            </div>
+          ) : null}
+        </div>
+
+        {children ? <div className="mt-3">{children}</div> : null}
+      </div>
     </div>
   );
 }

@@ -10,7 +10,7 @@ type Props = { vm: ReturnType<typeof useClientRegistVM> };
 
 export default function ClientRegistContent({ vm }: Props) {
   const bizNoError =
-    vm.clientForm.bizr_numb.length > 0 && vm.clientForm.bizr_numb.length !== 10
+    vm.clientForm.bizn_numb.length > 0 && vm.clientForm.bizn_numb.length !== 10
       ? "사업자번호는 숫자 10자리여야 합니다."
       : undefined;
 
@@ -33,8 +33,8 @@ export default function ClientRegistContent({ vm }: Props) {
         />
 
         <BusinessNumberField
-          value={vm.clientForm.bizr_numb}
-          onChange={(v) => vm.setClientForm((p) => ({ ...p, bizr_numb: v }))}
+          value={vm.clientForm.bizn_numb}
+          onChange={(v) => vm.setClientForm((p) => ({ ...p, bizn_numb: v }))}
           error={bizNoError}
           inputProps={{
             disabled: vm.isSaving,

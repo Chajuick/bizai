@@ -183,7 +183,7 @@ export const billingRepo = {
       .where(
         and(
           eq(CORE_COMPANY_USER.comp_idno, comp_idno),
-          eq(CORE_COMPANY_USER.status_code, "active"),
+          eq(CORE_COMPANY_USER.memb_stat, "active"),
         ),
       );
     return rows[0]?.cnt ?? 0;

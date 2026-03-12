@@ -24,7 +24,7 @@ const EMPTY_FORM: ShipmentFormState = {
   orde_idno: "",
   clie_name: "",
   ship_pric: "",
-  stat_code: "pending",
+  ship_stat: "pending",
   ship_date: "",
   ship_memo: "",
 };
@@ -131,7 +131,7 @@ export function useShipmentListVM() {
         orde_idno: Number(form.orde_idno) || 0,
         clie_name: form.clie_name,
         ship_pric: Number(form.ship_pric),
-        stat_code: form.stat_code,
+        ship_stat: form.ship_stat,
         ship_date: form.ship_date || undefined,
         ship_memo: form.ship_memo || undefined,
       };
@@ -160,7 +160,7 @@ export function useShipmentListVM() {
       orde_idno: d.orde_idno ? String(d.orde_idno) : "",
       clie_name: d.clie_name || "",
       ship_pric: String(d.ship_pric ?? ""),
-      stat_code: d.stat_code,
+      ship_stat: d.ship_stat,
       ship_date: d.ship_date ? new Date(d.ship_date).toISOString().split("T")[0] : "",
       ship_memo: d.ship_memo || "",
     });
@@ -181,9 +181,9 @@ export function useShipmentListVM() {
   );
 
   const handleStatusUpdate = useCallback(
-    async (id: number, stat_code: ShipmentStatus) => {
+    async (id: number, ship_stat: ShipmentStatus) => {
       try {
-        await actions.updateShipment({ ship_idno: id, stat_code });
+        await actions.updateShipment({ ship_idno: id, ship_stat });
         shipmentVM.resetPaging();
         toast.success("상태가 변경되었습니다.");
       } catch (e) {

@@ -17,17 +17,17 @@ export const CORE_COMPANY_INVITE = table(
 
     invt_idno: int("invt_idno").autoincrement().primaryKey(), // 초대 PK
 
-    kind_code: inviteKindEnum.notNull(),                      // link | email
-    stat_code: inviteStatusEnum.default("active").notNull(),  // active | used | revoked | expired
+    invt_kind: inviteKindEnum.notNull(),                      // link | email
+    invt_stat: inviteStatusEnum.default("active").notNull(),  // active | used | revoked | expired
 
     // 링크/메일 공통 토큰 (서버에서 랜덤 생성)
-    token_key: varchar("token_key", { length: 128 }).notNull(),
+    tokn_keys: varchar("tokn_keys", { length: 128 }).notNull(),
 
     // 이메일 초대일 때만 설정(링크 초대면 null)
     mail_idno: varchar("mail_idno", { length: 320 }),
 
     // 수락 시 부여할 역할
-    role_code: companyRoleEnum.default("member").notNull(),
+    comp_role: companyRoleEnum.default("member").notNull(),
 
     // 만료 시간 (Pro 링크는 24h로 서버에서 설정)
     expi_date: timestamp("expi_date").notNull(),
@@ -39,8 +39,8 @@ export const CORE_COMPANY_INVITE = table(
     ...auditCols(), // crea_idno/crea_date/modi_idno/modi_date
   },
   (t) => [
-    uniqueIndex("ux_company_invite_token").on(t.token_key),
-    index("ix_company_invite_comp_stat").on(t.comp_idno, t.stat_code),
+    uniqueIndex("ux_company_invite_token").on(t.tokn_keys),
+    index("ix_company_invite_comp_stat").on(t.comp_idno, t.invt_stat),
     index("ix_company_invite_mail").on(t.mail_idno),
     index("ix_company_invite_expi").on(t.expi_date),
   ]

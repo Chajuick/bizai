@@ -17,7 +17,7 @@ export const CRM_ORDER = table(
     prod_serv: varchar("prod_serv", { length: 300 }).notNull(),      // 제품/서비스명
     orde_pric: decimal("orde_pric", { precision: 15, scale: 2 }).notNull(), // 수주 금액
 
-    stat_code: orderStatusEnum.default("proposal").notNull(),        // 단계(제안/협상/확정/취소)
+    orde_stat: orderStatusEnum.default("proposal").notNull(),        // 단계(제안/협상/확정/취소)
 
     ctrt_date: timestamp("ctrt_date"),                               // 계약일(옵션)
     expd_date: timestamp("expd_date"),                               // 예상 납기(옵션)
@@ -29,7 +29,7 @@ export const CRM_ORDER = table(
   },
   (t) => [
     index("ix_ord_comp").on(t.comp_idno),                            // 회사 기준 조회(기본)
-    index("ix_ord_comp_stat").on(t.comp_idno, t.stat_code),          // 회사+상태 필터
+    index("ix_ord_comp_stat").on(t.comp_idno, t.orde_stat),          // 회사+상태 필터
     index("ix_ord_comp_owne").on(t.comp_idno, t.owne_idno),          // 회사+담당자 필터
     index("ix_ord_comp_crea").on(t.comp_idno, t.crea_date),          // 회사+생성일 (revenueTrend GROUP BY crea_date)
 

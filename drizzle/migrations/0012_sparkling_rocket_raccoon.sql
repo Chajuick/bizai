@@ -1,1 +1,0 @@
-ALTER TABLE `COAPP_CRM_SALE` ADD `ai_status` enum('pending','processing','completed','failed') DEFAULT 'pending' NOT NULL;

@@ -27,7 +27,7 @@ function hashToken(raw: string): string {
 
 // #region Permission helpers
 function requireAdmin(ctx: ServiceCtx): void {
-  if (ctx.company_role !== "owner" && ctx.company_role !== "admin") {
+  if (ctx.comp_role !== "owner" && ctx.comp_role !== "admin") {
     throwAppError({ tRPCCode: "FORBIDDEN", appCode: "ADMIN_REQUIRED", message: "관리자 권한이 필요합니다.", displayType: "toast", retryable: false });
   }
 }
@@ -42,7 +42,7 @@ export const companyService = {
     return {
       comp_idno: ctx.comp_idno,
       comp_name: company?.comp_name ?? "",
-      company_role: (ctx.company_role ?? "member") as "owner" | "admin" | "member",
+      comp_role: (ctx.comp_role ?? "member") as "owner" | "admin" | "member",
     };
   },
 
@@ -53,8 +53,8 @@ export const companyService = {
     return rows.map((r) => ({
       comp_idno: r.comp_idno,
       comp_name: r.comp_name,
-      role_code: r.role_code as "owner" | "admin" | "member",
-      is_active: r.status_code === "active",
+      comp_role: r.comp_role as "owner" | "admin" | "member",
+      is_active: r.memb_stat === "active",
     }));
   },
 
@@ -66,8 +66,8 @@ export const companyService = {
       user_idno: m.user_idno,
       user_name: m.user_name ?? null,
       mail_idno: m.mail_idno ?? null,
-      role_code: m.role_code as "owner" | "admin" | "member",
-      status_code: m.status_code as "active" | "pending" | "removed",
+      comp_role: m.comp_role as "owner" | "admin" | "member",
+      memb_stat: m.memb_stat as "active" | "pending" | "removed",
       crea_date: m.crea_date,
     }));
   },
@@ -107,8 +107,8 @@ export const companyService = {
     return rows.map((r) => ({
       invt_idno: r.invt_idno,
       mail_idno: r.mail_idno ?? null,
-      role_code: r.role_code as "admin" | "member",
-      stat_code: r.stat_code as "active" | "used" | "revoked" | "expired",
+      comp_role: r.comp_role as "admin" | "member",
+      invt_stat: r.invt_stat as "active" | "used" | "revoked" | "expired",
       expi_date: r.expi_date,
       crea_date: r.crea_date,
     }));
@@ -127,11 +127,11 @@ export const companyService = {
       { db },
       {
         comp_idno: ctx.comp_idno,
-        kind_code: "link",
-        stat_code: "active",
-        token_key: tokenHash,
+        invt_kind: "link",
+        invt_stat: "active",
+        tokn_keys: tokenHash,
         mail_idno: null,
-        role_code: input.role,
+        comp_role: input.role,
         expi_date,
         crea_idno: ctx.user_idno,
       },
@@ -152,20 +152,20 @@ export const companyService = {
 
     const company = await companyRepo.findById({ db }, invite.comp_idno);
 
-    // 상태 판정: stat_code + 만료 시간 모두 체크
+    // 상태 판정: invt_stat + 만료 시간 모두 체크
     const isExpiredByDate = new Date() > invite.expi_date;
     const effectiveStat =
-      invite.stat_code !== "active"
-        ? invite.stat_code
+      invite.invt_stat !== "active"
+        ? invite.invt_stat
         : isExpiredByDate
           ? "expired"
           : "active";
 
     return {
       comp_name: company?.comp_name ?? "",
-      role_code: invite.role_code as "admin" | "member",
+      comp_role: invite.comp_role as "admin" | "member",
       expi_date: invite.expi_date,
-      stat_code: effectiveStat as "active" | "used" | "revoked" | "expired",
+      invt_stat: effectiveStat as "active" | "used" | "revoked" | "expired",
     };
   },
 
@@ -178,7 +178,7 @@ export const companyService = {
     if (!invite) {
       throwAppError({ tRPCCode: "NOT_FOUND", appCode: "INVITE_NOT_FOUND", message: "초대장을 찾을 수 없습니다.", displayType: "toast", retryable: false });
     }
-    if (invite.stat_code !== "active") {
+    if (invite.invt_stat !== "active") {
       throwAppError({ tRPCCode: "BAD_REQUEST", appCode: "INVITE_ALREADY_USED", message: "이미 사용되었거나 취소된 초대입니다.", displayType: "toast", retryable: false });
     }
     if (new Date() > invite.expi_date) {
@@ -192,7 +192,7 @@ export const companyService = {
       );
 
       if (existing) {
-        if (existing.status_code === "active") {
+        if (existing.memb_stat === "active") {
           throwAppError({ tRPCCode: "CONFLICT", appCode: "ALREADY_MEMBER", message: "이미 해당 회사의 멤버입니다.", displayType: "toast", retryable: false });
         }
         // removed/pending → 재활성화
@@ -202,8 +202,8 @@ export const companyService = {
             comp_idno: invite.comp_idno,
             user_idno,
             data: {
-              status_code: "active",
-              role_code: invite.role_code as "admin" | "member",
+              memb_stat: "active",
+              comp_role: invite.comp_role as "admin" | "member",
               modi_idno: user_idno,
             },
           },
@@ -214,8 +214,8 @@ export const companyService = {
           {
             comp_idno: invite.comp_idno,
             user_idno,
-            role_code: invite.role_code as "admin" | "member",
-            status_code: "active",
+            comp_role: invite.comp_role as "admin" | "member",
+            memb_stat: "active",
             crea_idno: user_idno,
           },
         );
@@ -226,7 +226,7 @@ export const companyService = {
         {
           invt_idno: invite.invt_idno,
           data: {
-            stat_code: "used",
+            invt_stat: "used",
             used_date: new Date(),
             used_user: user_idno,
             modi_idno: user_idno,
@@ -252,7 +252,7 @@ export const companyService = {
 
     await companyRepo.updateInvite(
       { db },
-      { invt_idno, data: { stat_code: "revoked", modi_idno: ctx.user_idno } },
+      { invt_idno, data: { invt_stat: "revoked", modi_idno: ctx.user_idno } },
     );
     return { success: true as const };
   },
@@ -277,7 +277,7 @@ export const companyService = {
       { db },
       {
         invt_idno,
-        data: { token_key: tokenHash, expi_date, stat_code: "active", modi_idno: ctx.user_idno },
+        data: { tokn_keys: tokenHash, expi_date, invt_stat: "active", modi_idno: ctx.user_idno },
       },
     );
 
@@ -297,10 +297,10 @@ export const companyService = {
       { comp_idno: ctx.comp_idno, user_idno: target_user_idno },
     );
 
-    if (!membership || membership.status_code !== "active") {
+    if (!membership || membership.memb_stat !== "active") {
       throwAppError({ tRPCCode: "NOT_FOUND", appCode: "MEMBER_NOT_FOUND", message: "멤버를 찾을 수 없습니다.", displayType: "toast", retryable: false });
     }
-    if (membership.role_code === "owner") {
+    if (membership.comp_role === "owner") {
       throwAppError({ tRPCCode: "FORBIDDEN", appCode: "CANNOT_REMOVE_OWNER", message: "소유자는 제거할 수 없습니다.", displayType: "toast", retryable: false });
     }
 
@@ -309,7 +309,7 @@ export const companyService = {
       {
         comp_idno: ctx.comp_idno,
         user_idno: target_user_idno,
-        data: { status_code: "removed", modi_idno: ctx.user_idno },
+        data: { memb_stat: "removed", modi_idno: ctx.user_idno },
       },
     );
     return { success: true as const };
@@ -325,10 +325,10 @@ export const companyService = {
       { comp_idno: ctx.comp_idno, user_idno: target_user_idno },
     );
 
-    if (!membership || membership.status_code !== "active") {
+    if (!membership || membership.memb_stat !== "active") {
       throwAppError({ tRPCCode: "NOT_FOUND", appCode: "MEMBER_NOT_FOUND", message: "멤버를 찾을 수 없습니다.", displayType: "toast", retryable: false });
     }
-    if (membership.role_code === "owner") {
+    if (membership.comp_role === "owner") {
       throwAppError({ tRPCCode: "FORBIDDEN", appCode: "CANNOT_CHANGE_OWNER_ROLE", message: "소유자의 권한은 변경할 수 없습니다.", displayType: "toast", retryable: false });
     }
 
@@ -337,7 +337,7 @@ export const companyService = {
       {
         comp_idno: ctx.comp_idno,
         user_idno: target_user_idno,
-        data: { role_code: role, modi_idno: ctx.user_idno },
+        data: { comp_role: role, modi_idno: ctx.user_idno },
       },
     );
     return { success: true as const };

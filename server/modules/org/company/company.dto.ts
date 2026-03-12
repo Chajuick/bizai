@@ -51,32 +51,32 @@ export const MemberItemOutput = z.object({
   user_idno: z.number().int(),
   user_name: z.string().nullable(),
   mail_idno: z.string().nullable(),
-  role_code: CompanyRoleSchema,
-  status_code: MemberStatSchema,
+  comp_role: CompanyRoleSchema,
+  memb_stat: MemberStatSchema,
   crea_date: IsoDateTime,
 });
 
 export const CompanyItemOutput = z.object({
   comp_idno: z.number().int(),
   comp_name: z.string(),
-  role_code: CompanyRoleSchema,
+  comp_role: CompanyRoleSchema,
   is_active: z.boolean(),
 });
 
 export const InviteItemOutput = z.object({
   invt_idno: z.number().int(),
   mail_idno: z.string().nullable(),
-  role_code: InviteRoleOutputSchema, // DB는 owner|admin|member 허용
-  stat_code: InviteStatSchema,
+  comp_role: InviteRoleOutputSchema, // DB는 owner|admin|member 허용
+  invt_stat: InviteStatSchema,
   expi_date: IsoDateTime,
   crea_date: IsoDateTime,
 });
 
 export const InviteInfoOutput = z.object({
   comp_name: z.string(),
-  role_code: InviteRoleOutputSchema,
+  comp_role: InviteRoleOutputSchema,
   expi_date: IsoDateTime,
-  stat_code: InviteStatSchema,
+  invt_stat: InviteStatSchema,
 });
 
 export const CreateInviteOutput = z.object({
@@ -92,7 +92,7 @@ export const AcceptInviteOutput = z.object({
 export const CompanyContextOutput = z.object({
   comp_idno: z.number().int(),
   comp_name: z.string(),
-  company_role: CompanyRoleSchema,
+  comp_role: CompanyRoleSchema,
 });
 // #endregion
 

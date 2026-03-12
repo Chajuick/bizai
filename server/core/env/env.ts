@@ -81,6 +81,8 @@ export const ENV = {
   // --- Google OAuth
   googleClientId: optional("GOOGLE_CLIENT_ID"),
   googleClientSecret: optional("GOOGLE_CLIENT_SECRET"),
+  googleRedirectUri: optional("GOOGLE_REDIRECT_URI"),
+  appRedirectUrl: optional("APP_REDIRECT_URL"),  
 
   // --- database
   databaseUrl: required("DATABASE_URL"),

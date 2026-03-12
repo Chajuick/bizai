@@ -11,6 +11,8 @@
     "format": "prettier --write .",
     "test": "vitest run",
     "db:push": "drizzle-kit generate && drizzle-kit migrate",
+    "db:comment": "tsx scripts/db-comment.ts",
+    "db:setup": "pnpm db:push && pnpm db:comment",
     "start:pm2": "pm2 start dist/index.js --name bizai",
     "restart:pm2": "pm2 restart bizai",
     "stop:pm2": "pm2 stop bizai",

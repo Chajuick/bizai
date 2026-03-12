@@ -62,7 +62,7 @@ function buildWhere(params: {
   }
 
   if (params.status) {
-    conditions.push(eq(CRM_ORDER.stat_code, params.status));
+    conditions.push(eq(CRM_ORDER.orde_stat, params.status));
   }
 
   if (params.clie_idno) {
@@ -111,9 +111,9 @@ export const orderRepo = {
   async stats(
     { db }: RepoDeps,
     params: { comp_idno: number }
-  ): Promise<{ stat_code: string; orde_pric: string | number | null }[]> {
+  ): Promise<{ orde_stat: string; orde_pric: string | number | null }[]> {
     return db
-      .select({ stat_code: CRM_ORDER.stat_code, orde_pric: CRM_ORDER.orde_pric })
+      .select({ orde_stat: CRM_ORDER.orde_stat, orde_pric: CRM_ORDER.orde_pric })
       .from(CRM_ORDER)
       .where(and(eq(CRM_ORDER.comp_idno, params.comp_idno), eq(CRM_ORDER.enab_yesn, true)));
   },

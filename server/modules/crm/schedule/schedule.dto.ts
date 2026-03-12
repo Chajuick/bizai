@@ -53,7 +53,7 @@ export const ScheduleUpdateInput = z.object({
   sche_pric: z.number().positive().nullable().optional(),
   sche_date: z.string().nullable().optional(),
 
-  stat_code: z.enum(SCHEDULE_STATUSES).optional(),
+  sche_stat: z.enum(SCHEDULE_STATUSES).optional(),
   clie_name: z.string().nullable().optional(),
 
   enab_yesn: z.boolean().optional(),
@@ -80,7 +80,7 @@ export const ScheduleItemOutput = z.object({
   sche_pric: DecimalLikeNullable.optional(), // ✅ 기존 union/string/number를 공용으로
   sche_date: IsoDateTime,                   // ✅ z.date() → ISO string
 
-  stat_code: z.enum(SCHEDULE_STATUSES),
+  sche_stat: z.enum(SCHEDULE_STATUSES),
   actn_ownr: z.enum(ACTION_OWNERS).nullable().optional(),
   remd_sent: z.boolean().optional(),
   auto_gene: z.boolean().optional(),

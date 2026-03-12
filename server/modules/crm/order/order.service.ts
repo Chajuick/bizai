@@ -63,15 +63,15 @@ export const orderService = {
 
     for (const row of rows) {
       counts.all++;
-      switch (row.stat_code) {
+      switch (row.orde_stat) {
         case "proposal":    counts.proposal++;    break;
         case "negotiation": counts.negotiation++; break;
         case "confirmed":   counts.confirmed++;   break;
         case "canceled":    counts.canceled++;    break;
       }
       const price = Number(row.orde_pric || 0);
-      if (row.stat_code !== "canceled") totalPipeline += price;
-      if (row.stat_code === "confirmed") confirmedAmount += price;
+      if (row.orde_stat !== "canceled") totalPipeline += price;
+      if (row.orde_stat === "confirmed") confirmedAmount += price;
     }
 
     return { ...counts, totalPipeline, confirmedAmount };
@@ -102,7 +102,7 @@ export const orderService = {
       prod_serv: input.prod_serv,
 
       orde_pric: toDecimalStr(input.orde_pric),
-      stat_code: input.stat_code,
+      orde_stat: input.orde_stat,
 
       ctrt_date: parseDateOrNull(input.ctrt_date),
       expd_date: parseDateOrNull(input.expd_date),
@@ -130,7 +130,7 @@ export const orderService = {
 
     if (patch.orde_pric !== undefined) data.orde_pric = toDecimalStr(patch.orde_pric);
 
-    if (patch.stat_code !== undefined) data.stat_code = patch.stat_code as any;
+    if (patch.orde_stat !== undefined) data.orde_stat = patch.orde_stat as any;
 
     const ctrt = parseDateOrNull(patch.ctrt_date);
     if (ctrt !== undefined) data.ctrt_date = ctrt as any;

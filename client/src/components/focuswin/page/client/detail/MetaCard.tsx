@@ -17,7 +17,7 @@ type Props = {
 export default function ClientDetailMetaCard({ client }: Props) {
   if (!client) return null;
 
-  const hasMeta = client.clie_name || client.bizr_numb || client.indu_type || client.clie_addr || client.clie_memo;
+  const hasMeta = client.clie_name || client.bizn_numb || client.indu_type || client.clie_addr || client.clie_memo;
 
   if (!hasMeta) return null;
 
@@ -26,11 +26,11 @@ export default function ClientDetailMetaCard({ client }: Props) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {client.clie_name && <MetaItem icon={Building2} label="거래처" value={client.clie_name} tone="blue" />}
 
-        {client.bizr_numb && (
+        {client.bizn_numb && (
           <MetaItem
             icon={Hash}
             label="사업자번호"
-            value={`${client.bizr_numb.slice(0, 3)}-${client.bizr_numb.slice(3, 5)}-${client.bizr_numb.slice(5)}`}
+            value={`${client.bizn_numb.slice(0, 3)}-${client.bizn_numb.slice(3, 5)}-${client.bizn_numb.slice(5)}`}
             tone="slate"
           />
         )}

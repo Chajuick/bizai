@@ -19,7 +19,7 @@ export function svcCtxFromTrpc(ctx: ProtectedContext): ServiceCtx {
     comp_idno: ctx.comp_idno,
     user_idno: ctx.user.user_idno,
     user_role: ctx.user.role,
-    company_role: ctx.company_role ?? null,
+    comp_role: ctx.comp_role ?? null,
   };
 }
 // #endregion

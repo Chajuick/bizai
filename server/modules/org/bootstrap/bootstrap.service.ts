@@ -55,7 +55,7 @@ export const bootstrapService = {
     // 1) 기존 활성 멤버십 확인
     const memberships = await bootstrapRepo.findActiveMembership({ db }, user_idno);
     if (memberships.length > 0) {
-      const owner = memberships.find((m) => m.role_code === "owner");
+      const owner = memberships.find((m) => m.comp_role === "owner");
       const defaultMembership = owner ?? memberships[0];
       return { comp_idno: defaultMembership!.comp_idno };
     }

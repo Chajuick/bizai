@@ -637,15 +637,15 @@ export const clientService = {
         errors.push({ row: rowNo, reason: "사업자번호가 비어있습니다." });
         continue;
       }
-      const bizr_numb = normalizeBizrNumb(bizr_raw);
-      if (!bizr_numb) {
+      const bizn_numb = normalizeBizrNumb(bizr_raw);
+      if (!bizn_numb) {
         errors.push({ row: rowNo, reason: "사업자번호가 10자리 숫자가 아닙니다." });
         continue;
       }
 
       // Upsert: 사업자번호 기준
       try {
-        const existing = await clientRepo.findByBizrNumb({ db }, { comp_idno: ctx.comp_idno, bizr_numb });
+        const existing = await clientRepo.findByBizrNumb({ db }, { comp_idno: ctx.comp_idno, bizn_numb });
 
         if (existing) {
           // UPDATE — CRM_CLIENT 캐시 갱신
@@ -695,7 +695,7 @@ export const clientService = {
             withCreateAudit(ctx, {
               comp_idno: ctx.comp_idno,
               clie_name,
-              bizr_numb,
+              bizn_numb,
               indu_type: indu_type ?? null,
               clie_addr: clie_addr ?? null,
               cont_name: cont_name ?? null,

@@ -22,7 +22,7 @@ export type AppRole = "admin" | "user";
 
 /**
  * CompanyRole
- * - 회사 멤버십 권한: CORE_COMPANY_USER.role_code 기반
+ * - 회사 멤버십 권한: CORE_COMPANY_USER.comp_role 기반
  */
 export type CompanyRole = "owner" | "admin" | "member";
 
@@ -62,7 +62,7 @@ export type TrpcContext = {
    * - protected/companyAdmin에서는 존재하는 것이 자연스럽지만,
    *   fail-safe를 위해 optional 유지
    */
-  company_role?: CompanyRole | null;
+  comp_role?: CompanyRole | null;
 };
 // #endregion
 
@@ -99,7 +99,7 @@ export async function createContext(opts: CreateExpressContextOptions): Promise<
   // #region Vars
   let user: ContextUser | null = null;
   let comp_idno: number | null = null;
-  let company_role: CompanyRole | null = null;
+  let comp_role: CompanyRole | null = null;
   // #endregion
 
   try {
@@ -130,21 +130,21 @@ export async function createContext(opts: CreateExpressContextOptions): Promise<
         const [m] = await db
           .select({
             comp_idno: CORE_COMPANY_USER.comp_idno,
-            role_code: CORE_COMPANY_USER.role_code,
+            comp_role: CORE_COMPANY_USER.comp_role,
           })
           .from(CORE_COMPANY_USER)
           .where(
             and(
               eq(CORE_COMPANY_USER.user_idno, user.user_idno),
               eq(CORE_COMPANY_USER.comp_idno, requestedCompId),
-              eq(CORE_COMPANY_USER.status_code, "active"),
+              eq(CORE_COMPANY_USER.memb_stat, "active"),
             ),
           )
           .limit(1);
 
         if (m) {
           comp_idno = m.comp_idno;
-          company_role = normalizeCompanyRole(m.role_code);
+          comp_role = normalizeCompanyRole(m.comp_role);
         }
       }
 
@@ -153,20 +153,20 @@ export async function createContext(opts: CreateExpressContextOptions): Promise<
         const [membership] = await db
           .select({
             comp_idno: CORE_COMPANY_USER.comp_idno,
-            role_code: CORE_COMPANY_USER.role_code,
+            comp_role: CORE_COMPANY_USER.comp_role,
           })
           .from(CORE_COMPANY_USER)
           .where(
             and(
               eq(CORE_COMPANY_USER.user_idno, user.user_idno),
-              eq(CORE_COMPANY_USER.status_code, "active"),
+              eq(CORE_COMPANY_USER.memb_stat, "active"),
             ),
           )
           .orderBy(asc(CORE_COMPANY_USER.crea_date))
           .limit(1);
 
         comp_idno = membership?.comp_idno ?? null;
-        company_role = normalizeCompanyRole(membership?.role_code);
+        comp_role = normalizeCompanyRole(membership?.comp_role);
       }
     }
     // #endregion
@@ -187,7 +187,7 @@ export async function createContext(opts: CreateExpressContextOptions): Promise<
       logger.debug({ requestId, err: (err as Error).message }, "auth token rejected — public context");
       user = null;
       comp_idno = null;
-      company_role = null;
+      comp_role = null;
     } else {
       logger.error({ requestId, err }, "createContext unexpected error — propagating 500");
       throw new TRPCError({
@@ -205,7 +205,7 @@ export async function createContext(opts: CreateExpressContextOptions): Promise<
     requestId,
     user,
     comp_idno,
-    company_role,
+    comp_role,
   };
 }
 // #endregion

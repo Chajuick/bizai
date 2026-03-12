@@ -336,7 +336,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               style={{ borderColor: "var(--blueprint-border)" }}
             >
               <div className="flex items-center gap-3">
-                <LogoAvatar src={COMPANY.appLogo} size={36} className="rounded-2xl" />
+                <LogoAvatar src={COMPANY.appLogo} size={36} className="rounded-2xl" radius={0} />
                 <span className="font-black text-[color:var(--blueprint-text)]">BizAI</span>
               </div>
               <button
@@ -436,7 +436,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </button>
 
           <div className="flex items-center gap-2">
-            <LogoAvatar src={COMPANY.appLogo} size={28} className="rounded-2xl" />
+            <LogoAvatar src={COMPANY.appLogo} size={28} className="rounded-2xl" radius={0} />
             <span className="font-black text-slate-900 text-sm">BizAI</span>
           </div>
 

@@ -23,14 +23,14 @@ export const bootstrapRepo = {
     const rows = await db
       .select({
         comp_idno: CORE_COMPANY_USER.comp_idno,
-        role_code: CORE_COMPANY_USER.role_code,
+        comp_role: CORE_COMPANY_USER.comp_role,
         crea_date: CORE_COMPANY_USER.crea_date,
       })
       .from(CORE_COMPANY_USER)
       .where(
         and(
           eq(CORE_COMPANY_USER.user_idno, user_idno),
-          eq(CORE_COMPANY_USER.status_code, "active"),
+          eq(CORE_COMPANY_USER.memb_stat, "active"),
         ),
       )
       .orderBy(CORE_COMPANY_USER.crea_date);

@@ -1,1 +1,0 @@
-ALTER TABLE `COAPP_CRM_SCHEDULE` ADD `actn_ownr` varchar(16);

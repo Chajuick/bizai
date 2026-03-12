@@ -137,7 +137,7 @@ const requireCompanyAdmin = t.middleware(({ ctx, next }) => {
   const pctx = ctx as ProtectedContext;
 
   const isCompanyAdmin =
-    pctx.company_role === "owner" || pctx.company_role === "admin";
+    pctx.comp_role === "owner" || pctx.comp_role === "admin";
 
   if (!isCompanyAdmin) {
     throw new TRPCError({ code: "FORBIDDEN", message: NOT_ADMIN_ERR_MSG });

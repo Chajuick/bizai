@@ -67,11 +67,11 @@ export default function CreateShipmetModal({
           {/* 납품 상태 */}
           <SelectField
             label="납품 상태"
-            value={deliveryForm.stat_code}
+            value={deliveryForm.ship_stat}
             onChange={(v) =>
               setDeliveryForm((f) => ({
                 ...f,
-                stat_code: v as ShipmentStatus,
+                ship_stat: v as ShipmentStatus,
               }))
             }
             options={[

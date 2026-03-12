@@ -112,11 +112,11 @@ export default function ShipmentListFormModal({
           {/* 납품 상태 */}
           <SelectField
             label="납품 상태"
-            value={form.stat_code}
+            value={form.ship_stat}
             onChange={(v) =>
               setForm((f) => ({
                 ...f,
-                stat_code: v as ShipmentStatus,
+                ship_stat: v as ShipmentStatus,
               }))
             }
             options={[

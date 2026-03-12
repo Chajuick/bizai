@@ -34,7 +34,7 @@ export default function InviteAcceptPage({ params }: Props) {
   }
 
   // 유효하지 않은 상태 처리
-  if (vm.info.stat_code !== "active") {
+  if (vm.info.invt_stat !== "active") {
     const messages: Record<string, { icon: React.ReactNode; title: string; desc: string }> = {
       used: {
         icon: <CheckCircle2 className="mx-auto text-green-400" size={40} />,
@@ -53,7 +53,7 @@ export default function InviteAcceptPage({ params }: Props) {
       },
     };
 
-    const info = messages[vm.info.stat_code] ?? messages.expired;
+    const info = messages[vm.info.invt_stat] ?? messages.expired;
 
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
@@ -74,7 +74,7 @@ export default function InviteAcceptPage({ params }: Props) {
         <div className="space-y-1">
           <h1 className="text-xl font-bold text-slate-900">{vm.info.comp_name}</h1>
           <p className="text-sm text-slate-500">
-            회사에 <strong>{ROLE_LABEL[vm.info.role_code]}</strong>으로 초대받으셨습니다.
+            회사에 <strong>{ROLE_LABEL[vm.info.comp_role]}</strong>으로 초대받으셨습니다.
           </p>
           <p className="text-xs text-slate-400">
             만료: {new Date(vm.info.expi_date).toLocaleDateString("ko-KR")}

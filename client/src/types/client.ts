@@ -33,7 +33,7 @@ export type ContactDraft = {
 export type ClientDraft = {
   clie_idno?: number;
   clie_name: string;
-  bizr_numb: string;   // 사업자번호 (숫자 10자리, 미입력 시 빈 문자열)
+  bizn_numb: string;   // 사업자번호 (숫자 10자리, 미입력 시 빈 문자열)
   indu_type: string;
   clie_addr: string;
   clie_memo: string;

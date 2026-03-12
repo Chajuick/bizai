@@ -47,10 +47,10 @@ export default function OrderListItemCard({
   statusChanging: boolean;
   onOpenDelivery: () => void;
 }) {
-  const isCanceled = order.stat_code === "canceled";
-  const stage = isCanceled ? "proposal" : (order.stat_code as OrderStage);
+  const isCanceled = order.orde_stat === "canceled";
+  const stage = isCanceled ? "proposal" : (order.orde_stat as OrderStage);
   const next = isCanceled ? null : nextStage(stage);
-  const nextAction = getNextAction(order.stat_code, stage);
+  const nextAction = getNextAction(order.orde_stat, stage);
 
   const iconVariant = isCanceled ? "slate" : "primary";
 
@@ -68,7 +68,7 @@ export default function OrderListItemCard({
       <div className="min-w-0 flex-1">
         <WorkItemCard.Header
           title={order.clie_name}
-          tags={<StatusBadge status={order.stat_code} />}
+          tags={<StatusBadge status={order.orde_stat} />}
           actions={
             <div className="flex items-center gap-1.5">
               {/* 확정 상태: 납품 생성/추가 아이콘 버튼 */}

@@ -18,7 +18,7 @@ type Props = {
 // #endregion
 
 export default function ClientDetailEditFormCard({ form, setForm }: Props) {
-  const bizNo = form.bizr_numb ?? "";
+  const bizNo = form.bizn_numb ?? "";
 
   const bizNoError = bizNo.length > 0 && bizNo.length !== 10 ? "숫자 10자리여야 합니다." : undefined;
 
@@ -55,7 +55,7 @@ export default function ClientDetailEditFormCard({ form, setForm }: Props) {
         <BusinessNumberField
           label="사업자번호"
           value={bizNo}
-          onChange={v => setForm(f => ({ ...f, bizr_numb: v }))}
+          onChange={v => setForm(f => ({ ...f, bizn_numb: v }))}
           error={bizNoError}
           inputProps={{
             placeholder: "숫자 10자리",

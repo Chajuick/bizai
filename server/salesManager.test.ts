@@ -22,7 +22,7 @@ function createAuthContext(): { ctx: TrpcContext } {
   const ctx: TrpcContext = {
     user,
     comp_idno: null,
-    company_role: null,
+    comp_role: null,
     req: {
       protocol: "https",
       headers: {},
@@ -67,7 +67,7 @@ describe("auth.me", () => {
     const anonCtx: TrpcContext = {
       user: null,
       comp_idno: null,
-      company_role: null,
+      comp_role: null,
       req: { protocol: "https", headers: {} } as TrpcContext["req"],
       res: { clearCookie: () => {} } as TrpcContext["res"],
     };

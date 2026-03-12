@@ -43,33 +43,33 @@ function buildTabWhere(comp_idno: number, tab: TabFilter) {
 
   switch (tab.type) {
     case "overdue":
-      // stat_code='scheduled' AND sche_date < KST 자정
-      return and(...base, eq(CRM_SCHEDULE.stat_code, "scheduled"), lt(CRM_SCHEDULE.sche_date, tab.kstMidnight));
+      // sche_stat='scheduled' AND sche_date < KST 자정
+      return and(...base, eq(CRM_SCHEDULE.sche_stat, "scheduled"), lt(CRM_SCHEDULE.sche_date, tab.kstMidnight));
 
     case "imminent":
-      // stat_code='scheduled' AND now <= sche_date < now+48h
+      // sche_stat='scheduled' AND now <= sche_date < now+48h
       return and(
         ...base,
-        eq(CRM_SCHEDULE.stat_code, "scheduled"),
+        eq(CRM_SCHEDULE.sche_stat, "scheduled"),
         gte(CRM_SCHEDULE.sche_date, tab.now),
         lt(CRM_SCHEDULE.sche_date, tab.imminentEnd)
       );
 
     case "scheduled":
-      // stat_code='scheduled', overdue/imminent 제외
+      // sche_stat='scheduled', overdue/imminent 제외
       // = sche_date >= kstMidnight AND (sche_date < now OR sche_date >= imminentEnd)
       return and(
         ...base,
-        eq(CRM_SCHEDULE.stat_code, "scheduled"),
+        eq(CRM_SCHEDULE.sche_stat, "scheduled"),
         gte(CRM_SCHEDULE.sche_date, tab.kstMidnight),
         or(lt(CRM_SCHEDULE.sche_date, tab.now), gte(CRM_SCHEDULE.sche_date, tab.imminentEnd))
       );
 
     case "completed":
-      return and(...base, eq(CRM_SCHEDULE.stat_code, "completed"));
+      return and(...base, eq(CRM_SCHEDULE.sche_stat, "completed"));
 
     case "canceled":
-      return and(...base, eq(CRM_SCHEDULE.stat_code, "canceled"));
+      return and(...base, eq(CRM_SCHEDULE.sche_stat, "canceled"));
 
     case "all":
     default:
@@ -106,8 +106,8 @@ function buildTabOrderBy(tab: TabFilter, sort?: { field: SortField; dir: SortDir
       // 우선순위: overdue(0) → imminent(1) → rest(2), 2차 날짜 오름차순
       return [
         sql`CASE
-          WHEN ${CRM_SCHEDULE.stat_code} = 'scheduled' AND ${CRM_SCHEDULE.sche_date} < ${tab.kstMidnight} THEN 0
-          WHEN ${CRM_SCHEDULE.stat_code} = 'scheduled' AND ${CRM_SCHEDULE.sche_date} >= ${tab.now} AND ${CRM_SCHEDULE.sche_date} < ${tab.imminentEnd} THEN 1
+          WHEN ${CRM_SCHEDULE.sche_stat} = 'scheduled' AND ${CRM_SCHEDULE.sche_date} < ${tab.kstMidnight} THEN 0
+          WHEN ${CRM_SCHEDULE.sche_stat} = 'scheduled' AND ${CRM_SCHEDULE.sche_date} >= ${tab.now} AND ${CRM_SCHEDULE.sche_date} < ${tab.imminentEnd} THEN 1
           ELSE 2
         END`,
         asc(CRM_SCHEDULE.sche_date),
@@ -151,7 +151,7 @@ export const scheduleRepo = {
 
     const rows = await db
       .select({
-        stat_code: CRM_SCHEDULE.stat_code,
+        sche_stat: CRM_SCHEDULE.sche_stat,
         cnt: sql<number>`count(*)`.mapWith(Number),
       })
       .from(CRM_SCHEDULE)
@@ -159,10 +159,10 @@ export const scheduleRepo = {
         and(
           where,
           // ✅ overdue는 DB status로 쓰지 않는다는 전제 (현재 정책상 scheduled/completed/canceled만 세면 됨)
-          sql`${CRM_SCHEDULE.stat_code} in ('scheduled','completed','canceled')`
+          sql`${CRM_SCHEDULE.sche_stat} in ('scheduled','completed','canceled')`
         )
       )
-      .groupBy(CRM_SCHEDULE.stat_code);
+      .groupBy(CRM_SCHEDULE.sche_stat);
 
     const out: Record<"scheduled" | "completed" | "canceled", number> = {
       scheduled: 0,
@@ -171,9 +171,9 @@ export const scheduleRepo = {
     };
 
     for (const r of rows) {
-      if (r.stat_code === "scheduled") out.scheduled = r.cnt;
-      if (r.stat_code === "completed") out.completed = r.cnt;
-      if (r.stat_code === "canceled") out.canceled = r.cnt;
+      if (r.sche_stat === "scheduled") out.scheduled = r.cnt;
+      if (r.sche_stat === "completed") out.completed = r.cnt;
+      if (r.sche_stat === "canceled") out.canceled = r.cnt;
     }
 
     return out;
@@ -193,7 +193,7 @@ export const scheduleRepo = {
       .where(
         and(
           where,
-          eq(CRM_SCHEDULE.stat_code, "scheduled"),
+          eq(CRM_SCHEDULE.sche_stat, "scheduled"),
           lt(CRM_SCHEDULE.sche_date, params.before)
         )
       )
@@ -216,7 +216,7 @@ export const scheduleRepo = {
       .where(
         and(
           where,
-          eq(CRM_SCHEDULE.stat_code, "scheduled"),
+          eq(CRM_SCHEDULE.sche_stat, "scheduled"),
           gte(CRM_SCHEDULE.sche_date, params.from),
           // to는 inclusive 처리를 원하면 lt 대신 <= 구현 필요
           lt(CRM_SCHEDULE.sche_date, params.to)

@@ -10,7 +10,7 @@ export type ShipmentFormState = {
   orde_idno: string;
   clie_name: string;
   ship_pric: string;
-  stat_code: ShipmentStatus;
+  ship_stat: ShipmentStatus;
   ship_date: string;
   ship_memo: string;
 };

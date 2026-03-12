@@ -20,7 +20,7 @@ export const shipmentRepo = {
     params: {
       comp_idno: number;
       orde_idno?: number;
-      stat_code?: "pending" | "delivered" | "invoiced" | "paid";
+      ship_stat?: "pending" | "delivered" | "invoiced" | "paid";
       search?: string;
 
       limit: number;
@@ -33,7 +33,7 @@ export const shipmentRepo = {
       eq(CRM_SHIPMENT.comp_idno, params.comp_idno),
       eq(CRM_SHIPMENT.enab_yesn, true),
       params.orde_idno ? eq(CRM_SHIPMENT.orde_idno, params.orde_idno) : undefined,
-      params.stat_code ? eq(CRM_SHIPMENT.stat_code, params.stat_code) : undefined,
+      params.ship_stat ? eq(CRM_SHIPMENT.ship_stat, params.ship_stat) : undefined,
       params.search ? like(CRM_SHIPMENT.clie_name, `%${escapeLike(params.search)}%`) : undefined
     );
 
@@ -64,9 +64,9 @@ export const shipmentRepo = {
   async stats(
     { db }: RepoDeps,
     params: { comp_idno: number }
-  ): Promise<{ stat_code: string; ship_pric: unknown }[]> {
+  ): Promise<{ ship_stat: string; ship_pric: unknown }[]> {
     return db
-      .select({ stat_code: CRM_SHIPMENT.stat_code, ship_pric: CRM_SHIPMENT.ship_pric })
+      .select({ ship_stat: CRM_SHIPMENT.ship_stat, ship_pric: CRM_SHIPMENT.ship_pric })
       .from(CRM_SHIPMENT)
       .where(and(eq(CRM_SHIPMENT.comp_idno, params.comp_idno), eq(CRM_SHIPMENT.enab_yesn, true)));
   },

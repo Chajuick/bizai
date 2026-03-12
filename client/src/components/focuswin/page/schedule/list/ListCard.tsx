@@ -27,12 +27,12 @@ export default function ScheduleListCard({
   onDeleteRequest: (p: EnhancedSchedule) => void;
   onCompleteRequest: (p: EnhancedSchedule) => void;
 }) {
-  const isScheduled = p.stat_code === "scheduled";
+  const isScheduled = p.sche_stat === "scheduled";
 
   const scheduleStatus: "default" | "imminent" | "overdue" = p.overdue ? "overdue" : p.imminent ? "imminent" : "default";
 
   // 유효 상태: overdue/imminent 플래그를 stat_code보다 우선
-  const effectiveStatCode = p.overdue ? "overdue" : p.imminent ? "imminent" : p.stat_code;
+  const effectiveStatCode = p.overdue ? "overdue" : p.imminent ? "imminent" : p.sche_stat;
 
   const iconVariant = p.overdue ? "danger" : p.imminent ? "warning" : "primary";
 

@@ -1,1 +1,0 @@
-ALTER TABLE `COAPP_CRM_SALE` ADD `sale_pric` decimal(15,2);

@@ -215,7 +215,7 @@ export default function SettingsTeam() {
                   <div className="flex items-center gap-2">
                     <Badge variant="secondary">링크</Badge>
 
-                    <span className="text-sm text-slate-700">{ROLE_LABEL[inv.role_code]}</span>
+                    <span className="text-sm text-slate-700">{ROLE_LABEL[inv.comp_role]}</span>
                   </div>
 
                   <p className="text-xs text-slate-400 pt-2 ml-1">
@@ -270,9 +270,9 @@ export default function SettingsTeam() {
               </div>
 
               <div className="flex items-center gap-2">
-                <Badge variant="outline">{ROLE_LABEL[m.role_code]}</Badge>
+                <Badge variant="outline">{ROLE_LABEL[m.comp_role]}</Badge>
 
-                {isAdmin && m.role_code !== "owner" && (
+                {isAdmin && m.comp_role !== "owner" && (
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon" className="h-7 w-7">
@@ -283,7 +283,7 @@ export default function SettingsTeam() {
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem
                         onClick={() =>
-                          vm.handleUpdateRole(m.user_idno, m.role_code === "admin" ? "member" : "admin")
+                          vm.handleUpdateRole(m.user_idno, m.comp_role === "admin" ? "member" : "admin")
                         }
                       >
                         <UserCog size={14} className="mr-2" />

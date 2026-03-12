@@ -188,7 +188,7 @@ export const saleService = {
     const sort_field = input?.sort?.field ?? "vist_date";
     const sort_dir = input?.sort?.dir ?? "desc";
 
-    const isAdminOrOwner = ctx.company_role === "owner" || ctx.company_role === "admin";
+    const isAdminOrOwner = ctx.comp_role === "owner" || ctx.comp_role === "admin";
 
     const rows = await saleRepo.list(
       { db },
@@ -228,7 +228,7 @@ export const saleService = {
 
         aiex_done: !!r.aiex_done,
         aiex_summ: r.aiex_summ ?? null,
-        ai_status: (r.ai_status ?? "pending") as "pending" | "processing" | "completed" | "failed",
+        aiex_stat: (r.aiex_stat ?? "pending") as "pending" | "processing" | "completed" | "failed",
       })),
       page: { limit: page.limit, offset: page.offset, hasMore },
     };
@@ -241,7 +241,7 @@ export const saleService = {
   async getSale(ctx: ServiceCtx, sale_idno: number) {
     const db = getDb();
 
-    const isAdminOrOwner = ctx.company_role === "owner" || ctx.company_role === "admin";
+    const isAdminOrOwner = ctx.comp_role === "owner" || ctx.comp_role === "admin";
     const sale = await saleRepo.getById({ db }, {
       comp_idno: ctx.comp_idno,
       owne_idno: isAdminOrOwner ? undefined : ctx.user_idno,
@@ -305,7 +305,7 @@ export const saleService = {
 
         aiex_done: !!sale.aiex_done,
         aiex_summ: sale.aiex_summ ?? null,
-        ai_status: (sale.ai_status ?? "pending") as "pending" | "processing" | "completed" | "failed",
+        aiex_stat: (sale.aiex_stat ?? "pending") as "pending" | "processing" | "completed" | "failed",
         aiex_core,
       },
       client_contact,
@@ -315,7 +315,7 @@ export const saleService = {
         sche_name: s.sche_name,
         sche_date: toIso(s.sche_date),
         sche_desc: s.sche_desc ?? null,
-        stat_code: s.stat_code,
+        sche_stat: s.sche_stat,
         actn_ownr: s.actn_ownr ?? null,
         auto_gene: !!s.auto_gene,
         aiex_keys: s.aiex_keys ?? null,
@@ -349,7 +349,7 @@ export const saleService = {
       aiex_done: false,
       aiex_summ: null,
       aiex_text: null,
-      ai_status: "pending" as const,
+      aiex_stat: "pending" as const,
 
       enab_yesn: true,
     };
@@ -435,8 +435,8 @@ export const saleService = {
       jobs_stat: "queued",
       fail_mess: null,
       sttx_text: null,
-      aiex_sum: null,
-      aiex_ext: null,
+      aiex_summ: null,
+      aiex_text: null,
       sttx_name: null,
       llmd_name: null,
       meta_json: { task: "transcribe", language: input.language ?? null },
@@ -557,7 +557,7 @@ export const saleService = {
   async getTranscribeJobResult(ctx: ServiceCtx, sale_idno: number) {
     const db = getDb();
 
-    const isAdminOrOwner = ctx.company_role === "owner" || ctx.company_role === "admin";
+    const isAdminOrOwner = ctx.comp_role === "owner" || ctx.comp_role === "admin";
     const sale = await saleRepo.getById({ db }, {
       comp_idno: ctx.comp_idno,
       owne_idno: isAdminOrOwner ? undefined : ctx.user_idno,
@@ -580,13 +580,13 @@ export const saleService = {
 
   /**
    * AI 분석 큐 등록 (HTTP 즉시 응답)
-   * - 잡 생성 + 토큰 선차감 + ai_status = "pending" 설정 후 즉시 반환
+   * - 잡 생성 + 토큰 선차감 + aiex_stat = "pending" 설정 후 즉시 반환
    * - 실제 LLM 처리는 background worker(processQueuedAnalyzeJob)가 수행
    */
   async queueAnalyze(ctx: ServiceCtx, sale_idno: number, file_idno?: number) {
     const db = getDb();
 
-    const isAdminOrOwner = ctx.company_role === "owner" || ctx.company_role === "admin";
+    const isAdminOrOwner = ctx.comp_role === "owner" || ctx.comp_role === "admin";
     const sale = await saleRepo.getById({ db }, {
       comp_idno: ctx.comp_idno,
       owne_idno: isAdminOrOwner ? undefined : ctx.user_idno,
@@ -613,13 +613,13 @@ export const saleService = {
         jobs_idno = Number(exists.jobs_idno);
         await saleRepo.updateAudioJob({ db }, {
           jobs_idno,
-          data: { jobs_stat: "queued", fail_mess: null, aiex_sum: null, aiex_ext: null, reqe_date: new Date(), fini_date: null },
+          data: { jobs_stat: "queued", fail_mess: null, aiex_summ: null, aiex_text: null, reqe_date: new Date(), fini_date: null },
         });
       } else {
         const jobBase: AudioJobBase = {
           comp_idno: ctx.comp_idno, sale_idno, file_idno: targetFileId,
           jobs_stat: "queued", fail_mess: null, sttx_text: null,
-          aiex_sum: null, aiex_ext: null, sttx_name: null, llmd_name: null,
+          aiex_summ: null, aiex_text: null, sttx_name: null, llmd_name: null,
           meta_json: { task: "analyze" }, reqe_date: new Date(), fini_date: null,
         };
         const job = withCreateAudit(ctx, jobBase) as InsertSaleAudioJob;
@@ -633,13 +633,13 @@ export const saleService = {
         jobs_idno = Number(existingNoFile.jobs_idno);
         await saleRepo.updateAudioJob({ db }, {
           jobs_idno,
-          data: { jobs_stat: "queued", fail_mess: null, aiex_sum: null, aiex_ext: null, reqe_date: new Date(), fini_date: null },
+          data: { jobs_stat: "queued", fail_mess: null, aiex_summ: null, aiex_text: null, reqe_date: new Date(), fini_date: null },
         });
       } else {
         const jobBase: AudioJobBase = {
           comp_idno: ctx.comp_idno, sale_idno, file_idno: null,
           jobs_stat: "queued", fail_mess: null, sttx_text: null,
-          aiex_sum: null, aiex_ext: null, sttx_name: null, llmd_name: null,
+          aiex_summ: null, aiex_text: null, sttx_name: null, llmd_name: null,
           meta_json: { task: "analyze_text" }, reqe_date: new Date(), fini_date: null,
         };
         const job = withCreateAudit(ctx, jobBase) as InsertSaleAudioJob;
@@ -661,7 +661,7 @@ export const saleService = {
 
     await saleRepo.update({ db }, {
       comp_idno: ctx.comp_idno, owne_idno: ctx.user_idno, sale_idno,
-      data: { ai_status: "pending" as const },
+      data: { aiex_stat: "pending" as const },
     });
 
     return { jobs_idno, jobs_stat: "queued" as const };
@@ -674,7 +674,7 @@ export const saleService = {
   /**
    * Worker: 큐에서 잡 하나를 꺼내 LLM 분석 실행
    * - billing.jobs.ts의 runAiJobWorker가 5초마다 호출
-   * - 결과는 CRM_SALE_AUDIO_JOB.aiex_ext에 저장 (analyzeResult 엔드포인트로 조회)
+   * - 결과는 CRM_SALE_AUDIO_JOB.aiex_text에 저장 (analyzeResult 엔드포인트로 조회)
    */
   async processQueuedAnalyzeJob(jobs_idno: number): Promise<void> {
     const db = getDb();
@@ -705,7 +705,7 @@ export const saleService = {
     // sale → processing
     await saleRepo.update({ db }, {
       comp_idno, owne_idno, sale_idno,
-      data: { ai_status: "processing" as const },
+      data: { aiex_stat: "processing" as const },
     });
 
     const text = sale.edit_text?.trim() || sale.orig_memo;
@@ -713,7 +713,7 @@ export const saleService = {
       await saleRepo.updateAudioJob({ db }, {
         jobs_idno, data: { jobs_stat: "failed", fail_mess: "분석할 텍스트가 없습니다.", fini_date: new Date() },
       });
-      await saleRepo.update({ db }, { comp_idno, owne_idno, sale_idno, data: { ai_status: "failed" as const } });
+      await saleRepo.update({ db }, { comp_idno, owne_idno, sale_idno, data: { aiex_stat: "failed" as const } });
       return;
     }
 
@@ -737,7 +737,7 @@ export const saleService = {
         jobs_idno,
         data: { jobs_stat: "failed", fail_mess: err instanceof Error ? err.message : "LLM 호출 실패", fini_date: new Date() },
       });
-      await saleRepo.update({ db }, { comp_idno, owne_idno, sale_idno, data: { ai_status: "failed" as const } });
+      await saleRepo.update({ db }, { comp_idno, owne_idno, sale_idno, data: { aiex_stat: "failed" as const } });
       return;
     }
 
@@ -807,7 +807,7 @@ export const saleService = {
         aiex_done: true,
         aiex_summ: summary,
         aiex_text: parsed as Record<string, unknown>,
-        ai_status: "completed" as const,
+        aiex_stat: "completed" as const,
         ...(sale_pric !== null && !sale.sale_pric ? { sale_pric: String(sale_pric) } : {}),
         ...(primaryContact?.cont_name && !sale.cont_name ? { cont_name: primaryContact.cont_name } : {}),
         ...(primaryContact?.cont_role && !sale.cont_role ? { cont_role: primaryContact.cont_role } : {}),
@@ -845,7 +845,7 @@ export const saleService = {
         sche_desc: appt.desc ?? null,
         sche_pric: sale_pric !== null ? String(sale_pric) : null,
         sche_date: apptDate,
-        stat_code: "scheduled" as const,
+        sche_stat: "scheduled" as const,
         actn_ownr,
         auto_gene: true,
         aiex_keys,
@@ -855,7 +855,7 @@ export const saleService = {
       if (schedule_idno === null) schedule_idno = created.sche_idno;
     }
 
-    // 결과 payload → aiex_ext에 저장 (analyzeResult 엔드포인트에서 조회)
+    // 결과 payload → aiex_text에 저장 (analyzeResult 엔드포인트에서 조회)
     const resultPayload = {
       summary,
       schedule_idno,
@@ -873,8 +873,8 @@ export const saleService = {
       jobs_idno,
       data: {
         jobs_stat: "done",
-        aiex_sum: summary,
-        aiex_ext: resultPayload,
+        aiex_summ: summary,
+        aiex_text: resultPayload,
         llmd_name: llmResult.model,
         fini_date: new Date(),
       },
@@ -902,7 +902,7 @@ export const saleService = {
     const db = getDb();
 
     // 사용자 접근 권한 확인
-    const isAdminOrOwner = ctx.company_role === "owner" || ctx.company_role === "admin";
+    const isAdminOrOwner = ctx.comp_role === "owner" || ctx.comp_role === "admin";
     const sale = await saleRepo.getById({ db }, {
       comp_idno: ctx.comp_idno,
       owne_idno: isAdminOrOwner ? undefined : ctx.user_idno,
@@ -910,7 +910,7 @@ export const saleService = {
     });
     if (!sale) throwAppError({ tRPCCode: "NOT_FOUND", appCode: "SALE_NOT_FOUND", message: "영업일지를 찾을 수 없습니다.", displayType: "toast" });
 
-    const ai_status = (sale.ai_status ?? "pending") as "pending" | "processing" | "completed" | "failed";
+    const aiex_stat = (sale.aiex_stat ?? "pending") as "pending" | "processing" | "completed" | "failed";
 
     const job = await saleRepo.getLatestDoneAnalyzeJob({ db }, { sale_idno, comp_idno: ctx.comp_idno });
 
@@ -926,10 +926,10 @@ export const saleService = {
       ai_contact_email?: string | null;
     };
 
-    const ext = job?.aiex_ext as ExtPayload | null;
+    const ext = job?.aiex_text as ExtPayload | null;
 
     return {
-      ai_status,
+      aiex_stat,
       jobs_stat: job?.jobs_stat ?? null,
       summary: ext?.summary ?? null,
       schedule_idno: ext?.schedule_idno ?? null,

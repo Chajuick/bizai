@@ -76,7 +76,7 @@ export default function ShipmentListItemCard({
   onStatusUpdate: (id: number, status: ShipmentStatus) => void;
   statusUpdatePending: boolean;
 }) {
-  const stage = d.stat_code as Stage;
+  const stage = d.ship_stat as Stage;
   const next = nextStage(stage);
   const nextAction = getNextAction(stage);
   const iconConfig = DELIVERY_ICON_MAP[stage];
@@ -91,7 +91,7 @@ export default function ShipmentListItemCard({
       <div className="min-w-0 flex-1">
         <WorkItemCard.Header
           title={d.clie_name}
-          tags={<StatusBadge status={d.stat_code} />}
+          tags={<StatusBadge status={d.ship_stat} />}
           actions={
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

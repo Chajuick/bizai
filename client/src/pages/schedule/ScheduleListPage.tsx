@@ -8,7 +8,9 @@ import SkeletonCardList from "@/components/focuswin/common/skeletons/skeleton-ca
 import PageScaffold from "@/components/focuswin/common/page/scaffold/page-scaffold";
 import ListNotice from "@/components/focuswin/page/schedule/list/ListNotice";
 import { ScheduleModals } from "@/components/focuswin/page/schedule/list/ScheduleModals";
-import NotificationPermissionBanner, { NotificationDeniedHint } from "@/components/focuswin/common/feedback/NotificationPermissionBanner";
+import NotificationPermissionBanner, {
+  NotificationDeniedHint,
+} from "@/components/focuswin/common/feedback/NotificationPermissionBanner";
 
 import ScheduleListHeadContent from "@/components/focuswin/page/schedule/list/Header";
 import ScheduleListEmptyCard from "@/components/focuswin/page/schedule/list/Empty";
@@ -17,19 +19,25 @@ import ScheduleListContent from "@/components/focuswin/page/schedule/list/Conten
 export default function ScheduleList() {
   const vm = useScheduleListVM();
 
-  // notice: VM은 숫자만 제공, JSX 조립은 Page에서
-  const notice =
+  const listNotice =
     vm.overdueInList > 0 || vm.imminentInList > 0 ? (
       <ListNotice tone={vm.overdueInList > 0 ? "danger" : "warning"}>
         {vm.overdueInList > 0 ? `지연 ${vm.overdueInList}건` : null}
         {vm.overdueInList > 0 && vm.imminentInList > 0 ? " · " : null}
         {vm.imminentInList > 0 ? `임박 ${vm.imminentInList}건` : null}이 있어요.
       </ListNotice>
-    ) : undefined;
+    ) : null;
+
+  const composedNotice = (
+    <div className="space-y-2">
+      <NotificationPermissionBanner />
+      <NotificationDeniedHint />
+      {listNotice}
+    </div>
+  );
 
   return (
     <>
-      {/* 모달 조립: VM의 상태/핸들러를 받아 렌더 */}
       <ScheduleModals {...vm.modalProps} />
 
       <PageScaffold
@@ -37,13 +45,7 @@ export default function ScheduleList() {
         title="일정"
         description="후속 미팅과 할 일을 상태별로 관리하세요."
         status={vm.status}
-        notice={
-          <>
-            <NotificationPermissionBanner />
-            <NotificationDeniedHint />
-            {notice}
-          </>
-        }
+        notice={composedNotice}
         headerChildren={<ScheduleListHeadContent vm={vm} />}
         empty={<ScheduleListEmptyCard vm={vm} />}
         loading={<SkeletonCardList count={4} variant="simple" />}

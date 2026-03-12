@@ -107,13 +107,13 @@ export default function InviteEnterPage() {
                 <Loader2 size={16} className="animate-spin" />
                 <span className="text-sm">초대 정보 확인 중…</span>
               </div>
-            ) : info?.stat_code === "active" ? (
+            ) : info?.invt_stat === "active" ? (
               <>
                 <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-center space-y-2">
                   <Building2 className="mx-auto text-blue-500" size={28} />
                   <p className="font-bold text-slate-900">{info.comp_name}</p>
                   <p className="text-sm text-slate-500">
-                    <strong>{ROLE_LABEL[info.role_code]}</strong>으로 초대받으셨습니다.
+                    <strong>{ROLE_LABEL[info.comp_role]}</strong>으로 초대받으셨습니다.
                   </p>
                   <p className="text-xs text-slate-400">
                     만료: {new Date(info.expi_date).toLocaleDateString("ko-KR")}
@@ -152,7 +152,7 @@ export default function InviteEnterPage() {
                     used: "이미 사용된 초대입니다.",
                     revoked: "취소된 초대입니다.",
                     expired: "만료된 초대입니다.",
-                  }[info?.stat_code ?? "expired"] ?? "유효하지 않은 초대입니다."}
+                  }[info?.invt_stat ?? "expired"] ?? "유효하지 않은 초대입니다."}
                 </p>
                 <button
                   className="text-xs text-slate-400 hover:text-slate-600 transition"

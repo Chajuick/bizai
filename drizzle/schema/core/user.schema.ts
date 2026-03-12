@@ -10,7 +10,7 @@ export const CORE_USER = table(
     open_idno: varchar("open_idno", { length: 191 }).notNull(),        // OIDC sub 등(유니크)
     user_name: varchar("user_name", { length: 200 }),                  // 표시 이름
     mail_idno: varchar("mail_idno", { length: 320 }),                  // 이메일(옵션)
-    passwd_hash: varchar("passwd_hash", { length: 255 }),              // bcrypt 해시 (이메일 가입자만)
+    passwd_hash: varchar("pass_hash", { length: 255 }),              // bcrypt 해시 (이메일 가입자만)
     logi_mthd: varchar("logi_mthd", { length: 64 }),                   // 로그인 방식(google/email 등)
 
     user_auth: varchar("user_auth", { length: 16 }).default("user").notNull(), // 시스템 권한

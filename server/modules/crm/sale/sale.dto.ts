@@ -154,7 +154,7 @@ export const SaleItemOutput = z.object({
 
   aiex_done: z.boolean(),
   aiex_summ: z.string().nullable(),
-  ai_status: z.enum(AI_STATUSES),
+  aiex_stat: z.enum(AI_STATUSES),
 });
 
 export const SaleListOutput = z.object({
@@ -171,7 +171,7 @@ export const ScheduleSummaryOutput = z.object({
   sche_name: z.string(),
   sche_date: z.string(), // ISO
   sche_desc: z.string().nullable().optional(),
-  stat_code: z.string(),
+  sche_stat: z.string(),
   actn_ownr: z.string().nullable(),
   auto_gene: z.boolean(),
   aiex_keys: z.string().nullable(),
@@ -200,7 +200,7 @@ export const SaleGetOutput = z.object({
 
     aiex_done: z.boolean(),
     aiex_summ: z.string().nullable(),
-    ai_status: z.enum(AI_STATUSES),
+    aiex_stat: z.enum(AI_STATUSES),
 
     aiex_core: AiCoreOutput.nullable(),
   }),
@@ -250,7 +250,7 @@ export const SaleAnalyzeResultInput = z.object({
 
 /** analyzeResult 쿼리 응답 (워커 완료 후 조회) */
 export const SaleAnalyzeResultOutput = z.object({
-  ai_status: z.enum(AI_STATUSES),
+  aiex_stat: z.enum(AI_STATUSES),
   jobs_stat: z.string().nullable(),
 
   summary: z.string().nullable(),

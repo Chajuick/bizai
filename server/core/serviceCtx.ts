@@ -29,6 +29,6 @@ export type ServiceCtx = {
    * 회사 멤버십 권한: role_code 기반
    * - 회사 설정/멤버 관리 등에서 사용
    */
-  company_role?: CompanyRole | null;
+  comp_role?: CompanyRole | null;
 };
 // #endregion

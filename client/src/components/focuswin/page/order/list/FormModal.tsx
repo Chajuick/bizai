@@ -88,8 +88,8 @@ export default function OrderListFormDModal({
             {/* 상태 */}
             <SelectField
               label="상태"
-              value={form.stat_code}
-              onChange={(v) => setForm((f) => ({ ...f, stat_code: v as OrderStatus }))}
+              value={form.orde_stat}
+              onChange={(v) => setForm((f) => ({ ...f, orde_stat: v as OrderStatus }))}
               options={[
                 { value: "proposal", label: "제안" },
                 { value: "negotiation", label: "협상" },

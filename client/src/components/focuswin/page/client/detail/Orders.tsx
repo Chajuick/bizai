@@ -57,7 +57,7 @@ export default function ClientDetailOrders({
             <WorkItemCard key={order.orde_idno} className="p-3">
               <WorkItemCard.Icon
                 className="w-9 h-9"
-                variant={order.stat_code === "canceled" ? "slate" : "primary"}
+                variant={order.orde_stat === "canceled" ? "slate" : "primary"}
               >
                 <ShoppingCart size={14} />
               </WorkItemCard.Icon>
@@ -65,7 +65,7 @@ export default function ClientDetailOrders({
               <div className="min-w-0 flex-1">
                 <WorkItemCard.Header
                   title={order.prod_serv}
-                  tags={<StatusBadge status={order.stat_code} />}
+                  tags={<StatusBadge status={order.orde_stat} />}
                 />
                 <WorkItemCard.Body>
                   <p className="text-sm font-black text-slate-900">

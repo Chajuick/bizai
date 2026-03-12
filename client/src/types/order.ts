@@ -12,7 +12,7 @@ export type OrderFormState = {
   clie_idno?: number;
   prod_serv: string;
   orde_pric: string;
-  stat_code: OrderStatus;
+  orde_stat: OrderStatus;
   ctrt_date: string;
   expd_date: string;
   orde_memo: string;
@@ -21,7 +21,7 @@ export type OrderFormState = {
 /** 수주에서 납품 생성 시 사용하는 폼 상태 */
 export type OrderShipmentFormState = {
   ship_pric: string;
-  stat_code: ShipmentStatus;
+  ship_stat: ShipmentStatus;
   ship_date: string;
   ship_memo: string;
 };
@@ -30,7 +30,7 @@ export type OrderShipmentFormState = {
 export type OrderQuickFormState = {
   prod_serv: string;
   orde_pric: string;
-  stat_code: "proposal" | "negotiation" | "confirmed";
+  orde_stat: "proposal" | "negotiation" | "confirmed";
   ctrt_date: string;
   orde_memo: string;
 };

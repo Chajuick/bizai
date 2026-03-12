@@ -301,7 +301,7 @@ export const saleRepo = {
   /**
    * Stale "running" job 복구
    * - reqe_date가 cutoff보다 오래된 running 잡을 failed로 전환
-   * - ai_status = "failed"로도 연동 업데이트
+   * - aiex_stat = "failed"로도 연동 업데이트
    */
   async resetStaleRunningJobs(deps: SaleRepoDeps, cutoff: Date): Promise<number> {
     const stale = await deps.db
@@ -323,11 +323,11 @@ export const saleRepo = {
         .set({ jobs_stat: "failed", fail_mess: "서버 재시작 또는 타임아웃으로 인한 자동 복구", fini_date: now })
         .where(eq(CRM_SALE_AUDIO_JOB.jobs_idno, job.jobs_idno));
 
-      // 연결된 sale ai_status도 failed로 동기화 (file-only job은 sale_idno 없음)
+      // 연결된 sale aiex_stat도 failed로 동기화 (file-only job은 sale_idno 없음)
       if (job.sale_idno != null) {
         await deps.db
           .update(CRM_SALE)
-          .set({ ai_status: "failed" })
+          .set({ aiex_stat: "failed" })
           .where(
             and(
               eq(CRM_SALE.comp_idno, job.comp_idno),

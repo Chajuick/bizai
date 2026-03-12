@@ -1,19 +1,24 @@
-import { useCallback, useMemo, useRef, useState } from "react";
-import { Mic, MicOff, Loader2, CheckCircle, UploadCloud } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Mic, MicOff, Loader2, CheckCircle, UploadCloud, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useVoiceUploadTranscribe } from "@/hooks/focuswin/files/useVoiceUploadTranscribe";
 
-type RecordingState = "idle" | "recording" | "uploading" | "confirming" | "transcribing" | "done";
+type RecordingState =
+  | "idle"
+  | "recording"
+  | "stopping"
+  | "uploading"
+  | "confirming"
+  | "transcribing"
+  | "done";
 
 interface VoiceRecorderProps {
   onTranscribed: (text: string) => void;
-
-  // 저장 시점에 attachments로 묶기 위해 file_idno를 부모가 들고 있게 하자
   onUploadedFileId?: (fileId: number) => void;
-
-  // 옵션: 파일 크기 제한
-  maxBytes?: number; // default 16MB
+  maxBytes?: number;
 }
+
+type MicPermissionState = "granted" | "prompt" | "denied" | "unknown";
 
 function formatDuration(s: number) {
   const mm = Math.floor(s / 60)
@@ -30,11 +35,13 @@ export default function VoiceRecorder({
 }: VoiceRecorderProps) {
   const [state, setState] = useState<RecordingState>("idle");
   const [duration, setDuration] = useState(0);
+  const [permissionState, setPermissionState] = useState<MicPermissionState>("unknown");
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const { uploadAndTranscribe, abort } = useVoiceUploadTranscribe();
 
@@ -50,16 +57,145 @@ export default function VoiceRecorder({
     setDuration(0);
   }, []);
 
-  // 녹음 시작
-  const startRecording = useCallback(async () => {
+  const ensureMicrophonePermission = useCallback(async (): Promise<MicPermissionState> => {
+    try {
+      if (!("permissions" in navigator) || !navigator.permissions?.query) {
+        return "unknown";
+      }
+
+      const result = await navigator.permissions.query({
+        name: "microphone" as PermissionName,
+      });
+
+      return result.state;
+    } catch {
+      return "unknown";
+    }
+  }, []);
+
+  const refreshPermissionState = useCallback(async () => {
+    const permission = await ensureMicrophonePermission();
+    setPermissionState(permission);
+    return permission;
+  }, [ensureMicrophonePermission]);
+
+  const checkBrowserSupport = useCallback(() => {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      toast.error("이 브라우저에서는 마이크 녹음을 지원하지 않습니다.", {
+        description: "Chrome, Edge 같은 최신 브라우저에서 다시 시도해 주세요.",
+        duration: 5000,
+      });
+      return false;
+    }
+
+    if (typeof MediaRecorder === "undefined") {
+      toast.error("이 브라우저에서는 녹음 기능을 지원하지 않습니다.", {
+        description: "최신 Chrome 또는 Edge 환경을 권장합니다.",
+        duration: 5000,
+      });
+      return false;
+    }
+
+    return true;
+  }, []);
+
+  const resolveMimeType = useCallback(() => {
+    if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+      return "audio/webm;codecs=opus";
+    }
+    if (MediaRecorder.isTypeSupported("audio/webm")) {
+      return "audio/webm";
+    }
+    if (MediaRecorder.isTypeSupported("audio/mp4")) {
+      return "audio/mp4";
+    }
+    return "";
+  }, []);
+
+  const requestMicrophonePermission = useCallback(async () => {
+    if (!checkBrowserSupport()) return;
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      streamRef.current = stream;
+      stream.getTracks().forEach((t) => t.stop());
 
-      // mimeType: 브라우저 지원 체크 (webm 우선)
-      const mimeType = MediaRecorder.isTypeSupported("audio/webm;codecs=opus")
-        ? "audio/webm;codecs=opus"
-        : "audio/webm";
+      setPermissionState("granted");
+      toast.success("마이크 권한이 확인되었습니다.", {
+        description: "이제 음성 녹음을 시작할 수 있어요.",
+        duration: 3000,
+      });
+    } catch (e) {
+      const latest = await refreshPermissionState();
+
+      if (e instanceof DOMException) {
+        if (e.name === "NotAllowedError" || e.name === "PermissionDeniedError") {
+          toast.error("마이크 접근이 거부되었습니다.", {
+            description:
+              latest === "denied"
+                ? "브라우저 주소창의 권한 설정과 운영체제의 마이크 권한을 모두 확인해 주세요."
+                : "권한 요청이 취소되었거나 시스템 마이크 접근이 막혀 있을 수 있습니다.",
+            duration: 6000,
+          });
+          return;
+        }
+
+        if (e.name === "NotFoundError" || e.name === "DevicesNotFoundError") {
+          toast.error("사용 가능한 마이크를 찾을 수 없습니다.", {
+            description: "마이크 연결 상태와 기본 입력 장치를 확인해 주세요.",
+            duration: 5000,
+          });
+          return;
+        }
+
+        if (e.name === "NotReadableError" || e.name === "TrackStartError") {
+          toast.error("마이크를 사용할 수 없습니다.", {
+            description: "다른 앱이나 다른 브라우저 탭에서 마이크를 사용 중인지 확인해 주세요.",
+            duration: 5000,
+          });
+          return;
+        }
+
+        if (e.name === "SecurityError") {
+          toast.error("보안 설정 때문에 마이크를 열 수 없습니다.", {
+            description: "브라우저 정책, iframe 설정, localhost/HTTPS 환경을 확인해 주세요.",
+            duration: 5000,
+          });
+          return;
+        }
+      }
+
+      toast.error("마이크 권한을 확인할 수 없습니다.", {
+        description: "브라우저 및 운영체제 마이크 설정을 다시 확인해 주세요.",
+        duration: 5000,
+      });
+    }
+  }, [checkBrowserSupport, refreshPermissionState]);
+
+  const startRecording = useCallback(async () => {
+    if (!checkBrowserSupport()) return;
+
+    try {
+      const permission = await refreshPermissionState();
+
+      if (permission === "denied") {
+        toast.error("마이크 권한이 차단되어 있습니다.", {
+          description: "브라우저 주소창의 권한 설정과 운영체제의 마이크 권한을 모두 확인해 주세요.",
+          duration: 6000,
+        });
+        return;
+      }
+
+      const mimeType = resolveMimeType();
+      if (!mimeType) {
+        toast.error("지원되는 녹음 형식을 찾지 못했습니다.", {
+          description: "최신 Chrome 또는 Edge 환경에서 다시 시도해 주세요.",
+          duration: 5000,
+        });
+        return;
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
 
       const mr = new MediaRecorder(stream, { mimeType });
       mediaRecorderRef.current = mr;
@@ -75,14 +211,13 @@ export default function VoiceRecorder({
 
         await uploadAndTranscribe({
           blob,
-          mimeType, // ✅ 고정 "audio/webm"이 아니라 실제 mimeType 전달
+          mimeType,
           fileName: `sale-audio-${Date.now()}.webm`,
           maxBytes,
           onUploadedFileId,
           onTranscribed,
           onState: (s) => setState(s),
           onFinally: () => {
-            // done 상태는 잠깐 보여주고 idle로 복귀
             setTimeout(() => setState("idle"), 1200);
           },
         });
@@ -93,51 +228,74 @@ export default function VoiceRecorder({
       setDuration(0);
       timerRef.current = setInterval(() => setDuration((d) => d + 1), 1000);
     } catch (e) {
-      // getUserMedia 권한 거부, 디바이스 없음, MediaRecorder 미지원 등
-      if (e instanceof Error) {
+      const latest = await refreshPermissionState();
+
+      if (e instanceof DOMException) {
         if (e.name === "NotAllowedError" || e.name === "PermissionDeniedError") {
-          toast.error("마이크 권한이 차단되어 있습니다.", {
-            description: "브라우저 주소창의 🔒 아이콘을 클릭하여 마이크를 '허용'으로 변경해 주세요.",
+          toast.error("마이크 접근이 거부되었습니다.", {
+            description:
+              latest === "denied"
+                ? "사이트 권한이 차단되어 있습니다. 주소창의 권한 설정을 확인해 주세요."
+                : "사이트 권한뿐 아니라 Windows/macOS의 시스템 마이크 권한도 함께 확인해 주세요.",
             duration: 6000,
           });
-        } else if (e.name === "NotFoundError" || e.name === "DevicesNotFoundError") {
-          toast.error("마이크를 찾을 수 없습니다.", {
-            description: "마이크가 연결되어 있는지 확인해 주세요.",
-            duration: 4000,
-          });
-        } else if (e.name === "NotReadableError") {
-          toast.error("마이크가 다른 앱에서 사용 중입니다.", {
-            description: "다른 앱에서 마이크를 종료한 후 다시 시도해 주세요.",
-            duration: 4000,
-          });
-        } else {
-          toast.error("마이크를 사용할 수 없습니다.", {
-            description: "브라우저 설정에서 마이크 권한을 확인해 주세요.",
-            duration: 4000,
-          });
+          return;
         }
-      } else {
-        toast.error("마이크를 사용할 수 없습니다.");
-      }
-    }
-  }, [cleanupRecording, uploadAndTranscribe, maxBytes, onUploadedFileId, onTranscribed]);
 
-  // 녹음 중지
+        if (e.name === "NotFoundError" || e.name === "DevicesNotFoundError") {
+          toast.error("사용 가능한 마이크를 찾을 수 없습니다.", {
+            description: "마이크 연결 상태와 기본 입력 장치를 확인해 주세요.",
+            duration: 5000,
+          });
+          return;
+        }
+
+        if (e.name === "NotReadableError" || e.name === "TrackStartError") {
+          toast.error("마이크를 사용할 수 없습니다.", {
+            description: "다른 앱이나 다른 브라우저 탭에서 마이크를 사용 중인지 확인해 주세요.",
+            duration: 5000,
+          });
+          return;
+        }
+
+        if (e.name === "SecurityError") {
+          toast.error("보안 설정 때문에 마이크를 열 수 없습니다.", {
+            description: "iframe 사용 여부, 브라우저 정책, HTTPS/localhost 환경을 확인해 주세요.",
+            duration: 5000,
+          });
+          return;
+        }
+      }
+
+      toast.error("마이크를 시작할 수 없습니다.", {
+        description: "권한, 장치 연결, 브라우저 환경을 다시 확인해 주세요.",
+        duration: 5000,
+      });
+    }
+  }, [
+    checkBrowserSupport,
+    cleanupRecording,
+    maxBytes,
+    onTranscribed,
+    onUploadedFileId,
+    refreshPermissionState,
+    resolveMimeType,
+    uploadAndTranscribe,
+  ]);
+
   const stopRecording = useCallback(() => {
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = null;
 
+    setState("stopping");
     mediaRecorderRef.current?.stop();
   }, []);
 
-  // 파일 업로드(첨부) 핸들러
   const onPickFile = useCallback(
     async (file: File | null) => {
       if (!file) return;
 
-      // 타입 제한(원하면 더 엄격히)
       if (!file.type.startsWith("audio/") && file.type !== "video/webm") {
-        // 파일 형식 검증 — 브라우저에서만 알 수 있으므로 직접 처리
         toast.error("오디오 파일만 업로드할 수 있습니다.");
         return;
       }
@@ -159,119 +317,166 @@ export default function VoiceRecorder({
   );
 
   const label = useMemo(() => {
-    if (state === "uploading") return "업로드 중...";
-    if (state === "confirming") return "등록 중...";
-    if (state === "transcribing") return "텍스트 변환 중...";
-    if (state === "done") return "완료";
+    if (state === "stopping") return "녹음 정리 중...";
+    if (state === "uploading") return "1/3 업로드 중...";
+    if (state === "confirming") return "2/3 등록 중...";
+    if (state === "transcribing") return "3/3 텍스트 변환 중...";
+    if (state === "done") return "본문에 반영 완료";
     return "";
   }, [state]);
 
+  const permissionHint = useMemo(() => {
+    if (permissionState === "granted") return "마이크 권한이 허용되어 있어요.";
+    if (permissionState === "prompt") return "처음 사용 시 브라우저 마이크 권한 허용이 필요해요.";
+    if (permissionState === "denied") return "마이크 권한이 차단되어 있어요. 주소창 권한 설정을 확인해 주세요.";
+    return "브라우저와 운영체제의 마이크 설정이 필요할 수 있어요.";
+  }, [permissionState]);
+
+  useEffect(() => {
+    refreshPermissionState();
+  }, [refreshPermissionState]);
+
+  useEffect(() => {
+    return () => {
+      abort();
+      cleanupRecording();
+    };
+  }, [abort, cleanupRecording]);
+
   return (
-    <div className="flex items-center gap-3">
-      {state === "idle" && (
-        <>
-          <button
-            type="button"
-            onClick={startRecording}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all hover:scale-105"
-            style={{
-              background: "rgba(59,130,246,0.15)",
-              border: "1px solid rgba(59,130,246,0.3)",
-              color: "#60a5fa",
-            }}
-          >
-            <Mic size={16} />
-            음성 녹음
-          </button>
+    <div className="space-y-3">
+      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+        {state === "idle" && (
+          <>
+            <button
+              type="button"
+              onClick={startRecording}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all hover:scale-[1.02]"
+              style={{
+                background: "rgba(59,130,246,0.15)",
+                border: "1px solid rgba(59,130,246,0.3)",
+                color: "#60a5fa",
+              }}
+            >
+              <Mic size={16} />
+              음성 녹음
+            </button>
 
-          <label
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium cursor-pointer transition-all hover:scale-105"
-            style={{
-              background: "rgba(99,102,241,0.12)",
-              border: "1px solid rgba(99,102,241,0.3)",
-              color: "#818cf8",
-            }}
-          >
-            <UploadCloud size={15} />
-            음성 파일 첨부 (최대 {(maxBytes / (1024 * 1024)).toFixed(0)}MB)
-            <input
-              type="file"
-              accept="audio/*,video/webm"
-              className="hidden"
-              onChange={(e) => onPickFile(e.target.files?.[0] ?? null)}
-            />
-          </label>
-        </>
-      )}
-
-      {state === "recording" && (
-        <button
-          type="button"
-          onClick={stopRecording}
-          className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium"
-          style={{
-            background: "rgba(239,68,68,0.15)",
-            border: "1px solid rgba(239,68,68,0.3)",
-            color: "#f87171",
-          }}
-        >
-          <div className="recording-pulse">
-            <MicOff size={16} />
-          </div>
-          <div className="flex items-end gap-0.5 h-5">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div
-                key={i}
-                className="waveform-bar w-1 rounded-full"
-                style={{ background: "#f87171", minHeight: "4px" }}
+            <label
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium cursor-pointer transition-all hover:scale-[1.02]"
+              style={{
+                background: "rgba(99,102,241,0.12)",
+                border: "1px solid rgba(99,102,241,0.3)",
+                color: "#818cf8",
+              }}
+            >
+              <UploadCloud size={15} />
+              음성 파일 첨부 (최대 {(maxBytes / (1024 * 1024)).toFixed(0)}MB)
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="audio/*,video/webm"
+                className="hidden"
+                onChange={async (e) => {
+                  await onPickFile(e.target.files?.[0] ?? null);
+                  e.currentTarget.value = "";
+                }}
               />
-            ))}
-          </div>
-          <span className="font-mono">{formatDuration(duration)}</span>
-          <span>중지</span>
-        </button>
-      )}
+            </label>
 
-      {(state === "uploading" || state === "confirming" || state === "transcribing") && (
-        <div
-          className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm"
-          style={{
-            background: "rgba(251,191,36,0.1)",
-            border: "1px solid rgba(251,191,36,0.2)",
-            color: "#fbbf24",
-          }}
-        >
-          <Loader2 size={16} className="animate-spin" />
-          {label}
+            <button
+              type="button"
+              onClick={requestMicrophonePermission}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all hover:scale-[1.02]"
+              style={{
+                background: "rgba(16,185,129,0.10)",
+                border: "1px solid rgba(16,185,129,0.22)",
+                color: "#10b981",
+              }}
+            >
+              <ShieldCheck size={16} />
+              권한 확인
+            </button>
+          </>
+        )}
+
+        {state === "recording" && (
           <button
             type="button"
-            className="ml-2 text-xs opacity-80 hover:opacity-100"
-            onClick={() => {
-              abort();
-              toast.message("작업을 취소했습니다.");
-              setState("idle");
-              cleanupRecording();
+            onClick={stopRecording}
+            className="w-full sm:w-auto flex items-center justify-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium"
+            style={{
+              background: "rgba(239,68,68,0.15)",
+              border: "1px solid rgba(239,68,68,0.3)",
+              color: "#f87171",
             }}
           >
-            취소
+            <div className="recording-pulse">
+              <MicOff size={16} />
+            </div>
+
+            <div className="flex items-end gap-0.5 h-5">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div
+                  key={i}
+                  className="waveform-bar w-1 rounded-full"
+                  style={{ background: "#f87171", minHeight: "4px" }}
+                />
+              ))}
+            </div>
+
+            <span className="font-mono">{formatDuration(duration)}</span>
+            <span>중지</span>
           </button>
-        </div>
-      )}
+        )}
 
-      {state === "done" && (
-        <div
-          className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm"
-          style={{
-            background: "rgba(16,185,129,0.1)",
-            border: "1px solid rgba(16,185,129,0.2)",
-            color: "#34d399",
-          }}
-        >
-          <CheckCircle size={16} />
-          변환 완료
-        </div>
-      )}
+        {(state === "stopping" ||
+          state === "uploading" ||
+          state === "confirming" ||
+          state === "transcribing") && (
+          <div
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm"
+            style={{
+              background: "rgba(251,191,36,0.1)",
+              border: "1px solid rgba(251,191,36,0.2)",
+              color: "#fbbf24",
+            }}
+          >
+            <Loader2 size={16} className="animate-spin" />
+            {label}
+            {state !== "stopping" && (
+              <button
+                type="button"
+                className="ml-2 text-xs opacity-80 hover:opacity-100"
+                onClick={() => {
+                  abort();
+                  toast.message("작업을 취소했습니다.");
+                  setState("idle");
+                  cleanupRecording();
+                }}
+              >
+                취소
+              </button>
+            )}
+          </div>
+        )}
 
+        {state === "done" && (
+          <div
+            className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm"
+            style={{
+              background: "rgba(16,185,129,0.1)",
+              border: "1px solid rgba(16,185,129,0.2)",
+              color: "#34d399",
+            }}
+          >
+            <CheckCircle size={16} />
+            {label}
+          </div>
+        )}
+      </div>
+
+      <p className="text-xs text-slate-500">{permissionHint}</p>
     </div>
   );
 }

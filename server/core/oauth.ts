@@ -125,12 +125,6 @@ function buildGoogleAuthUrl(redirectUri: string, state: string): string {
   return `${GOOGLE_AUTH_URL}?${params.toString()}`;
 }
 
-function buildRedirectUri(req: Request): string {
-  const protocol = req.protocol;
-  const host = req.get("host") ?? "localhost:3000";
-  return `${protocol}://${host}/api/auth/google/callback`;
-}
-
 type GoogleTokenResponse = {
   access_token: string;
   id_token?: string;
@@ -202,7 +196,7 @@ export function registerOAuthRoutes(app: Express) {
       return;
     }
     const state = generateState();
-    const redirectUri = buildRedirectUri(req);
+    const redirectUri = ENV.googleRedirectUri;
     setStateCookie(res, req, state);
     res.redirect(302, buildGoogleAuthUrl(redirectUri, state));
   });
@@ -230,7 +224,7 @@ export function registerOAuthRoutes(app: Express) {
     }
 
     try {
-      const redirectUri = buildRedirectUri(req);
+      const redirectUri = ENV.googleRedirectUri;
       const tokens = await exchangeGoogleCode(code, redirectUri);
       const googleUser = await fetchGoogleUserInfo(tokens.access_token);
 

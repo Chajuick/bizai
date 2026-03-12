@@ -171,39 +171,39 @@ export type AiStatus = typeof AI_STATUSES[number];
 
 // #region Billing enums
 export const planCodeEnum = mysqlEnum("plan_code", PLAN_CODES);
-export const subStatusEnum = mysqlEnum("sub_status", SUB_STATUSES);
+export const subStatusEnum = mysqlEnum("subs_stat", SUB_STATUSES);
 // #endregion
 
 // #region Company enums
-export const companyRoleEnum = mysqlEnum("company_role", COMPANY_ROLES);
-export const memberStatusEnum = mysqlEnum("member_status", MEMBER_STATUSES);
+export const companyRoleEnum = mysqlEnum("comp_role", COMPANY_ROLES);
+export const memberStatusEnum = mysqlEnum("memb_stat", MEMBER_STATUSES);
 // #endregion
 
 // #region Invite enums
-export const inviteKindEnum = mysqlEnum("invite_kind", INVITE_KINDS);
-export const inviteStatusEnum = mysqlEnum("invite_status", INVITE_STATUSES);
+export const inviteKindEnum = mysqlEnum("invt_kind", INVITE_KINDS);
+export const inviteStatusEnum = mysqlEnum("invt_stat", INVITE_STATUSES);
 // #endregion
 
 // #region AI enums
-export const aiFeatureEnum = mysqlEnum("ai_feature", AI_FEATURES);
-export const ledgerReasonEnum = mysqlEnum("ledger_reason", LEDGER_REASONS);
+export const aiFeatureEnum = mysqlEnum("feat_code", AI_FEATURES);
+export const ledgerReasonEnum = mysqlEnum("resn_code", LEDGER_REASONS);
 // #endregion
 
 // #region CRM enums
-export const scheduleStatusEnum = mysqlEnum("schedule_status", SCHEDULE_STATUSES);
-export const orderStatusEnum = mysqlEnum("order_status", ORDER_STATUSES);
-export const shipStatusEnum = mysqlEnum("ship_status", SHIP_STATUSES);
+export const scheduleStatusEnum = mysqlEnum("sche_stat", SCHEDULE_STATUSES);
+export const orderStatusEnum = mysqlEnum("orde_stat", ORDER_STATUSES);
+export const shipStatusEnum = mysqlEnum("ship_stat", SHIP_STATUSES);
 // #endregion
 
 // #region File enums
-export const fileRefTypeEnum = mysqlEnum("file_ref_type", FILE_REF_TYPES);
-export const filePurpTypeEnum = mysqlEnum("file_purp_type", FILE_PURP_TYPES);
+export const fileRefTypeEnum = mysqlEnum("refe_type", FILE_REF_TYPES);
+export const filePurpTypeEnum = mysqlEnum("purp_type", FILE_PURP_TYPES);
 // #endregion
 
 // #region Job enums
-export const jobsStatusEnum = mysqlEnum("jobs_status", JOB_STATUSES);
+export const jobsStatusEnum = mysqlEnum("jobs_stat", JOB_STATUSES);
 // #endregion
 
 // #region Sale AI status enums
-export const aiStatusEnum = mysqlEnum("ai_status", AI_STATUSES);
+export const aiStatusEnum = mysqlEnum("aiex_stat", AI_STATUSES);
 // #endregion

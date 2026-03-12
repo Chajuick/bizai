@@ -86,7 +86,7 @@ export const dashboardRepo = {
           and(
             eq(CRM_SCHEDULE.comp_idno, params.comp_idno),
             eq(CRM_SCHEDULE.enab_yesn, true),
-            eq(CRM_SCHEDULE.stat_code, "scheduled"),
+            eq(CRM_SCHEDULE.sche_stat, "scheduled"),
             gte(CRM_SCHEDULE.sche_date, now)
           )
         ),
@@ -100,7 +100,7 @@ export const dashboardRepo = {
           and(
             eq(CRM_ORDER.comp_idno, params.comp_idno),
             eq(CRM_ORDER.enab_yesn, true),
-            sql`${CRM_ORDER.stat_code} IN ('proposal','negotiation','confirmed')`
+            sql`${CRM_ORDER.orde_stat} IN ('proposal','negotiation','confirmed')`
           )
         ),
       //  월 매출 = 수금(paid) + paid_date 기준
@@ -113,7 +113,7 @@ export const dashboardRepo = {
           and(
             eq(CRM_SHIPMENT.comp_idno, params.comp_idno),
             eq(CRM_SHIPMENT.enab_yesn, true),
-            eq(CRM_SHIPMENT.stat_code, "paid"),
+            eq(CRM_SHIPMENT.ship_stat, "paid"),
             gte(CRM_SHIPMENT.paid_date, monthStart),
             lt(CRM_SHIPMENT.paid_date, monthEnd)
           )
@@ -126,7 +126,7 @@ export const dashboardRepo = {
           and(
             eq(CRM_SCHEDULE.comp_idno, params.comp_idno),
             eq(CRM_SCHEDULE.enab_yesn, true),
-            eq(CRM_SCHEDULE.stat_code, "scheduled"),
+            eq(CRM_SCHEDULE.sche_stat, "scheduled"),
             lt(CRM_SCHEDULE.sche_date, kstMidnight)
           )
         ),
@@ -138,7 +138,7 @@ export const dashboardRepo = {
           and(
             eq(CRM_SCHEDULE.comp_idno, params.comp_idno),
             eq(CRM_SCHEDULE.enab_yesn, true),
-            eq(CRM_SCHEDULE.stat_code, "scheduled"),
+            eq(CRM_SCHEDULE.sche_stat, "scheduled"),
             gte(CRM_SCHEDULE.sche_date, now),
             lte(CRM_SCHEDULE.sche_date, twelveHoursLater)
           )
@@ -180,7 +180,7 @@ export const dashboardRepo = {
         and(
           eq(CRM_SCHEDULE.comp_idno, params.comp_idno),
           eq(CRM_SCHEDULE.enab_yesn, true),
-          eq(CRM_SCHEDULE.stat_code, "scheduled"),
+          eq(CRM_SCHEDULE.sche_stat, "scheduled"),
           gte(CRM_SCHEDULE.sche_date, params.now)
         )
       )
@@ -205,7 +205,7 @@ export const dashboardRepo = {
             eq(CRM_ORDER.comp_idno, params.comp_idno),
             eq(CRM_ORDER.enab_yesn, true),
             gte(CRM_ORDER.crea_date, params.from),
-            sql`${CRM_ORDER.stat_code} != 'canceled'`
+            sql`${CRM_ORDER.orde_stat} != 'canceled'`
           )
         )
         .groupBy(sql`DATE_FORMAT(${CRM_ORDER.crea_date}, '%Y-%m')`)
@@ -222,7 +222,7 @@ export const dashboardRepo = {
           and(
             eq(CRM_SHIPMENT.comp_idno, params.comp_idno),
             eq(CRM_SHIPMENT.enab_yesn, true),
-            eq(CRM_SHIPMENT.stat_code, "paid"),
+            eq(CRM_SHIPMENT.ship_stat, "paid"),
             gte(CRM_SHIPMENT.paid_date, params.from)
           )
         )

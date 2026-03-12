@@ -172,11 +172,11 @@ export default function CreateOrderModal({
           {/* 초기 상태 */}
           <SelectField
             label="초기 상태"
-            value={orderForm.stat_code}
+            value={orderForm.orde_stat}
             onChange={(v) =>
               setOrderForm((f) => ({
                 ...f,
-                stat_code: v as OrderQuickFormState["stat_code"],
+                orde_stat: v as OrderQuickFormState["orde_stat"],
               }))
             }
             options={[

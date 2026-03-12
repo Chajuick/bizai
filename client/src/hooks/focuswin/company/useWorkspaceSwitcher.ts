@@ -27,7 +27,7 @@ export function useWorkspaceSwitcher() {
   return {
     currentCompIdno: context?.comp_idno ?? null,
     currentCompName: context?.comp_name ?? null,
-    companyRole: context?.company_role ?? null,
+    companyRole: context?.comp_role ?? null,
     planCode: billing?.plan_code ?? null,
     planName: billing?.plan_name ?? null,
     companies,

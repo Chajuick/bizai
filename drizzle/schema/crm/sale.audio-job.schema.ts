@@ -18,8 +18,8 @@ export const CRM_SALE_AUDIO_JOB = table(
     fail_mess: text("fail_mess"),                                     // 실패 메시지(옵션)
 
     sttx_text: text("sttx_text"),                                     // STT 결과(옵션)
-    aiex_sum:  text("aiex_sum"),                                      // AI 요약
-    aiex_ext:  json("aiex_ext"),                                      // AI 추출(json)
+    aiex_summ:  text("aiex_summ"),                                      // AI 요약
+    aiex_text:  json("aiex_text"),                                      // AI 추출(json)
 
     sttx_name: varchar("sttx_name", { length: 80 }),                  // STT 모델명
     llmd_name: varchar("llmd_name", { length: 80 }),                  // LLM 모델명

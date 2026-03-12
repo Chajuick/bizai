@@ -36,7 +36,7 @@ const EMPTY_ORDER_FORM: OrderFormState = {
   clie_idno: undefined,
   prod_serv: "",
   orde_pric: "",
-  stat_code: "proposal",
+  orde_stat: "proposal",
   ctrt_date: "",
   expd_date: "",
   orde_memo: "",
@@ -44,7 +44,7 @@ const EMPTY_ORDER_FORM: OrderFormState = {
 
 const EMPTY_DELIVERY_FORM: OrderShipmentFormState = {
   ship_pric: "",
-  stat_code: "pending",
+  ship_stat: "pending",
   ship_date: "",
   ship_memo: "",
 };
@@ -128,7 +128,7 @@ export function useOrderListVM() {
 
     setDeliveryForm({
       ship_pric: order.orde_pric ? String(Math.round(Number(order.orde_pric))) : "",
-      stat_code: "delivered",
+      ship_stat: "delivered",
       ship_date: defaultDate,
       ship_memo: "",
     });
@@ -174,7 +174,7 @@ export function useOrderListVM() {
           clie_name: form.clie_name,
           prod_serv: form.prod_serv,
           orde_pric: Number(form.orde_pric),
-          stat_code: form.stat_code,
+          orde_stat: form.orde_stat,
           ctrt_date: form.ctrt_date || undefined,
           expd_date: form.expd_date || undefined,
           orde_memo: form.orde_memo || undefined,
@@ -198,7 +198,7 @@ export function useOrderListVM() {
       clie_idno: order.clie_idno ?? undefined,
       prod_serv: order.prod_serv,
       orde_pric: String(order.orde_pric ?? ""),
-      stat_code: order.stat_code,
+      orde_stat: order.orde_stat,
       ctrt_date: order.ctrt_date ? new Date(order.ctrt_date).toISOString().split("T")[0] : "",
       expd_date: order.expd_date ? new Date(order.expd_date).toISOString().split("T")[0] : "",
       orde_memo: order.orde_memo || "",
@@ -222,7 +222,7 @@ export function useOrderListVM() {
           clie_name: form.clie_name,
           prod_serv: form.prod_serv,
           orde_pric: Number(form.orde_pric),
-          stat_code: form.stat_code,
+          orde_stat: form.orde_stat,
           ctrt_date: form.ctrt_date || undefined,
           expd_date: form.expd_date || undefined,
           orde_memo: form.orde_memo || undefined,
@@ -255,7 +255,7 @@ export function useOrderListVM() {
   const handleStatusChange = useCallback(
     async (id: number, next: OrderStatus) => {
       try {
-        await actions.updateOrder({ orde_idno: id, stat_code: next });
+        await actions.updateOrder({ orde_idno: id, orde_stat: next });
         orderVM.resetPaging();
         toast.success("상태가 변경되었습니다.");
       } catch (e) {
@@ -280,7 +280,7 @@ export function useOrderListVM() {
           clie_idno: selectedOrder.clie_idno ?? undefined,
           clie_name: selectedOrder.clie_name,
           ship_pric: Number(deliveryForm.ship_pric),
-          stat_code: deliveryForm.stat_code,
+          ship_stat: deliveryForm.ship_stat,
           ship_date: deliveryForm.ship_date || undefined,
           ship_memo: deliveryForm.ship_memo || undefined,
         });

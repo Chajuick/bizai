@@ -23,8 +23,8 @@ function toDateOrUndefined(v?: string) {
 // #region Status Transition Policy
 /**
  * 상태 변경 시 날짜 자동 세팅 정책(정석)
- * - invc_date: stat_code가 invoiced(또는 paid로 직행)로 "처음" 들어갈 때
- * - paid_date: stat_code가 paid로 "처음" 들어갈 때
+ * - invc_date: ship_stat가 invoiced(또는 paid로 직행)로 "처음" 들어갈 때
+ * - paid_date: ship_stat가 paid로 "처음" 들어갈 때
  *
  * 우선순위:
  * 1) 요청에서 invc_date/paid_date를 명시하면 그 값을 우선
@@ -33,16 +33,16 @@ function toDateOrUndefined(v?: string) {
  */
 function applyStatusDates(params: {
   now: Date;
-  prev: { stat_code?: string | null; invc_date?: Date | null; paid_date?: Date | null } | null;
-  next: { stat_code?: "pending" | "delivered" | "invoiced" | "paid" | undefined };
+  prev: { ship_stat?: string | null; invc_date?: Date | null; paid_date?: Date | null } | null;
+  next: { ship_stat?: "pending" | "delivered" | "invoiced" | "paid" | undefined };
   patch: {
     invc_date?: Date | null | undefined;
     paid_date?: Date | null | undefined;
   };
 }) {
   const now = params.now;
-  const prevStat: string | null = params.prev?.stat_code ?? null;
-  const nextStat = params.next.stat_code;
+  const prevStat: string | null = params.prev?.ship_stat ?? null;
+  const nextStat = params.next.ship_stat;
 
   if (!nextStat) return;
 
@@ -78,7 +78,7 @@ export const shipmentService = {
       {
         comp_idno: ctx.comp_idno,
         orde_idno: input?.orde_idno,
-        stat_code: input?.stat_code,
+        ship_stat: input?.ship_stat,
         search: input?.search,
 
         limit: page.limit,
@@ -107,14 +107,14 @@ export const shipmentService = {
 
     for (const row of rows) {
       counts.all++;
-      switch (row.stat_code) {
+      switch (row.ship_stat) {
         case "pending":   counts.pending++;   break;
         case "delivered": counts.delivered++; break;
         case "invoiced":  counts.invoiced++;  break;
         case "paid":      counts.paid++;      break;
       }
       const price = Number(row.ship_pric || 0);
-      if (row.stat_code === "paid") totalPaid += price;
+      if (row.ship_stat === "paid") totalPaid += price;
       else totalPending += price;
     }
 
@@ -142,7 +142,7 @@ export const shipmentService = {
       clie_idno: input.clie_idno,
       clie_name: input.clie_name,
 
-      stat_code: input.stat_code,
+      ship_stat: input.ship_stat,
       ship_pric: String(input.ship_pric),
 
       ship_date: toDateOrUndefined(input.ship_date),
@@ -158,7 +158,7 @@ export const shipmentService = {
     applyStatusDates({
       now,
       prev: null,
-      next: { stat_code: input.stat_code },
+      next: { ship_stat: input.ship_stat },
       patch: patchDates,
     });
 
@@ -186,7 +186,7 @@ export const shipmentService = {
     // nullable string
     if (patch.ship_memo !== undefined) data.ship_memo = patch.ship_memo ?? null;
     // enum / boolean
-    if (patch.stat_code !== undefined) data.stat_code = patch.stat_code;
+    if (patch.ship_stat !== undefined) data.ship_stat = patch.ship_stat;
     if (patch.enab_yesn !== undefined) data.enab_yesn = patch.enab_yesn;
     // decimal
     if (rawPric !== undefined && rawPric !== null) data.ship_pric = String(rawPric);
@@ -203,11 +203,11 @@ export const shipmentService = {
     applyStatusDates({
       now,
       prev: {
-        stat_code: prev.stat_code,
+        ship_stat: prev.ship_stat,
         invc_date: prev.invc_date,
         paid_date: prev.paid_date,
       },
-      next: { stat_code: patch.stat_code },
+      next: { ship_stat: patch.ship_stat },
       patch: autoDates,
     });
 

@@ -31,7 +31,7 @@ const EMPTY_SCHEDULE_FORM: ScheduleFormState = {
 const EMPTY_ORDER_FORM: OrderQuickFormState = {
   prod_serv: "",
   orde_pric: "",
-  stat_code: "proposal",
+  orde_stat: "proposal",
   ctrt_date: "",
   orde_memo: "",
 };
@@ -176,7 +176,7 @@ export function useScheduleListVM() {
       sche_name: p.sche_name,
       sche_desc: p.sche_desc || "",
       sche_date: toLocalDatetimeInputValue(new Date(p.sche_date)),
-      stat_code: p.stat_code === "overdue" ? "scheduled" : p.stat_code,
+      stat_code: p.sche_stat === "overdue" ? "scheduled" : p.sche_stat,
     });
     setShowForm(true);
   }, []);
@@ -194,7 +194,7 @@ export function useScheduleListVM() {
           clie_name: form.clie_name || undefined,
           sche_desc: form.sche_desc || undefined,
           sche_date: form.sche_date,
-          stat_code: form.stat_code,
+          sche_stat: form.stat_code,
         });
 
         toast.success("일정이 수정되었습니다.");
@@ -270,7 +270,7 @@ export function useScheduleListVM() {
             clie_name: selectedSchedule.clie_name || "",
             prod_serv: orderForm.prod_serv,
             orde_pric: Number(orderForm.orde_pric),
-            stat_code: orderForm.stat_code,
+            orde_stat: orderForm.orde_stat,
             ctrt_date: orderForm.ctrt_date || undefined,
             orde_memo: orderForm.orde_memo || undefined,
           },

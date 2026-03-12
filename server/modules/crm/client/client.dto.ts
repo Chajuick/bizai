@@ -42,7 +42,7 @@ export const ClientFindNameInput = z.object({
 
 export const ClientCreateInput = z.object({
   clie_name: z.string().min(1),
-  bizr_numb: z.string().regex(/^\d{10}$/, "사업자번호는 숫자 10자리여야 합니다.").optional(),
+  bizn_numb: z.string().regex(/^\d{10}$/, "사업자번호는 숫자 10자리여야 합니다.").optional(),
   indu_type: z.string().optional(),
   cont_name: z.string().optional(),
   cont_tele: z.string().optional(),
@@ -55,7 +55,7 @@ export const ClientUpdateInput = z.object({
   clie_idno: z.number().int().positive(),
 
   clie_name: z.string().min(1).optional(),
-  bizr_numb: z.string().regex(/^\d{10}$/, "사업자번호는 숫자 10자리여야 합니다.").nullable().optional(),
+  bizn_numb: z.string().regex(/^\d{10}$/, "사업자번호는 숫자 10자리여야 합니다.").nullable().optional(),
   indu_type: z.string().nullable().optional(),
   cont_name: z.string().nullable().optional(),
   cont_tele: z.string().nullable().optional(),
@@ -129,7 +129,7 @@ export const ClientContactDeleteInput = z.object({
 export const ClientItemOutput = z.object({
   clie_idno: z.number().int().positive(),
   clie_name: z.string(),
-  bizr_numb: z.string().nullable().optional(),
+  bizn_numb: z.string().nullable().optional(),
 
   indu_type: z.string().nullable().optional(),
   cont_name: z.string().nullable().optional(),

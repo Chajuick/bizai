@@ -25,7 +25,7 @@ type ClientContactRow = RouterOutputs["crm"]["client"]["contact"]["list"][number
 const emptyClientDraft = (): ClientDraft => ({
   clie_idno: undefined,
   clie_name: "",
-  bizr_numb: "",
+  bizn_numb: "",
   indu_type: "",
   clie_addr: "",
   clie_memo: "",
@@ -132,7 +132,7 @@ export function useClientDetailVM() {
 
   const totalOrderAmount = useMemo(() => {
     return orders
-      .filter((o) => o.stat_code !== "canceled")
+      .filter((o) => o.orde_stat !== "canceled")
       .reduce((sum, o) => sum + Number(o.orde_pric || 0), 0);
   }, [orders]);
 
@@ -146,7 +146,7 @@ export function useClientDetailVM() {
     setClientForm({
       clie_idno: client.clie_idno,
       clie_name: client.clie_name ?? "",
-      bizr_numb: client.bizr_numb ?? "",
+      bizn_numb: client.bizn_numb ?? "",
       indu_type: client.indu_type ?? "",
       clie_addr: client.clie_addr ?? "",
       clie_memo: client.clie_memo ?? "",
@@ -168,7 +168,7 @@ export function useClientDetailVM() {
       setClientForm({
         clie_idno: client.clie_idno,
         clie_name: client.clie_name ?? "",
-        bizr_numb: client.bizr_numb ?? "",
+        bizn_numb: client.bizn_numb ?? "",
         indu_type: client.indu_type ?? "",
         clie_addr: client.clie_addr ?? "",
         clie_memo: client.clie_memo ?? "",
@@ -254,7 +254,7 @@ export function useClientDetailVM() {
       return;
     }
 
-    if (clientForm.bizr_numb && !/^\d{10}$/.test(clientForm.bizr_numb)) {
+    if (clientForm.bizn_numb && !/^\d{10}$/.test(clientForm.bizn_numb)) {
       toast.error("사업자번호는 숫자 10자리여야 합니다.");
       return;
     }
@@ -274,7 +274,7 @@ export function useClientDetailVM() {
         client: {
           clie_idno: clientId,
           clie_name: clientForm.clie_name,
-          bizr_numb: clientForm.bizr_numb || null,
+          bizn_numb: clientForm.bizn_numb || null,
           indu_type: clientForm.indu_type,
           clie_addr: clientForm.clie_addr,
           clie_memo: clientForm.clie_memo,

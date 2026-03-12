@@ -99,7 +99,7 @@ export function useScheduleAlerts({ list, overdueCount, imminentCount }: Args) {
     // #endregion
 
     // #region 정책 리마인드 (날짜별 1회 / 모든 scheduled 일정 기준)
-    const scheduled = list.filter((p) => p.stat_code === "scheduled");
+    const scheduled = list.filter((p) => p.sche_stat === "scheduled");
     if (scheduled.length === 0) return;
 
     const hasThisWeek = scheduled.some((p) => isWithinThisWeekKst(new Date(p.sche_date), now));

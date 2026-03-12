@@ -26,7 +26,7 @@ export function useShipmentVM() {
   // #region Queries
   const listQuery = trpc.crm.shipment.list.useQuery(
     {
-      stat_code: activeTab !== "all" ? activeTab : undefined,
+      ship_stat: activeTab !== "all" ? activeTab : undefined,
       page: { limit: PAGE_LIMIT, offset },
     },
     { placeholderData: (prev) => prev, staleTime: 10_000 }

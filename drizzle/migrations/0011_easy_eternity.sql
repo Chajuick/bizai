@@ -1,1 +1,0 @@
-ALTER TABLE `COAPP_CRM_SALE` ADD `edit_text` text;

@@ -40,7 +40,7 @@ export async function runBillingSweepJobs() {
 /**
  * ✅ Stale "running" AI job 복구
  * - reqe_date 기준 10분 이상 running 상태인 job → failed 처리
- * - 연결된 sale.ai_status도 failed로 동기화
+ * - 연결된 sale.aiex_stat도 failed로 동기화
  * - 운영: 5분마다 실행 권장
  */
 export async function runStaleJobRecovery() {

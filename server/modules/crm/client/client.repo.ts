@@ -395,7 +395,7 @@ export const clientRepo = {
   // #region findByBizrNumb — 사업자번호 기준 조회 (엑셀 업로드 upsert 용)
   async findByBizrNumb(
     { db }: RepoDeps,
-    params: { comp_idno: number; bizr_numb: string }
+    params: { comp_idno: number; bizn_numb: string }
   ): Promise<ClientRow | null> {
     const [row] = await db
       .select()
@@ -403,7 +403,7 @@ export const clientRepo = {
       .where(
         and(
           eq(CRM_CLIENT.comp_idno, params.comp_idno),
-          eq(CRM_CLIENT.bizr_numb, params.bizr_numb)
+          eq(CRM_CLIENT.bizn_numb, params.bizn_numb)
         )
       )
       .limit(1);

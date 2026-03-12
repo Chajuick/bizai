@@ -63,9 +63,9 @@ export const scheduleService = {
     // ✅ 서버에서 overdue/imminent 플래그 계산 후 주입
     const enhanced = items.map((row) => ({
       ...row,
-      overdue: row.stat_code === "scheduled" && row.sche_date < kstMidnight,
+      overdue: row.sche_stat === "scheduled" && row.sche_date < kstMidnight,
       imminent:
-        row.stat_code === "scheduled" && row.sche_date >= now && row.sche_date < imminentEnd,
+        row.sche_stat === "scheduled" && row.sche_date >= now && row.sche_date < imminentEnd,
     }));
 
     return {
@@ -125,8 +125,8 @@ export const scheduleService = {
     const imminentEnd = new Date(nowMs + 48 * 60 * 60 * 1000);
     return {
       ...row,
-      overdue: row.stat_code === "scheduled" && row.sche_date < kstMidnight,
-      imminent: row.stat_code === "scheduled" && row.sche_date >= now && row.sche_date < imminentEnd,
+      overdue: row.sche_stat === "scheduled" && row.sche_date < kstMidnight,
+      imminent: row.sche_stat === "scheduled" && row.sche_date >= now && row.sche_date < imminentEnd,
     };
   },
   // #endregion
@@ -151,7 +151,7 @@ export const scheduleService = {
       sche_pric: toDecimalStrOrNull(input.sche_pric),
       sche_date: parseDateOrThrow(input.sche_date),
 
-      stat_code: "scheduled" as const,
+      sche_stat: "scheduled" as const,
       remd_sent: false,
       auto_gene: false,
 
@@ -178,7 +178,7 @@ export const scheduleService = {
     const schePric = toDecimalStrOrNull(patch.sche_pric);
     if (schePric !== undefined) data.sche_pric = schePric as any;
 
-    if (patch.stat_code !== undefined) data.stat_code = patch.stat_code as any;
+    if (patch.sche_stat !== undefined) data.sche_stat = patch.sche_stat as any;
     if (patch.clie_name !== undefined) data.clie_name = patch.clie_name as any;
 
     if (patch.enab_yesn !== undefined) data.enab_yesn = patch.enab_yesn;
@@ -195,7 +195,7 @@ export const scheduleService = {
   async completeSchedule(ctx: ServiceCtx, sche_idno: number) {
     const db = getDb();
 
-    const audited = withUpdateAudit(ctx, { stat_code: "completed" as const });
+    const audited = withUpdateAudit(ctx, { sche_stat: "completed" as const });
     await scheduleRepo.update({ db }, { comp_idno: ctx.comp_idno, sche_idno, data: audited });
 
     return { success: true as const };
@@ -206,7 +206,7 @@ export const scheduleService = {
   async cancelSchedule(ctx: ServiceCtx, sche_idno: number) {
     const db = getDb();
 
-    const audited = withUpdateAudit(ctx, { stat_code: "canceled" as const });
+    const audited = withUpdateAudit(ctx, { sche_stat: "canceled" as const });
     await scheduleRepo.update({ db }, { comp_idno: ctx.comp_idno, sche_idno, data: audited });
 
     return { success: true as const };

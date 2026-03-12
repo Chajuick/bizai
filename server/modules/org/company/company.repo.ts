@@ -19,32 +19,32 @@ type RepoDeps = { db: DbOrTx };
 type MemberData = {
   comp_idno: number;
   user_idno: number;
-  role_code: "owner" | "admin" | "member";
-  status_code: "active" | "pending" | "removed";
+  comp_role: "owner" | "admin" | "member";
+  memb_stat: "active" | "pending" | "removed";
   crea_idno: number;
 };
 
 type MemberPatch = Partial<{
-  role_code: "owner" | "admin" | "member";
-  status_code: "active" | "pending" | "removed";
+  comp_role: "owner" | "admin" | "member";
+  memb_stat: "active" | "pending" | "removed";
   modi_idno: number;
 }>;
 
 type InviteData = {
   comp_idno: number;
-  kind_code: "link" | "email";
-  stat_code: "active";
-  token_key: string;
+  invt_kind: "link" | "email";
+  invt_stat: "active";
+  tokn_keys: string;
   mail_idno: string | null;
-  role_code: "admin" | "member";
+  comp_role: "admin" | "member";
   expi_date: Date;
   crea_idno: number;
 };
 
 type InvitePatch = Partial<{
-  stat_code: "active" | "used" | "revoked" | "expired";
+  invt_stat: "active" | "used" | "revoked" | "expired";
   expi_date: Date;
-  token_key: string;
+  tokn_keys: string;
   used_date: Date;
   used_user: number;
   modi_idno: number;
@@ -74,8 +74,8 @@ export const companyRepo = {
       .select({
         comp_idno: CORE_COMPANY_USER.comp_idno,
         comp_name: CORE_COMPANY.comp_name,
-        role_code: CORE_COMPANY_USER.role_code,
-        status_code: CORE_COMPANY_USER.status_code,
+        comp_role: CORE_COMPANY_USER.comp_role,
+        memb_stat: CORE_COMPANY_USER.memb_stat,
       })
       .from(CORE_COMPANY_USER)
       .innerJoin(CORE_COMPANY, eq(CORE_COMPANY_USER.comp_idno, CORE_COMPANY.comp_idno))
@@ -95,8 +95,8 @@ export const companyRepo = {
     return db
       .select({
         user_idno: CORE_COMPANY_USER.user_idno,
-        role_code: CORE_COMPANY_USER.role_code,
-        status_code: CORE_COMPANY_USER.status_code,
+        comp_role: CORE_COMPANY_USER.comp_role,
+        memb_stat: CORE_COMPANY_USER.memb_stat,
         crea_date: CORE_COMPANY_USER.crea_date,
         user_name: CORE_USER.user_name,
         mail_idno: CORE_USER.mail_idno,
@@ -106,7 +106,7 @@ export const companyRepo = {
       .where(
         and(
           eq(CORE_COMPANY_USER.comp_idno, comp_idno),
-          eq(CORE_COMPANY_USER.status_code, "active"),
+          eq(CORE_COMPANY_USER.memb_stat, "active"),
         ),
       )
       .orderBy(asc(CORE_COMPANY_USER.crea_date));
@@ -146,7 +146,7 @@ export const companyRepo = {
     const rows = await db
       .select()
       .from(CORE_COMPANY_INVITE)
-      .where(eq(CORE_COMPANY_INVITE.token_key, tokenHash))
+      .where(eq(CORE_COMPANY_INVITE.tokn_keys, tokenHash))
       .limit(1);
     return rows[0] ?? null;
   },
@@ -156,7 +156,7 @@ export const companyRepo = {
       .select()
       .from(CORE_COMPANY_INVITE)
       .where(
-        and(eq(CORE_COMPANY_INVITE.comp_idno, comp_idno), eq(CORE_COMPANY_INVITE.stat_code, "active")),
+        and(eq(CORE_COMPANY_INVITE.comp_idno, comp_idno), eq(CORE_COMPANY_INVITE.invt_stat, "active")),
       )
       .orderBy(asc(CORE_COMPANY_INVITE.crea_date));
   },

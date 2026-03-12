@@ -16,7 +16,7 @@ type ShipmentSortField = z.infer<typeof ShipmentSortInput>["field"];
 export const ShipmentListInput = z
   .object({
     orde_idno: z.number().int().positive().optional(),
-    stat_code: z.enum(["pending", "delivered", "invoiced", "paid"]).optional(),
+    ship_stat: z.enum(["pending", "delivered", "invoiced", "paid"]).optional(),
     search: z.string().optional(), // clie_name like
 
     page: PaginationInput.optional(),
@@ -37,7 +37,7 @@ export const ShipmentCreateInput = z.object({
   clie_name: z.string().min(1),
 
   ship_pric: z.number().positive(), // number로 받되 service에서 string/decimal로 변환
-  stat_code: z.enum(["pending", "delivered", "invoiced", "paid"]).default("pending"),
+  ship_stat: z.enum(["pending", "delivered", "invoiced", "paid"]).default("pending"),
 
   ship_date: z.string().optional(), // ISO string (옵션)
   invc_date: z.string().optional(), // 청구일(옵션)
@@ -53,7 +53,7 @@ export const ShipmentUpdateInput = z.object({
   ship_pric: z.number().positive().nullable().optional(),
   ship_memo: z.string().nullable().optional(),
 
-  stat_code: z.enum(["pending", "delivered", "invoiced", "paid"]).optional(),
+  ship_stat: z.enum(["pending", "delivered", "invoiced", "paid"]).optional(),
 
   ship_date: z.string().nullable().optional(),
   invc_date: z.string().nullable().optional(),
@@ -77,7 +77,7 @@ export const ShipmentItemOutput = z.object({
   clie_idno: z.number().int().nullable().optional(),
   clie_name: z.string(),
 
-  stat_code: z.enum(["pending", "delivered", "invoiced", "paid"]),
+  ship_stat: z.enum(["pending", "delivered", "invoiced", "paid"]),
 
   ship_date: IsoDateTimeNullable.optional(),
   invc_date: IsoDateTimeNullable.optional(),

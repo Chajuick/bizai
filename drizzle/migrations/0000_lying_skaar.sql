@@ -3,9 +3,9 @@ CREATE TABLE `COAPP_CORE_COMPANY` (
 	`comp_name` varchar(200) NOT NULL,
 	`bizn_numb` varchar(10) NOT NULL,
 	`need_appr` tinyint NOT NULL DEFAULT 0,
-	`mail_domain` varchar(120),
-	`invt_link_ok` tinyint NOT NULL DEFAULT 1,
-	`invt_mail_ok` tinyint NOT NULL DEFAULT 0,
+	`mail_doma` varchar(120),
+	`link_yesn` tinyint NOT NULL DEFAULT 1,
+	`mail_yesn` tinyint NOT NULL DEFAULT 0,
 	`crea_date` timestamp NOT NULL DEFAULT (now()),
 	`modi_date` timestamp ON UPDATE CURRENT_TIMESTAMP,
 	CONSTRAINT `COAPP_CORE_COMPANY_comp_idno` PRIMARY KEY(`comp_idno`),
@@ -17,21 +17,22 @@ CREATE TABLE `COAPP_CORE_USER` (
 	`open_idno` varchar(191) NOT NULL,
 	`user_name` varchar(200),
 	`mail_idno` varchar(320),
-	`passwd_hash` varchar(255),
+	`pass_hash` varchar(255),
 	`logi_mthd` varchar(64),
 	`user_auth` varchar(16) NOT NULL DEFAULT 'user',
 	`last_sign` timestamp NOT NULL DEFAULT (now()),
 	`crea_date` timestamp NOT NULL DEFAULT (now()),
 	`modi_date` timestamp ON UPDATE CURRENT_TIMESTAMP,
 	CONSTRAINT `COAPP_CORE_USER_user_idno` PRIMARY KEY(`user_idno`),
-	CONSTRAINT `ux_core_user_open` UNIQUE(`open_idno`)
+	CONSTRAINT `ux_core_user_open` UNIQUE(`open_idno`),
+	CONSTRAINT `ux_core_user_mail` UNIQUE(`mail_idno`)
 );
 --> statement-breakpoint
 CREATE TABLE `COAPP_CORE_COMPANY_USER` (
 	`comp_idno` int NOT NULL,
 	`user_idno` int NOT NULL,
-	`company_role` enum('owner','admin','member') NOT NULL DEFAULT 'member',
-	`member_status` enum('active','pending','removed') NOT NULL DEFAULT 'active',
+	`comp_role` enum('owner','admin','member') NOT NULL DEFAULT 'member',
+	`memb_stat` enum('active','pending','removed') NOT NULL DEFAULT 'active',
 	`crea_idno` int NOT NULL,
 	`crea_date` timestamp NOT NULL DEFAULT (now()),
 	`modi_idno` int,
@@ -42,11 +43,11 @@ CREATE TABLE `COAPP_CORE_COMPANY_USER` (
 CREATE TABLE `COAPP_CORE_COMPANY_INVITE` (
 	`comp_idno` int NOT NULL,
 	`invt_idno` int AUTO_INCREMENT NOT NULL,
-	`invite_kind` enum('link','email') NOT NULL,
-	`invite_status` enum('active','used','revoked','expired') NOT NULL DEFAULT 'active',
-	`token_key` varchar(128) NOT NULL,
+	`invt_kind` enum('link','email') NOT NULL,
+	`invt_stat` enum('active','used','revoked','expired') NOT NULL DEFAULT 'active',
+	`tokn_keys` varchar(128) NOT NULL,
 	`mail_idno` varchar(320),
-	`company_role` enum('owner','admin','member') NOT NULL DEFAULT 'member',
+	`comp_role` enum('owner','admin','member') NOT NULL DEFAULT 'member',
 	`expi_date` timestamp NOT NULL,
 	`used_date` timestamp,
 	`used_user` int,
@@ -55,7 +56,7 @@ CREATE TABLE `COAPP_CORE_COMPANY_INVITE` (
 	`modi_idno` int,
 	`modi_date` timestamp ON UPDATE CURRENT_TIMESTAMP,
 	CONSTRAINT `COAPP_CORE_COMPANY_INVITE_invt_idno` PRIMARY KEY(`invt_idno`),
-	CONSTRAINT `ux_company_invite_token` UNIQUE(`token_key`)
+	CONSTRAINT `ux_company_invite_token` UNIQUE(`tokn_keys`)
 );
 --> statement-breakpoint
 CREATE TABLE `COAPP_CORE_FILE` (
@@ -85,9 +86,9 @@ CREATE TABLE `COAPP_CORE_FILE` (
 CREATE TABLE `COAPP_CORE_FILE_LINK` (
 	`comp_idno` int NOT NULL,
 	`file_idno` int NOT NULL,
-	`file_ref_type` enum('sale_info','client','promise','order','delivery') NOT NULL,
+	`refe_type` enum('sale_info','client','promise','order','delivery') NOT NULL,
 	`refe_idno` int NOT NULL,
-	`file_purp_type` enum('general','sale_audio','sale_image','contract','quote'),
+	`purp_type` enum('general','sale_audio','sale_image','contract','quote'),
 	`sort_orde` int NOT NULL DEFAULT 0,
 	`dele_yesn` int NOT NULL DEFAULT 0,
 	`dele_date` timestamp,
@@ -95,7 +96,7 @@ CREATE TABLE `COAPP_CORE_FILE_LINK` (
 	`crea_date` timestamp NOT NULL DEFAULT (now()),
 	`modi_idno` int,
 	`modi_date` timestamp ON UPDATE CURRENT_TIMESTAMP,
-	CONSTRAINT `pk_core_file_link` PRIMARY KEY(`comp_idno`,`file_ref_type`,`refe_idno`,`file_idno`)
+	CONSTRAINT `pk_core_file_link` PRIMARY KEY(`comp_idno`,`refe_type`,`refe_idno`,`file_idno`)
 );
 --> statement-breakpoint
 CREATE TABLE `COAPP_BILLING_PLAN` (
@@ -114,7 +115,7 @@ CREATE TABLE `COAPP_BILLING_SUBSCRIPTION` (
 	`subs_idno` int AUTO_INCREMENT NOT NULL,
 	`comp_idno` int NOT NULL,
 	`plan_idno` int NOT NULL,
-	`sub_status` enum('active','trialing','canceled','past_due','inactive') NOT NULL DEFAULT 'active',
+	`subs_stat` enum('active','trialing','canceled','past_due','inactive') NOT NULL DEFAULT 'active',
 	`prov_name` varchar(40),
 	`prov_subs` varchar(120),
 	`seat_ovrr` int,
@@ -126,6 +127,7 @@ CREATE TABLE `COAPP_BILLING_SUBSCRIPTION` (
 	`modi_idno` int,
 	`modi_date` timestamp ON UPDATE CURRENT_TIMESTAMP,
 	CONSTRAINT `COAPP_BILLING_SUBSCRIPTION_subs_idno` PRIMARY KEY(`subs_idno`),
+	CONSTRAINT `ux_billing_sub_comp` UNIQUE(`comp_idno`),
 	CONSTRAINT `ux_billing_sub_prov` UNIQUE(`prov_name`,`prov_subs`)
 );
 --> statement-breakpoint
@@ -140,8 +142,8 @@ CREATE TABLE `COAPP_AI_TOKEN_LEDGER` (
 	`ldgr_idno` int AUTO_INCREMENT NOT NULL,
 	`comp_idno` int NOT NULL,
 	`actv_user` int,
-	`ledger_reason` enum('plan_monthly_grant','topup_purchase','usage_chat','usage_stt','usage_llm','admin_adjust') NOT NULL,
-	`ai_feature` enum('chat','stt','llm'),
+	`resn_code` enum('plan_monthly_grant','topup_purchase','usage_chat','usage_stt','usage_llm','admin_adjust') NOT NULL,
+	`feat_code` enum('chat','stt','llm'),
 	`delt_tokn` int NOT NULL,
 	`year_mont` int NOT NULL,
 	`refe_type` varchar(40),
@@ -155,7 +157,7 @@ CREATE TABLE `COAPP_AI_USAGE_EVENT` (
 	`evnt_idno` int AUTO_INCREMENT NOT NULL,
 	`comp_idno` int NOT NULL,
 	`user_idno` int NOT NULL,
-	`ai_feature` enum('chat','stt','llm') NOT NULL,
+	`feat_code` enum('chat','stt','llm') NOT NULL,
 	`mode_name` varchar(80),
 	`tokn_inpt` int NOT NULL DEFAULT 0,
 	`tokn_outs` int NOT NULL DEFAULT 0,
@@ -168,17 +170,39 @@ CREATE TABLE `COAPP_AI_USAGE_EVENT` (
 CREATE TABLE `COAPP_AI_USAGE_MONTH` (
 	`comp_idno` int NOT NULL,
 	`year_mont` int NOT NULL,
-	`ai_feature` enum('chat','stt','llm') NOT NULL,
+	`feat_code` enum('chat','stt','llm') NOT NULL,
 	`call_usag` int NOT NULL DEFAULT 0,
 	`modi_date` timestamp ON UPDATE CURRENT_TIMESTAMP,
-	CONSTRAINT `pk_ai_usage_month` PRIMARY KEY(`comp_idno`,`year_mont`,`ai_feature`)
+	CONSTRAINT `pk_ai_usage_month` PRIMARY KEY(`comp_idno`,`year_mont`,`feat_code`)
+);
+--> statement-breakpoint
+CREATE TABLE `COAPP_CRM_CLIENT_CONT` (
+	`cont_idno` int AUTO_INCREMENT NOT NULL,
+	`comp_idno` int NOT NULL,
+	`clie_idno` int NOT NULL,
+	`cont_name` varchar(100) NOT NULL,
+	`cont_role` varchar(100),
+	`cont_tele` varchar(50),
+	`cont_mail` varchar(320),
+	`cont_memo` text,
+	`main_yesn` boolean NOT NULL DEFAULT false,
+	`enab_yesn` boolean NOT NULL DEFAULT true,
+	`crea_idno` int NOT NULL,
+	`crea_date` timestamp NOT NULL DEFAULT (now()),
+	`modi_idno` int,
+	`modi_date` timestamp ON UPDATE CURRENT_TIMESTAMP,
+	CONSTRAINT `COAPP_CRM_CLIENT_CONT_cont_idno` PRIMARY KEY(`cont_idno`),
+	CONSTRAINT `ux_cont_comp_client_mail` UNIQUE(`comp_idno`,`clie_idno`,`cont_mail`),
+	CONSTRAINT `ux_cont_comp_client_tele` UNIQUE(`comp_idno`,`clie_idno`,`cont_tele`)
 );
 --> statement-breakpoint
 CREATE TABLE `COAPP_CRM_CLIENT` (
 	`clie_idno` int AUTO_INCREMENT NOT NULL,
 	`comp_idno` int NOT NULL,
 	`clie_name` varchar(200) NOT NULL,
+	`bizn_numb` varchar(10),
 	`indu_type` varchar(100),
+	`clie_type` varchar(16) NOT NULL DEFAULT 'sales',
 	`cont_name` varchar(100),
 	`cont_tele` varchar(50),
 	`cont_mail` varchar(320),
@@ -189,7 +213,9 @@ CREATE TABLE `COAPP_CRM_CLIENT` (
 	`crea_date` timestamp NOT NULL DEFAULT (now()),
 	`modi_idno` int,
 	`modi_date` timestamp ON UPDATE CURRENT_TIMESTAMP,
-	CONSTRAINT `COAPP_CRM_CLIENT_clie_idno` PRIMARY KEY(`clie_idno`)
+	CONSTRAINT `COAPP_CRM_CLIENT_clie_idno` PRIMARY KEY(`clie_idno`),
+	CONSTRAINT `ux_client_comp_name` UNIQUE(`comp_idno`,`clie_name`),
+	CONSTRAINT `ux_client_comp_bizr` UNIQUE(`comp_idno`,`bizn_numb`)
 );
 --> statement-breakpoint
 CREATE TABLE `COAPP_CRM_SALE` (
@@ -199,14 +225,19 @@ CREATE TABLE `COAPP_CRM_SALE` (
 	`clie_idno` int,
 	`clie_name` varchar(200),
 	`cont_name` varchar(100),
+	`cont_role` varchar(100),
+	`cont_tele` varchar(50),
+	`cont_mail` varchar(320),
 	`sale_loca` varchar(200),
 	`vist_date` timestamp NOT NULL,
+	`sale_pric` decimal(15,2),
 	`orig_memo` text NOT NULL,
 	`aiex_summ` text,
 	`aiex_text` json,
-	`audi_addr` text,
 	`sttx_text` text,
+	`edit_text` text,
 	`aiex_done` boolean NOT NULL DEFAULT false,
+	`aiex_stat` enum('pending','processing','completed','failed') NOT NULL DEFAULT 'pending',
 	`enab_yesn` boolean NOT NULL DEFAULT true,
 	`crea_idno` int NOT NULL,
 	`crea_date` timestamp NOT NULL DEFAULT (now()),
@@ -218,13 +249,14 @@ CREATE TABLE `COAPP_CRM_SALE` (
 CREATE TABLE `COAPP_CRM_SALE_AUDIO_JOB` (
 	`jobs_idno` int AUTO_INCREMENT NOT NULL,
 	`comp_idno` int NOT NULL,
-	`sale_idno` int NOT NULL,
-	`file_idno` int NOT NULL,
-	`jobs_status` enum('queued','running','done','failed') NOT NULL DEFAULT 'queued',
+	`sale_idno` int,
+	`file_idno` int,
+	`jobs_type` varchar(20) NOT NULL DEFAULT 'analyze',
+	`jobs_stat` enum('queued','running','done','failed') NOT NULL DEFAULT 'queued',
 	`fail_mess` text,
 	`sttx_text` text,
-	`aiex_sum` text,
-	`aiex_ext` json,
+	`aiex_summ` text,
+	`aiex_text` json,
 	`sttx_name` varchar(80),
 	`llmd_name` varchar(80),
 	`meta_json` json,
@@ -235,7 +267,7 @@ CREATE TABLE `COAPP_CRM_SALE_AUDIO_JOB` (
 	`modi_idno` int,
 	`modi_date` timestamp ON UPDATE CURRENT_TIMESTAMP,
 	CONSTRAINT `COAPP_CRM_SALE_AUDIO_JOB_jobs_idno` PRIMARY KEY(`jobs_idno`),
-	CONSTRAINT `ux_sale_audio_job_ref` UNIQUE(`comp_idno`,`sale_idno`,`file_idno`)
+	CONSTRAINT `ux_sale_audio_job_ref` UNIQUE(`comp_idno`,`sale_idno`,`file_idno`,`jobs_type`)
 );
 --> statement-breakpoint
 CREATE TABLE `COAPP_CRM_SCHEDULE` (
@@ -249,9 +281,11 @@ CREATE TABLE `COAPP_CRM_SCHEDULE` (
 	`sche_desc` text,
 	`sche_pric` decimal(15,2),
 	`sche_date` timestamp NOT NULL,
-	`schedule_status` enum('scheduled','completed','canceled','overdue') NOT NULL DEFAULT 'scheduled',
+	`sche_stat` enum('scheduled','completed','canceled','overdue') NOT NULL DEFAULT 'scheduled',
+	`actn_ownr` varchar(16),
 	`remd_sent` boolean NOT NULL DEFAULT false,
 	`auto_gene` boolean NOT NULL DEFAULT false,
+	`aiex_keys` varchar(64),
 	`enab_yesn` boolean NOT NULL DEFAULT true,
 	`crea_idno` int NOT NULL,
 	`crea_date` timestamp NOT NULL DEFAULT (now()),
@@ -269,7 +303,7 @@ CREATE TABLE `COAPP_CRM_ORDER` (
 	`clie_name` varchar(200) NOT NULL,
 	`prod_serv` varchar(300) NOT NULL,
 	`orde_pric` decimal(15,2) NOT NULL,
-	`order_status` enum('proposal','negotiation','confirmed','canceled') NOT NULL DEFAULT 'proposal',
+	`orde_stat` enum('proposal','negotiation','confirmed','canceled') NOT NULL DEFAULT 'proposal',
 	`ctrt_date` timestamp,
 	`expd_date` timestamp,
 	`orde_memo` text,
@@ -286,8 +320,9 @@ CREATE TABLE `COAPP_CRM_SHIPMENT` (
 	`comp_idno` int NOT NULL,
 	`owne_idno` int NOT NULL,
 	`orde_idno` int NOT NULL,
+	`clie_idno` int,
 	`clie_name` varchar(200) NOT NULL,
-	`ship_status` enum('pending','delivered','invoiced','paid') NOT NULL DEFAULT 'pending',
+	`ship_stat` enum('pending','delivered','invoiced','paid') NOT NULL DEFAULT 'pending',
 	`ship_date` timestamp,
 	`invc_date` timestamp,
 	`paid_date` timestamp,
@@ -302,50 +337,53 @@ CREATE TABLE `COAPP_CRM_SHIPMENT` (
 );
 --> statement-breakpoint
 CREATE INDEX `ix_company_name` ON `COAPP_CORE_COMPANY` (`comp_name`);--> statement-breakpoint
-CREATE INDEX `ix_company_mail_domain` ON `COAPP_CORE_COMPANY` (`mail_domain`);--> statement-breakpoint
-CREATE INDEX `ix_core_user_mail` ON `COAPP_CORE_USER` (`mail_idno`);--> statement-breakpoint
+CREATE INDEX `ix_company_mail_domain` ON `COAPP_CORE_COMPANY` (`mail_doma`);--> statement-breakpoint
 CREATE INDEX `ix_core_company_user_user` ON `COAPP_CORE_COMPANY_USER` (`user_idno`);--> statement-breakpoint
 CREATE INDEX `ix_core_company_user_comp` ON `COAPP_CORE_COMPANY_USER` (`comp_idno`);--> statement-breakpoint
-CREATE INDEX `ix_core_company_user_status` ON `COAPP_CORE_COMPANY_USER` (`comp_idno`,`member_status`);--> statement-breakpoint
-CREATE INDEX `ix_company_invite_comp_stat` ON `COAPP_CORE_COMPANY_INVITE` (`comp_idno`,`invite_status`);--> statement-breakpoint
+CREATE INDEX `ix_core_company_user_status` ON `COAPP_CORE_COMPANY_USER` (`comp_idno`,`memb_stat`);--> statement-breakpoint
+CREATE INDEX `ix_company_invite_comp_stat` ON `COAPP_CORE_COMPANY_INVITE` (`comp_idno`,`invt_stat`);--> statement-breakpoint
 CREATE INDEX `ix_company_invite_mail` ON `COAPP_CORE_COMPANY_INVITE` (`mail_idno`);--> statement-breakpoint
 CREATE INDEX `ix_company_invite_expi` ON `COAPP_CORE_COMPANY_INVITE` (`expi_date`);--> statement-breakpoint
 CREATE INDEX `ix_core_file_comp` ON `COAPP_CORE_FILE` (`comp_idno`);--> statement-breakpoint
 CREATE INDEX `ix_core_file_upld` ON `COAPP_CORE_FILE` (`comp_idno`,`upld_idno`);--> statement-breakpoint
 CREATE INDEX `ix_core_file_dele` ON `COAPP_CORE_FILE` (`comp_idno`,`dele_date`);--> statement-breakpoint
 CREATE INDEX `ix_core_file_drop` ON `COAPP_CORE_FILE` (`comp_idno`,`drop_date`);--> statement-breakpoint
-CREATE INDEX `ix_core_file_link_ref` ON `COAPP_CORE_FILE_LINK` (`comp_idno`,`file_ref_type`,`refe_idno`,`dele_yesn`);--> statement-breakpoint
+CREATE INDEX `ix_core_file_link_ref` ON `COAPP_CORE_FILE_LINK` (`comp_idno`,`refe_type`,`refe_idno`,`dele_yesn`);--> statement-breakpoint
 CREATE INDEX `ix_core_file_link_file` ON `COAPP_CORE_FILE_LINK` (`comp_idno`,`file_idno`,`dele_yesn`);--> statement-breakpoint
-CREATE INDEX `ix_billing_sub_comp` ON `COAPP_BILLING_SUBSCRIPTION` (`comp_idno`);--> statement-breakpoint
 CREATE INDEX `ix_billing_sub_plan` ON `COAPP_BILLING_SUBSCRIPTION` (`plan_idno`);--> statement-breakpoint
-CREATE INDEX `ix_billing_sub_stat` ON `COAPP_BILLING_SUBSCRIPTION` (`comp_idno`,`sub_status`);--> statement-breakpoint
-CREATE INDEX `ix_billing_sub_comp_stat_end` ON `COAPP_BILLING_SUBSCRIPTION` (`comp_idno`,`sub_status`,`ends_date`);--> statement-breakpoint
+CREATE INDEX `ix_billing_sub_stat` ON `COAPP_BILLING_SUBSCRIPTION` (`comp_idno`,`subs_stat`);--> statement-breakpoint
+CREATE INDEX `ix_billing_sub_comp_stat_end` ON `COAPP_BILLING_SUBSCRIPTION` (`comp_idno`,`subs_stat`,`ends_date`);--> statement-breakpoint
 CREATE INDEX `ix_ai_ledger_comp_crea` ON `COAPP_AI_TOKEN_LEDGER` (`comp_idno`,`crea_date`);--> statement-breakpoint
 CREATE INDEX `ix_ai_ledger_comp_mont` ON `COAPP_AI_TOKEN_LEDGER` (`comp_idno`,`year_mont`);--> statement-breakpoint
 CREATE INDEX `ix_ai_ledger_comp_user` ON `COAPP_AI_TOKEN_LEDGER` (`comp_idno`,`actv_user`);--> statement-breakpoint
 CREATE INDEX `ix_ai_event_comp_crea` ON `COAPP_AI_USAGE_EVENT` (`comp_idno`,`crea_date`);--> statement-breakpoint
 CREATE INDEX `ix_ai_event_comp_user_crea` ON `COAPP_AI_USAGE_EVENT` (`comp_idno`,`user_idno`,`crea_date`);--> statement-breakpoint
-CREATE INDEX `ix_ai_event_comp_feat_crea` ON `COAPP_AI_USAGE_EVENT` (`comp_idno`,`ai_feature`,`crea_date`);--> statement-breakpoint
+CREATE INDEX `ix_ai_event_comp_feat_crea` ON `COAPP_AI_USAGE_EVENT` (`comp_idno`,`feat_code`,`crea_date`);--> statement-breakpoint
 CREATE INDEX `ix_ai_mo_comp_mont` ON `COAPP_AI_USAGE_MONTH` (`comp_idno`,`year_mont`);--> statement-breakpoint
-CREATE INDEX `ix_ai_mo_comp_feat_mont` ON `COAPP_AI_USAGE_MONTH` (`comp_idno`,`ai_feature`,`year_mont`);--> statement-breakpoint
+CREATE INDEX `ix_ai_mo_comp_feat_mont` ON `COAPP_AI_USAGE_MONTH` (`comp_idno`,`feat_code`,`year_mont`);--> statement-breakpoint
+CREATE INDEX `ix_cont_comp_client` ON `COAPP_CRM_CLIENT_CONT` (`comp_idno`,`clie_idno`);--> statement-breakpoint
+CREATE INDEX `ix_cont_comp_name` ON `COAPP_CRM_CLIENT_CONT` (`comp_idno`,`cont_name`);--> statement-breakpoint
 CREATE INDEX `ix_client_comp` ON `COAPP_CRM_CLIENT` (`comp_idno`);--> statement-breakpoint
-CREATE INDEX `ix_client_comp_name` ON `COAPP_CRM_CLIENT` (`comp_idno`,`clie_name`);--> statement-breakpoint
 CREATE INDEX `ix_sale_comp_vist` ON `COAPP_CRM_SALE` (`comp_idno`,`vist_date`);--> statement-breakpoint
 CREATE INDEX `ix_sale_comp_owne_vist` ON `COAPP_CRM_SALE` (`comp_idno`,`owne_idno`,`vist_date`);--> statement-breakpoint
 CREATE INDEX `ix_sale_comp_clie_vist` ON `COAPP_CRM_SALE` (`comp_idno`,`clie_idno`,`vist_date`);--> statement-breakpoint
+CREATE INDEX `ix_sale_comp_cont` ON `COAPP_CRM_SALE` (`comp_idno`,`cont_name`);--> statement-breakpoint
 CREATE INDEX `ix_sale_audio_job_sale` ON `COAPP_CRM_SALE_AUDIO_JOB` (`comp_idno`,`sale_idno`);--> statement-breakpoint
 CREATE INDEX `ix_sale_audio_job_file` ON `COAPP_CRM_SALE_AUDIO_JOB` (`comp_idno`,`file_idno`);--> statement-breakpoint
-CREATE INDEX `ix_sale_audio_job_stat_reqe` ON `COAPP_CRM_SALE_AUDIO_JOB` (`comp_idno`,`jobs_status`,`reqe_date`);--> statement-breakpoint
+CREATE INDEX `ix_sale_audio_job_stat_reqe` ON `COAPP_CRM_SALE_AUDIO_JOB` (`comp_idno`,`jobs_stat`,`reqe_date`);--> statement-breakpoint
 CREATE INDEX `ix_sche_comp_date` ON `COAPP_CRM_SCHEDULE` (`comp_idno`,`sche_date`);--> statement-breakpoint
 CREATE INDEX `ix_sche_comp_owne_date` ON `COAPP_CRM_SCHEDULE` (`comp_idno`,`owne_idno`,`sche_date`);--> statement-breakpoint
 CREATE INDEX `ix_sche_comp_clie_date` ON `COAPP_CRM_SCHEDULE` (`comp_idno`,`clie_idno`,`sche_date`);--> statement-breakpoint
+CREATE INDEX `ix_sche_comp_stat_date` ON `COAPP_CRM_SCHEDULE` (`comp_idno`,`sche_stat`,`sche_date`);--> statement-breakpoint
 CREATE INDEX `ix_ord_comp` ON `COAPP_CRM_ORDER` (`comp_idno`);--> statement-breakpoint
-CREATE INDEX `ix_ord_comp_stat` ON `COAPP_CRM_ORDER` (`comp_idno`,`order_status`);--> statement-breakpoint
+CREATE INDEX `ix_ord_comp_stat` ON `COAPP_CRM_ORDER` (`comp_idno`,`orde_stat`);--> statement-breakpoint
 CREATE INDEX `ix_ord_comp_owne` ON `COAPP_CRM_ORDER` (`comp_idno`,`owne_idno`);--> statement-breakpoint
+CREATE INDEX `ix_ord_comp_crea` ON `COAPP_CRM_ORDER` (`comp_idno`,`crea_date`);--> statement-breakpoint
 CREATE INDEX `ix_ord_comp_ctrt` ON `COAPP_CRM_ORDER` (`comp_idno`,`ctrt_date`);--> statement-breakpoint
 CREATE INDEX `ix_ord_comp_expd` ON `COAPP_CRM_ORDER` (`comp_idno`,`expd_date`);--> statement-breakpoint
 CREATE INDEX `ix_ship_comp` ON `COAPP_CRM_SHIPMENT` (`comp_idno`);--> statement-breakpoint
 CREATE INDEX `ix_ship_comp_orde` ON `COAPP_CRM_SHIPMENT` (`comp_idno`,`orde_idno`);--> statement-breakpoint
-CREATE INDEX `ix_ship_comp_stat` ON `COAPP_CRM_SHIPMENT` (`comp_idno`,`ship_status`);--> statement-breakpoint
+CREATE INDEX `ix_ship_comp_stat` ON `COAPP_CRM_SHIPMENT` (`comp_idno`,`ship_stat`);--> statement-breakpoint
 CREATE INDEX `ix_ship_comp_owne` ON `COAPP_CRM_SHIPMENT` (`comp_idno`,`owne_idno`);--> statement-breakpoint
-CREATE INDEX `ix_ship_comp_date` ON `COAPP_CRM_SHIPMENT` (`comp_idno`,`ship_date`);
+CREATE INDEX `ix_ship_comp_date` ON `COAPP_CRM_SHIPMENT` (`comp_idno`,`ship_date`);--> statement-breakpoint
+CREATE INDEX `ix_ship_comp_stat_paid` ON `COAPP_CRM_SHIPMENT` (`comp_idno`,`ship_stat`,`paid_date`);

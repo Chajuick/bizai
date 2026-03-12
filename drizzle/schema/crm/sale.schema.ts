@@ -26,7 +26,7 @@ export const CRM_SALE = table(
     sttx_text: text("sttx_text"),                                  // STT 원본 텍스트 (변경 불가, 참조용)
     edit_text: text("edit_text"),                                  // 사용자 수정 텍스트 (STT 후 편집 시 저장, null=미수정)
     aiex_done: boolean("aiex_done").default(false).notNull(),      // AI 처리 완료 여부
-    ai_status: aiStatusEnum.default("pending").notNull(),          // AI 분석 상태
+    aiex_stat: aiStatusEnum.default("pending").notNull(),          // AI 분석 상태
 
     enab_yesn: boolean("enab_yesn").default(true).notNull(),       // 활성 여부
 

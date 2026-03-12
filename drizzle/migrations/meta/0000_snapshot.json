@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "1d9fffba-354f-430b-a29f-698251ffdae1",
+  "id": "705a9657-e509-42ef-a969-b3d9ac5a9ea3",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "tables": {
     "COAPP_CORE_COMPANY": {
@@ -36,23 +36,23 @@
           "autoincrement": false,
           "default": 0
         },
-        "mail_domain": {
-          "name": "mail_domain",
+        "mail_doma": {
+          "name": "mail_doma",
           "type": "varchar(120)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "invt_link_ok": {
-          "name": "invt_link_ok",
+        "link_yesn": {
+          "name": "link_yesn",
           "type": "tinyint",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
           "default": 1
         },
-        "invt_mail_ok": {
-          "name": "invt_mail_ok",
+        "mail_yesn": {
+          "name": "mail_yesn",
           "type": "tinyint",
           "primaryKey": false,
           "notNull": true,
@@ -94,7 +94,7 @@
         "ix_company_mail_domain": {
           "name": "ix_company_mail_domain",
           "columns": [
-            "mail_domain"
+            "mail_doma"
           ],
           "isUnique": false
         }
@@ -142,8 +142,8 @@
           "notNull": false,
           "autoincrement": false
         },
-        "passwd_hash": {
-          "name": "passwd_hash",
+        "pass_hash": {
+          "name": "pass_hash",
           "type": "varchar(255)",
           "primaryKey": false,
           "notNull": false,
@@ -197,12 +197,12 @@
           ],
           "isUnique": true
         },
-        "ix_core_user_mail": {
-          "name": "ix_core_user_mail",
+        "ux_core_user_mail": {
+          "name": "ux_core_user_mail",
           "columns": [
             "mail_idno"
           ],
-          "isUnique": false
+          "isUnique": true
         }
       },
       "foreignKeys": {},
@@ -234,16 +234,16 @@
           "notNull": true,
           "autoincrement": false
         },
-        "company_role": {
-          "name": "company_role",
+        "comp_role": {
+          "name": "comp_role",
           "type": "enum('owner','admin','member')",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
           "default": "'member'"
         },
-        "member_status": {
-          "name": "member_status",
+        "memb_stat": {
+          "name": "memb_stat",
           "type": "enum('active','pending','removed')",
           "primaryKey": false,
           "notNull": true,
@@ -300,7 +300,7 @@
           "name": "ix_core_company_user_status",
           "columns": [
             "comp_idno",
-            "member_status"
+            "memb_stat"
           ],
           "isUnique": false
         }
@@ -335,23 +335,23 @@
           "notNull": true,
           "autoincrement": true
         },
-        "invite_kind": {
-          "name": "invite_kind",
+        "invt_kind": {
+          "name": "invt_kind",
           "type": "enum('link','email')",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "invite_status": {
-          "name": "invite_status",
+        "invt_stat": {
+          "name": "invt_stat",
           "type": "enum('active','used','revoked','expired')",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
           "default": "'active'"
         },
-        "token_key": {
-          "name": "token_key",
+        "tokn_keys": {
+          "name": "tokn_keys",
           "type": "varchar(128)",
           "primaryKey": false,
           "notNull": true,
@@ -364,8 +364,8 @@
           "notNull": false,
           "autoincrement": false
         },
-        "company_role": {
-          "name": "company_role",
+        "comp_role": {
+          "name": "comp_role",
           "type": "enum('owner','admin','member')",
           "primaryKey": false,
           "notNull": true,
@@ -428,7 +428,7 @@
         "ux_company_invite_token": {
           "name": "ux_company_invite_token",
           "columns": [
-            "token_key"
+            "tokn_keys"
           ],
           "isUnique": true
         },
@@ -436,7 +436,7 @@
           "name": "ix_company_invite_comp_stat",
           "columns": [
             "comp_idno",
-            "invite_status"
+            "invt_stat"
           ],
           "isUnique": false
         },
@@ -678,8 +678,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "file_ref_type": {
-          "name": "file_ref_type",
+        "refe_type": {
+          "name": "refe_type",
           "type": "enum('sale_info','client','promise','order','delivery')",
           "primaryKey": false,
           "notNull": true,
@@ -692,8 +692,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "file_purp_type": {
-          "name": "file_purp_type",
+        "purp_type": {
+          "name": "purp_type",
           "type": "enum('general','sale_audio','sale_image','contract','quote')",
           "primaryKey": false,
           "notNull": false,
@@ -758,7 +758,7 @@
           "name": "ix_core_file_link_ref",
           "columns": [
             "comp_idno",
-            "file_ref_type",
+            "refe_type",
             "refe_idno",
             "dele_yesn"
           ],
@@ -780,7 +780,7 @@
           "name": "pk_core_file_link",
           "columns": [
             "comp_idno",
-            "file_ref_type",
+            "refe_type",
             "refe_idno",
             "file_idno"
           ]
@@ -889,8 +889,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "sub_status": {
-          "name": "sub_status",
+        "subs_stat": {
+          "name": "subs_stat",
           "type": "enum('active','trialing','canceled','past_due','inactive')",
           "primaryKey": false,
           "notNull": true,
@@ -971,12 +971,12 @@
         }
       },
       "indexes": {
-        "ix_billing_sub_comp": {
-          "name": "ix_billing_sub_comp",
+        "ux_billing_sub_comp": {
+          "name": "ux_billing_sub_comp",
           "columns": [
             "comp_idno"
           ],
-          "isUnique": false
+          "isUnique": true
         },
         "ix_billing_sub_plan": {
           "name": "ix_billing_sub_plan",
@@ -989,7 +989,7 @@
           "name": "ix_billing_sub_stat",
           "columns": [
             "comp_idno",
-            "sub_status"
+            "subs_stat"
           ],
           "isUnique": false
         },
@@ -997,7 +997,7 @@
           "name": "ix_billing_sub_comp_stat_end",
           "columns": [
             "comp_idno",
-            "sub_status",
+            "subs_stat",
             "ends_date"
           ],
           "isUnique": false
@@ -1087,15 +1087,15 @@
           "notNull": false,
           "autoincrement": false
         },
-        "ledger_reason": {
-          "name": "ledger_reason",
+        "resn_code": {
+          "name": "resn_code",
           "type": "enum('plan_monthly_grant','topup_purchase','usage_chat','usage_stt','usage_llm','admin_adjust')",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false
         },
-        "ai_feature": {
-          "name": "ai_feature",
+        "feat_code": {
+          "name": "feat_code",
           "type": "enum('chat','stt','llm')",
           "primaryKey": false,
           "notNull": false,
@@ -1207,8 +1207,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "ai_feature": {
-          "name": "ai_feature",
+        "feat_code": {
+          "name": "feat_code",
           "type": "enum('chat','stt','llm')",
           "primaryKey": false,
           "notNull": true,
@@ -1283,7 +1283,7 @@
           "name": "ix_ai_event_comp_feat_crea",
           "columns": [
             "comp_idno",
-            "ai_feature",
+            "feat_code",
             "crea_date"
           ],
           "isUnique": false
@@ -1318,8 +1318,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "ai_feature": {
-          "name": "ai_feature",
+        "feat_code": {
+          "name": "feat_code",
           "type": "enum('chat','stt','llm')",
           "primaryKey": false,
           "notNull": true,
@@ -1355,7 +1355,7 @@
           "name": "ix_ai_mo_comp_feat_mont",
           "columns": [
             "comp_idno",
-            "ai_feature",
+            "feat_code",
             "year_mont"
           ],
           "isUnique": false
@@ -1368,7 +1368,161 @@
           "columns": [
             "comp_idno",
             "year_mont",
-            "ai_feature"
+            "feat_code"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "COAPP_CRM_CLIENT_CONT": {
+      "name": "COAPP_CRM_CLIENT_CONT",
+      "columns": {
+        "cont_idno": {
+          "name": "cont_idno",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "comp_idno": {
+          "name": "comp_idno",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "clie_idno": {
+          "name": "clie_idno",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cont_name": {
+          "name": "cont_name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "cont_role": {
+          "name": "cont_role",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "cont_tele": {
+          "name": "cont_tele",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "cont_mail": {
+          "name": "cont_mail",
+          "type": "varchar(320)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "cont_memo": {
+          "name": "cont_memo",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "main_yesn": {
+          "name": "main_yesn",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "enab_yesn": {
+          "name": "enab_yesn",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": true
+        },
+        "crea_idno": {
+          "name": "crea_idno",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "crea_date": {
+          "name": "crea_date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        },
+        "modi_idno": {
+          "name": "modi_idno",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "modi_date": {
+          "name": "modi_date",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false,
+          "onUpdate": true
+        }
+      },
+      "indexes": {
+        "ix_cont_comp_client": {
+          "name": "ix_cont_comp_client",
+          "columns": [
+            "comp_idno",
+            "clie_idno"
+          ],
+          "isUnique": false
+        },
+        "ix_cont_comp_name": {
+          "name": "ix_cont_comp_name",
+          "columns": [
+            "comp_idno",
+            "cont_name"
+          ],
+          "isUnique": false
+        },
+        "ux_cont_comp_client_mail": {
+          "name": "ux_cont_comp_client_mail",
+          "columns": [
+            "comp_idno",
+            "clie_idno",
+            "cont_mail"
+          ],
+          "isUnique": true
+        },
+        "ux_cont_comp_client_tele": {
+          "name": "ux_cont_comp_client_tele",
+          "columns": [
+            "comp_idno",
+            "clie_idno",
+            "cont_tele"
+          ],
+          "isUnique": true
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "COAPP_CRM_CLIENT_CONT_cont_idno": {
+          "name": "COAPP_CRM_CLIENT_CONT_cont_idno",
+          "columns": [
+            "cont_idno"
           ]
         }
       },
@@ -1399,12 +1553,27 @@
           "notNull": true,
           "autoincrement": false
         },
+        "bizn_numb": {
+          "name": "bizn_numb",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "indu_type": {
           "name": "indu_type",
           "type": "varchar(100)",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
+        },
+        "clie_type": {
+          "name": "clie_type",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'sales'"
         },
         "cont_name": {
           "name": "cont_name",
@@ -1488,13 +1657,21 @@
           ],
           "isUnique": false
         },
-        "ix_client_comp_name": {
-          "name": "ix_client_comp_name",
+        "ux_client_comp_name": {
+          "name": "ux_client_comp_name",
           "columns": [
             "comp_idno",
             "clie_name"
           ],
-          "isUnique": false
+          "isUnique": true
+        },
+        "ux_client_comp_bizr": {
+          "name": "ux_client_comp_bizr",
+          "columns": [
+            "comp_idno",
+            "bizn_numb"
+          ],
+          "isUnique": true
         }
       },
       "foreignKeys": {},
@@ -1554,6 +1731,27 @@
           "notNull": false,
           "autoincrement": false
         },
+        "cont_role": {
+          "name": "cont_role",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "cont_tele": {
+          "name": "cont_tele",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "cont_mail": {
+          "name": "cont_mail",
+          "type": "varchar(320)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "sale_loca": {
           "name": "sale_loca",
           "type": "varchar(200)",
@@ -1566,6 +1764,13 @@
           "type": "timestamp",
           "primaryKey": false,
           "notNull": true,
+          "autoincrement": false
+        },
+        "sale_pric": {
+          "name": "sale_pric",
+          "type": "decimal(15,2)",
+          "primaryKey": false,
+          "notNull": false,
           "autoincrement": false
         },
         "orig_memo": {
@@ -1589,15 +1794,15 @@
           "notNull": false,
           "autoincrement": false
         },
-        "audi_addr": {
-          "name": "audi_addr",
+        "sttx_text": {
+          "name": "sttx_text",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "sttx_text": {
-          "name": "sttx_text",
+        "edit_text": {
+          "name": "edit_text",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
@@ -1610,6 +1815,14 @@
           "notNull": true,
           "autoincrement": false,
           "default": false
+        },
+        "aiex_stat": {
+          "name": "aiex_stat",
+          "type": "enum('pending','processing','completed','failed')",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'pending'"
         },
         "enab_yesn": {
           "name": "enab_yesn",
@@ -1676,6 +1889,14 @@
             "vist_date"
           ],
           "isUnique": false
+        },
+        "ix_sale_comp_cont": {
+          "name": "ix_sale_comp_cont",
+          "columns": [
+            "comp_idno",
+            "cont_name"
+          ],
+          "isUnique": false
         }
       },
       "foreignKeys": {},
@@ -1711,18 +1932,26 @@
           "name": "sale_idno",
           "type": "int",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
         "file_idno": {
           "name": "file_idno",
           "type": "int",
           "primaryKey": false,
-          "notNull": true,
+          "notNull": false,
           "autoincrement": false
         },
-        "jobs_status": {
-          "name": "jobs_status",
+        "jobs_type": {
+          "name": "jobs_type",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "'analyze'"
+        },
+        "jobs_stat": {
+          "name": "jobs_stat",
           "type": "enum('queued','running','done','failed')",
           "primaryKey": false,
           "notNull": true,
@@ -1743,15 +1972,15 @@
           "notNull": false,
           "autoincrement": false
         },
-        "aiex_sum": {
-          "name": "aiex_sum",
+        "aiex_summ": {
+          "name": "aiex_summ",
           "type": "text",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "aiex_ext": {
-          "name": "aiex_ext",
+        "aiex_text": {
+          "name": "aiex_text",
           "type": "json",
           "primaryKey": false,
           "notNull": false,
@@ -1830,7 +2059,8 @@
           "columns": [
             "comp_idno",
             "sale_idno",
-            "file_idno"
+            "file_idno",
+            "jobs_type"
           ],
           "isUnique": true
         },
@@ -1854,7 +2084,7 @@
           "name": "ix_sale_audio_job_stat_reqe",
           "columns": [
             "comp_idno",
-            "jobs_status",
+            "jobs_stat",
             "reqe_date"
           ],
           "isUnique": false
@@ -1945,13 +2175,20 @@
           "notNull": true,
           "autoincrement": false
         },
-        "schedule_status": {
-          "name": "schedule_status",
+        "sche_stat": {
+          "name": "sche_stat",
           "type": "enum('scheduled','completed','canceled','overdue')",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
           "default": "'scheduled'"
+        },
+        "actn_ownr": {
+          "name": "actn_ownr",
+          "type": "varchar(16)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         },
         "remd_sent": {
           "name": "remd_sent",
@@ -1968,6 +2205,13 @@
           "notNull": true,
           "autoincrement": false,
           "default": false
+        },
+        "aiex_keys": {
+          "name": "aiex_keys",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
         },
         "enab_yesn": {
           "name": "enab_yesn",
@@ -2031,6 +2275,15 @@
           "columns": [
             "comp_idno",
             "clie_idno",
+            "sche_date"
+          ],
+          "isUnique": false
+        },
+        "ix_sche_comp_stat_date": {
+          "name": "ix_sche_comp_stat_date",
+          "columns": [
+            "comp_idno",
+            "sche_stat",
             "sche_date"
           ],
           "isUnique": false
@@ -2107,8 +2360,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "order_status": {
-          "name": "order_status",
+        "orde_stat": {
+          "name": "orde_stat",
           "type": "enum('proposal','negotiation','confirmed','canceled')",
           "primaryKey": false,
           "notNull": true,
@@ -2187,7 +2440,7 @@
           "name": "ix_ord_comp_stat",
           "columns": [
             "comp_idno",
-            "order_status"
+            "orde_stat"
           ],
           "isUnique": false
         },
@@ -2196,6 +2449,14 @@
           "columns": [
             "comp_idno",
             "owne_idno"
+          ],
+          "isUnique": false
+        },
+        "ix_ord_comp_crea": {
+          "name": "ix_ord_comp_crea",
+          "columns": [
+            "comp_idno",
+            "crea_date"
           ],
           "isUnique": false
         },
@@ -2259,6 +2520,13 @@
           "notNull": true,
           "autoincrement": false
         },
+        "clie_idno": {
+          "name": "clie_idno",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
         "clie_name": {
           "name": "clie_name",
           "type": "varchar(200)",
@@ -2266,8 +2534,8 @@
           "notNull": true,
           "autoincrement": false
         },
-        "ship_status": {
-          "name": "ship_status",
+        "ship_stat": {
+          "name": "ship_stat",
           "type": "enum('pending','delivered','invoiced','paid')",
           "primaryKey": false,
           "notNull": true,
@@ -2368,7 +2636,7 @@
           "name": "ix_ship_comp_stat",
           "columns": [
             "comp_idno",
-            "ship_status"
+            "ship_stat"
           ],
           "isUnique": false
         },
@@ -2385,6 +2653,15 @@
           "columns": [
             "comp_idno",
             "ship_date"
+          ],
+          "isUnique": false
+        },
+        "ix_ship_comp_stat_paid": {
+          "name": "ix_ship_comp_stat_paid",
+          "columns": [
+            "comp_idno",
+            "ship_stat",
+            "paid_date"
           ],
           "isUnique": false
         }

@@ -20,7 +20,7 @@ export const CRM_SCHEDULE = table(
     sche_pric: decimal("sche_pric", { precision: 15, scale: 2 }),   // 금액(옵션)
     sche_date: timestamp("sche_date").notNull(),                    // 예정 일시
 
-    stat_code: scheduleStatusEnum.default("scheduled").notNull(),   // 상태
+    sche_stat: scheduleStatusEnum.default("scheduled").notNull(),   // 상태
     actn_ownr: varchar("actn_ownr", { length: 16 }).$type<ActionOwner>(), // 수행 주체: self/client/shared
     remd_sent: boolean("remd_sent").default(false).notNull(),       // 리마인드 발송 여부
     auto_gene: boolean("auto_gene").default(false).notNull(),       // AI 자동 생성 여부
@@ -41,7 +41,7 @@ export const CRM_SCHEDULE = table(
     index("ix_sche_comp_clie_date").on(t.comp_idno, t.clie_idno, t.sche_date),
 
     // 대시보드 upcoming/overdue/imminent (stat_code='scheduled' + sche_date 범위)
-    index("ix_sche_comp_stat_date").on(t.comp_idno, t.stat_code, t.sche_date),
+    index("ix_sche_comp_stat_date").on(t.comp_idno, t.sche_stat, t.sche_date),
   ]
 );
 

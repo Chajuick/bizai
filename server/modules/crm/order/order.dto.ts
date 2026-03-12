@@ -42,7 +42,7 @@ export const OrderCreateInput = z.object({
 
   orde_pric: z.number().positive(),
 
-  stat_code: z.enum(ORDER_STATUSES).default("proposal"),
+  orde_stat: z.enum(ORDER_STATUSES).default("proposal"),
 
   ctrt_date: z.string().optional(),
   expd_date: z.string().optional(),
@@ -59,7 +59,7 @@ export const OrderUpdateInput = z.object({
   prod_serv: z.string().min(1).optional(),
 
   orde_pric: z.number().positive().optional(),
-  stat_code: z.enum(ORDER_STATUSES).optional(),
+  orde_stat: z.enum(ORDER_STATUSES).optional(),
 
   ctrt_date: z.string().nullable().optional(),
   expd_date: z.string().nullable().optional(),
@@ -87,7 +87,7 @@ export const OrderItemOutput = z.object({
 
   // drizzle decimal은 보통 string으로 내려옴(정석)
   orde_pric: DecimalLike,
-  stat_code: z.enum(ORDER_STATUSES),
+  orde_stat: z.enum(ORDER_STATUSES),
 
   ctrt_date: IsoDateTimeNullable.optional(), // ✅ z.date() → ISO
   expd_date: IsoDateTimeNullable.optional(),
