@@ -19,6 +19,7 @@ import {
   SalePatchScheduleClientInput,
   SaleTranscribeInput,
   SaleTranscribeOutput,
+  SaleTranscribeResultInput,
   SaleTranscribeResultOutput,
   SaleUpdateInput,
 } from "./sale.dto";
@@ -70,10 +71,11 @@ export const saleRouter = router({
     .output(SaleTranscribeOutput)
     .mutation(({ ctx, input }) => saleService.transcribe(svcCtxFromTrpc(ctx), input)),
 
+  // jobs_idno 기준 polling — transcribe 뮤테이션이 반환한 jobs_idno를 그대로 사용
   transcribeResult: protectedProcedure
-    .input(SaleIdInput)
+    .input(SaleTranscribeResultInput)
     .output(SaleTranscribeResultOutput)
-    .query(({ ctx, input }) => saleService.getTranscribeJobResult(svcCtxFromTrpc(ctx), input.sale_idno)),
+    .query(({ ctx, input }) => saleService.getTranscribeJobResultById(svcCtxFromTrpc(ctx), input.jobs_idno)),
 
   patchScheduleClient: protectedProcedure
     .input(SalePatchScheduleClientInput)

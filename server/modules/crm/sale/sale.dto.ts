@@ -272,6 +272,11 @@ export const SaleTranscribeOutput = z.object({
   jobs_stat: z.string(),
 });
 
+/** transcribeResult 쿼리 입력 — jobs_idno 기준 (transcribe 뮤테이션이 반환한 값 사용) */
+export const SaleTranscribeResultInput = z.object({
+  jobs_idno: z.number().int().positive(),
+});
+
 /** transcribeResult 쿼리 응답 (워커 완료 후 polling) */
 export const SaleTranscribeResultOutput = z.object({
   jobs_stat: z.enum(["queued", "running", "done", "failed"]).nullable(),
