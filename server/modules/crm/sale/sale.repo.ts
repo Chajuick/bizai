@@ -179,6 +179,7 @@ export const saleRepo = {
       .select()
       .from(CRM_SALE_AUDIO_JOB)
       .where(and(...conditions))
+      .orderBy(desc(CRM_SALE_AUDIO_JOB.reqe_date), desc(CRM_SALE_AUDIO_JOB.jobs_idno))
       .limit(1);
 
     return rows[0] ?? null;
@@ -244,7 +245,10 @@ export const saleRepo = {
   },
 
   /** analyze_text job 재사용 조회 (file_idno 없는 분석 잡) */
-  async getLatestAnalyzeNoFileJob(deps: SaleRepoDeps, args: { comp_idno: number; sale_idno: number }): Promise<SaleAudioJobRow | null> {
+  async getLatestAnalyzeNoFileJob(
+    deps: SaleRepoDeps,
+    args: { comp_idno: number; sale_idno: number }
+  ): Promise<SaleAudioJobRow | null> {
     const rows = await deps.db
       .select()
       .from(CRM_SALE_AUDIO_JOB)
@@ -252,11 +256,13 @@ export const saleRepo = {
         and(
           eq(CRM_SALE_AUDIO_JOB.comp_idno, args.comp_idno),
           eq(CRM_SALE_AUDIO_JOB.sale_idno, args.sale_idno),
-          isNull(CRM_SALE_AUDIO_JOB.file_idno),
+          eq(CRM_SALE_AUDIO_JOB.jobs_type, "analyze"),
+          isNull(CRM_SALE_AUDIO_JOB.file_idno)
         )
       )
-      .orderBy(desc(CRM_SALE_AUDIO_JOB.reqe_date))
+      .orderBy(desc(CRM_SALE_AUDIO_JOB.reqe_date), desc(CRM_SALE_AUDIO_JOB.jobs_idno))
       .limit(1);
+
     return rows[0] ?? null;
   },
 
@@ -296,7 +302,10 @@ export const saleRepo = {
   },
 
   /** Worker: 완료된 분석 잡의 최신 결과 조회 */
-  async getLatestDoneAnalyzeJob(deps: SaleRepoDeps, args: { sale_idno: number; comp_idno: number }): Promise<SaleAudioJobRow | null> {
+  async getLatestDoneAnalyzeJob(
+    deps: SaleRepoDeps,
+    args: { sale_idno: number; comp_idno: number }
+  ): Promise<SaleAudioJobRow | null> {
     const rows = await deps.db
       .select()
       .from(CRM_SALE_AUDIO_JOB)
@@ -304,11 +313,13 @@ export const saleRepo = {
         and(
           eq(CRM_SALE_AUDIO_JOB.comp_idno, args.comp_idno),
           eq(CRM_SALE_AUDIO_JOB.sale_idno, args.sale_idno),
+          eq(CRM_SALE_AUDIO_JOB.jobs_type, "analyze"),
           eq(CRM_SALE_AUDIO_JOB.jobs_stat, "done")
         )
       )
-      .orderBy(desc(CRM_SALE_AUDIO_JOB.fini_date))
+      .orderBy(desc(CRM_SALE_AUDIO_JOB.fini_date), desc(CRM_SALE_AUDIO_JOB.jobs_idno))
       .limit(1);
+
     return rows[0] ?? null;
   },
 
