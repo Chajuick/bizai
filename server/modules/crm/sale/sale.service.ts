@@ -1142,6 +1142,7 @@ export const saleService = {
     const job = await saleRepo.getLatestDoneAnalyzeJob({ db }, { sale_idno, comp_idno: ctx.comp_idno });
 
     type ExtPayload = {
+      ebug_marker: "ANALYZE_RESULT_V3",
       summary?: string | null;
       confidence?: number | null;
       schedule_idno?: number | null;
