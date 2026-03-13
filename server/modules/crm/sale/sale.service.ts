@@ -1130,16 +1130,35 @@ export const saleService = {
 
     // 사용자 접근 권한 확인
     const isAdminOrOwner = ctx.comp_role === "owner" || ctx.comp_role === "admin";
-    const sale = await saleRepo.getById({ db }, {
-      comp_idno: ctx.comp_idno,
-      owne_idno: isAdminOrOwner ? undefined : ctx.user_idno,
-      sale_idno,
-    });
-    if (!sale) throwAppError({ tRPCCode: "NOT_FOUND", appCode: "SALE_NOT_FOUND", message: "영업일지를 찾을 수 없습니다.", displayType: "toast" });
+    const sale = await saleRepo.getById(
+      { db },
+      {
+        comp_idno: ctx.comp_idno,
+        owne_idno: isAdminOrOwner ? undefined : ctx.user_idno,
+        sale_idno,
+      }
+    );
 
-    const aiex_stat = (sale.aiex_stat ?? "pending") as "pending" | "processing" | "completed" | "failed";
+    if (!sale) {
+      throwAppError({
+        tRPCCode: "NOT_FOUND",
+        appCode: "SALE_NOT_FOUND",
+        message: "영업일지를 찾을 수 없습니다.",
+        displayType: "toast",
+      });
+    }
 
-    const job = await saleRepo.getLatestDoneAnalyzeJob({ db }, { sale_idno, comp_idno: ctx.comp_idno });
+    const aiex_stat = (sale.aiex_stat ?? "pending") as
+      | "pending"
+      | "processing"
+      | "completed"
+      | "failed";
+
+    const job = await saleRepo.getLatestDoneAnalyzeJob(
+      { db },
+      { sale_idno, comp_idno: ctx.comp_idno }
+    );
+
     logger.info(
       {
         sale_idno,
@@ -1150,24 +1169,50 @@ export const saleService = {
       },
       "[getAnalyzeJobResult] picked job"
     );
+
     type ExtPayload = {
-      ebug_marker: "ANALYZE_RESULT_V3",
       summary?: string | null;
       confidence?: number | null;
       schedule_idno?: number | null;
       ai_client_name?: string | null;
       matched_client_idno?: number | null;
       matched_client_name?: string | null;
-      ai_contacts?: Array<{ cont_name: string; cont_role?: string | null; cont_tele?: string | null; cont_mail?: string | null }>;
+      ai_contacts?: Array<{
+        cont_name: string;
+        cont_role?: string | null;
+        cont_tele?: string | null;
+        cont_mail?: string | null;
+      }>;
       ai_contact_person?: string | null;
       ai_contact_phone?: string | null;
       ai_contact_email?: string | null;
     };
 
-    const ext = job?.aiex_text as ExtPayload | null;
+    let ext: ExtPayload | null = null;
+
+    if (job?.aiex_text) {
+      if (typeof job.aiex_text === "string") {
+        try {
+          ext = JSON.parse(job.aiex_text) as ExtPayload;
+        } catch (err) {
+          logger.warn(
+            {
+              sale_idno,
+              picked_job_id: job.jobs_idno,
+              raw_aiex_text: job.aiex_text,
+              err,
+            },
+            "[getAnalyzeJobResult] failed to parse aiex_text"
+          );
+          ext = null;
+        }
+      } else {
+        ext = job.aiex_text as ExtPayload;
+      }
+    }
 
     return {
-      debug_marker: "SERVER_NEW_CODE_V1",
+      debug_marker: "SERVER_NEW_CODE_V2",
       aiex_stat,
       jobs_stat: job?.jobs_stat ?? null,
       summary: ext?.summary ?? null,
