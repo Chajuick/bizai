@@ -1140,7 +1140,16 @@ export const saleService = {
     const aiex_stat = (sale.aiex_stat ?? "pending") as "pending" | "processing" | "completed" | "failed";
 
     const job = await saleRepo.getLatestDoneAnalyzeJob({ db }, { sale_idno, comp_idno: ctx.comp_idno });
-
+    logger.info(
+      {
+        sale_idno,
+        picked_job_id: job?.jobs_idno,
+        picked_job_type: job?.jobs_type,
+        picked_job_stat: job?.jobs_stat,
+        raw_aiex_text: job?.aiex_text,
+      },
+      "[getAnalyzeJobResult] picked job"
+    );
     type ExtPayload = {
       ebug_marker: "ANALYZE_RESULT_V3",
       summary?: string | null;
