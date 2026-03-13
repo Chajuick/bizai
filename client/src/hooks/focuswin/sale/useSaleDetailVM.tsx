@@ -1,6 +1,6 @@
 // src/hooks/focuswin/sale/useSaleDetailVM.tsx
 
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { useLocation, useSearch } from "wouter";
 import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
@@ -51,7 +51,13 @@ export function useSaleDetailVM(logId: number) {
   // polling: aiex_stat가 pending/processing일 때 3초마다 재조회
   const [shouldPoll, setShouldPoll] = useState(false);
 
-  const saleGet = trpc.crm.sale.get.useQuery({ sale_idno: logId }, { enabled: Number.isFinite(logId), refetchInterval: shouldPoll ? 3000 : false });
+  const saleGet = trpc.crm.sale.get.useQuery(
+    { sale_idno: logId },
+    {
+      enabled: Number.isFinite(logId),
+      refetchInterval: shouldPoll ? 3000 : false,
+    }
+  );
 
   // analyzeResult: 워커 완료 후 모달용 데이터 조회 (수동 fetch)
   const analyzeResult = trpc.crm.sale.analyzeResult.useQuery({ sale_idno: logId }, { enabled: false });
@@ -82,6 +88,9 @@ export function useSaleDetailVM(logId: number) {
     sale_pric: undefined,
     orig_memo: "",
   });
+
+  // AI 분석 완료 후 후처리(토스트/모달)를 중복 실행하지 않기 위한 플래그
+  const [didHandleAnalyzeCompletion, setDidHandleAnalyzeCompletion] = useState(false);
 
   // #endregion
 
@@ -141,6 +150,7 @@ export function useSaleDetailVM(logId: number) {
       notes: core?.notes?.trim() ? core.notes.trim() : null,
     };
   }, [log?.sale.aiex_summ, log?.sale.aiex_core, log?.sale.aiex_confidence]);
+
   // #endregion
 
   // #region Derived (AI actions → schedule matching)
@@ -210,37 +220,89 @@ export function useSaleDetailVM(logId: number) {
 
   const aiStatus = saleGet.data?.sale?.aiex_stat ?? "pending";
 
+  // 등록 페이지에서 "AI 저장" 후 이동 시 (?analyzing=1) → 분석 완료까지 overlay 유지
+  const isFromAnalyze = useMemo(() => new URLSearchParams(search).has("analyzing"), [search]);
+
   useEffect(() => {
     setShouldPoll(aiStatus === "pending" || aiStatus === "processing");
   }, [aiStatus]);
 
-  // aiex_stat가 pending/processing → completed/failed 전환 시 결과 조회 + 모달/토스트
+  /**
+   * AI 분석 완료 후 공통 후처리
+   * - 배너 reset
+   * - 목록 invalidate
+   * - analyzeResult 조회
+   * - 일정 자동 등록 토스트
+   * - 거래처 연결 모달 조건 검사
+   *
+   * 주의:
+   * - 첫 진입 시 이미 completed 상태인 경우에도 이 함수를 타야 함
+   * - 중복 실행 방지를 위해 didHandleAnalyzeCompletion 플래그 사용
+   */
+  const handleAnalyzeCompleted = useCallback(async () => {
+    if (didHandleAnalyzeCompletion) return;
+
+    setDidHandleAnalyzeCompletion(true);
+
+    analyze.reset();
+    await utils.crm.sale.list.invalidate();
+
+    const r = await analyzeResult.refetch();
+
+    console.log("[handleAnalyzeCompleted] refetch result", {
+      aiStatus,
+      logId,
+      saleClieIdno: saleGet.data?.sale?.clie_idno,
+      queryData: r.data,
+      queryError: r.error,
+    });
+
+    if (!r.data) {
+      toast.success("AI 분석이 완료되었습니다.");
+      return;
+    }
+
+    if (r.data.schedule_idno) {
+      toast.success("AI 분석 완료. 일정이 자동 등록되었습니다.");
+    } else {
+      toast.success("AI 분석이 완료되었습니다.");
+    }
+
+    const opened = aiLink.maybeOpenPostAnalyzeModal(logId, r.data, !!saleGet.data?.sale?.clie_idno);
+
+    console.log("[handleAnalyzeCompleted] modal opened?", opened);
+  }, [didHandleAnalyzeCompletion, analyze, utils, analyzeResult, aiLink, logId, saleGet.data?.sale?.clie_idno, aiStatus]);
+
+  // aiex_stat 변화 감지
+  // 1) pending/processing -> completed 전환 시 완료 처리
+  // 2) 첫 진입부터 이미 completed 상태인 경우도 완료 처리
+  // 3) failed 전환 시 에러 토스트 + 플래그 초기화
   const prevAiStatusRef = useRef<string | undefined>(undefined);
+
   useEffect(() => {
     const prev = prevAiStatusRef.current;
     prevAiStatusRef.current = aiStatus;
 
+    // 상태 전환 기반 완료 처리
     if (prev !== undefined && (prev === "pending" || prev === "processing")) {
       if (aiStatus === "completed") {
-        analyze.reset(); // 배너 초기화 (완료 알림은 토스트로)
-        utils.crm.sale.list.invalidate();
-        analyzeResult.refetch().then(r => {
-          if (!r.data) {
-            toast.success("AI 분석이 완료되었습니다.");
-            return;
-          }
-          if (r.data.schedule_idno) toast.success("AI 분석 완료. 일정이 자동 등록되었습니다.");
-          else toast.success("AI 분석이 완료되었습니다.");
+        void handleAnalyzeCompleted();
+        return;
+      }
 
-          aiLink.maybeOpenPostAnalyzeModal(logId, r.data, !!saleGet.data?.sale?.clie_idno);
-        });
-      } else if (aiStatus === "failed") {
+      if (aiStatus === "failed") {
         analyze.reset(); // 배너 초기화
+        setDidHandleAnalyzeCompletion(false);
         toast.error("AI 분석에 실패했습니다. 잠시 후 다시 시도해주세요.");
+        return;
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [aiStatus]);
+
+    // 등록 페이지에서 넘어온 직후, 첫 조회가 이미 completed인 경우도 처리
+    if (isFromAnalyze && aiStatus === "completed" && !didHandleAnalyzeCompletion) {
+      void handleAnalyzeCompleted();
+    }
+  }, [aiStatus, isFromAnalyze, didHandleAnalyzeCompletion, handleAnalyzeCompleted, analyze]);
 
   // #endregion
 
@@ -281,6 +343,9 @@ export function useSaleDetailVM(logId: number) {
 
   const runAnalyze = async () => {
     try {
+      // 재분석 시작 시 완료 후처리 플래그 초기화
+      setDidHandleAnalyzeCompletion(false);
+
       await analyze.mutateAsync({ sale_idno: logId });
       await utils.crm.sale.get.invalidate({ sale_idno: logId }); // → aiex_stat=pending 반영
       toast.info("AI 분석을 시작했습니다. 완료되면 알려드립니다.");
@@ -328,9 +393,6 @@ export function useSaleDetailVM(logId: number) {
   }, [analyze.isPending, analyze.isSuccess, analyze.isError]);
 
   const canAnalyze = aiStatus === "pending" || aiStatus === "failed";
-
-  // 등록 페이지에서 "AI 저장" 후 이동 시 (?analyzing=1) → 분석 완료까지 overlay 유지
-  const isFromAnalyze = useMemo(() => new URLSearchParams(search).has("analyzing"), [search]);
   const showAnalysisOverlay = isFromAnalyze && (aiStatus === "pending" || aiStatus === "processing");
 
   const primaryAction = isEditing
@@ -360,9 +422,21 @@ export function useSaleDetailVM(logId: number) {
         : undefined;
 
   const actions = isEditing
-    ? [{ label: "취소", icon: <XCircle size={16} />, onClick: cancelEdit, variant: "outline" as const }]
+    ? [
+        {
+          label: "취소",
+          icon: <XCircle size={16} />,
+          onClick: cancelEdit,
+          variant: "outline" as const,
+        },
+      ]
     : [
-        { label: "수정", icon: <Pencil size={16} />, onClick: startEdit, variant: "ghost" as const },
+        {
+          label: "수정",
+          icon: <Pencil size={16} />,
+          onClick: startEdit,
+          variant: "ghost" as const,
+        },
         {
           label: "삭제",
           icon: del.isPending ? <Loader2 size={16} className="animate-spin" /> : <Trash2 size={16} />,
@@ -375,7 +449,10 @@ export function useSaleDetailVM(logId: number) {
                 title: "해당 일지",
                 metas: [
                   { label: "거래처", value: log.sale.clie_name || "-" },
-                  { label: "방문일", value: log.sale.vist_date ? new Date(log.sale.vist_date).toLocaleDateString("ko-KR") : "-" },
+                  {
+                    label: "방문일",
+                    value: log.sale.vist_date ? new Date(log.sale.vist_date).toLocaleDateString("ko-KR") : "-",
+                  },
                 ],
               })
             );
@@ -409,6 +486,7 @@ export function useSaleDetailVM(logId: number) {
   // #endregion
 
   // #region Modal props (SaleDetailModals 컴포넌트에 전달)
+
   const modalProps = {
     confirm,
     setConfirm,
@@ -417,6 +495,7 @@ export function useSaleDetailVM(logId: number) {
     onPostAnalyzeConfirm: handlePostAnalyzeConfirm,
     onPostAnalyzeDeny: handlePostAnalyzeDeny,
   };
+
   // #endregion
 
   return {

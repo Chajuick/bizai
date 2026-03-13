@@ -429,7 +429,7 @@ export default function ClientNameField({
 
         {/* #region Dropdown */}
         {open && (
-          <div className={cn("absolute z-50 mt-2 w-full overflow-hidden", "max-h-72 overflow-y-auto", "rounded-2xl border border-border/70 bg-popover", "shadow-[0_18px_50px_rgba(15,23,42,0.10)]")}>
+          <div className={cn("absolute z-15 mt-2 w-full overflow-hidden", "max-h-72 overflow-y-auto", "rounded-2xl border border-border/70 bg-popover", "shadow-[0_18px_50px_rgba(15,23,42,0.10)]")}>
             {searchResults.length === 0 ? renderEmptyState() : renderSearchResults()}
           </div>
         )}

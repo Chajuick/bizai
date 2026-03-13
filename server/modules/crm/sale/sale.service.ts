@@ -1081,10 +1081,10 @@ export const saleService = {
     const resultPayload = {
       summary,
       confidence: ai_confidence,
-      client_name: ai_client_name,
+      ai_client_name,
       matched_client_idno,
       matched_client_name,
-      contacts: ai_contacts,
+      ai_contacts,
       appointments: normalizedAppointments,
       pricing: parsed.pricing ?? null,
       notes: parsed.notes ?? "",
