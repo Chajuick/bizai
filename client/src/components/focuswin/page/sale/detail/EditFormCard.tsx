@@ -24,7 +24,14 @@ export default function SaleDetailEditFormCard({ form, setForm }: Props) {
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {/* 거래처 */}
-        <ClientNameField label="거래처" value={form.clie_name} clientId={form.clie_idno} onChange={(name, id) => setForm(f => ({ ...f, clie_name: name, clie_idno: id }))} placeholder="(주)포커스윈" />
+        <ClientNameField
+          className="sm:col-span-2"
+          label="거래처"
+          value={form.clie_name}
+          clientId={form.clie_idno}
+          onChange={(name, id) => setForm(f => ({ ...f, clie_name: name, clie_idno: id }))}
+          placeholder="(주)포커스윈"
+        />
 
         {/* 담당자 */}
         <TextField label="담당자" value={form.cont_name ?? ""} onChange={v => setForm(f => ({ ...f, cont_name: v }))} inputProps={{ placeholder: "홍길동 부장", maxLength: 100 }} />
@@ -50,9 +57,6 @@ export default function SaleDetailEditFormCard({ form, setForm }: Props) {
         {/* 방문일시 */}
         <DateTimeField label="방문일시" value={form.vist_date} onChange={v => setForm(f => ({ ...f, vist_date: v }))} />
 
-        {/* 장소 */}
-        <TextField label="장소" value={form.sale_loca} onChange={v => setForm(f => ({ ...f, sale_loca: v }))} inputProps={{ placeholder: "서울 강남구" }} />
-
         {/* 금액 */}
         <MoneyField
           label="금액 (원)"
@@ -65,6 +69,9 @@ export default function SaleDetailEditFormCard({ form, setForm }: Props) {
           }
           inputProps={{ placeholder: "1000000", maxLength: 13 }}
         />
+
+        {/* 장소 */}
+        <TextField className="sm:col-span-2" label="장소" value={form.sale_loca} onChange={v => setForm(f => ({ ...f, sale_loca: v }))} inputProps={{ placeholder: "서울 강남구" }} />
       </div>
 
       {/* memo */}

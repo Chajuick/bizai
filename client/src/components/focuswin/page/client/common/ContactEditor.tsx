@@ -69,7 +69,7 @@ export default function ContactEditor({ disabled, contacts, onAdd, onChange, onR
       <div className="flex items-center justify-between mb-4">
         <div className="flex flex-col items-start">
           <p className="text-[11px] font-extrabold tracking-[0.18em] text-slate-400 uppercase">CONTACT</p>
-          <div className="mt-1 flex items-center gap-2" >
+          <div className="mt-1 flex items-center gap-2">
             <p className="text-sm font-black text-slate-900">담당자</p>
             <span className={cn("text-[11px] font-bold rounded-full px-2 py-0.5", visibleCount > 0 ? "bg-slate-100 text-slate-700" : "bg-slate-50 text-slate-400")}>{visibleCount}</span>
           </div>
@@ -113,73 +113,93 @@ export default function ContactEditor({ disabled, contacts, onAdd, onChange, onR
                 className={cn("rounded-3xl bg-white", "border border-slate-200/60", "px-4 py-3", "shadow-[0_1px_0_rgba(0,0,0,0.06)]", "transition", canEdit && "hover:bg-slate-50/40")}
               >
                 {/* #region Summary Row */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-3 min-w-0">
-                    {/* Avatar */}
-                    <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center shrink-0", "bg-slate-50 border border-slate-100", "text-slate-800")}>
-                      <span className="text-sm font-black">{getInitial(name)}</span>
-                    </div>
-
-                    {/* Title / Sub */}
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <p className="text-sm font-extrabold text-slate-900 truncate">{title}</p>
-
-                        {/* ✅ 대표는 "정보"이므로 읽기모드에도 표시 */}
-                        {c.main_yesn && (
-                          <span className="inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 bg-amber-50 border border-amber-100">
-                            <Star size={11} className="text-amber-500 fill-amber-500" />
-                            <span className="text-[10px] font-bold text-amber-700">대표</span>
-                          </span>
-                        )}
-
-                        {/* ✅ draft 뱃지는 편집시에만 */}
-                        {canEdit && c._state !== "keep" && (
-                          <span
-                            className={cn(
-                              "text-[10px] font-bold rounded-full px-2 py-0.5 border",
-                              c._state === "new" && "bg-emerald-50 text-emerald-700 border-emerald-100",
-                              c._state === "update" && "bg-indigo-50 text-indigo-700 border-indigo-100"
-                            )}
-                          >
-                            {c._state === "new" ? "NEW" : "EDIT"}
-                          </span>
-                        )}
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-3">
+                  {/* 상단 정보 영역 */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-start gap-3 min-w-0">
+                      {/* Avatar */}
+                      <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center shrink-0", "bg-slate-50 border border-slate-100", "text-slate-800")}>
+                        <span className="text-sm font-black">{getInitial(name)}</span>
                       </div>
 
-                      {sub ? (
-                        <p className="mt-0.5 text-[12px] text-slate-500 truncate">{sub}</p>
-                      ) : (
-                        <p className="mt-0.5 text-[12px] text-slate-400 truncate">{canEdit ? "업무/연락처를 입력해 주세요" : "업무/연락처 정보가 없습니다"}</p>
-                      )}
+                      {/* Title / Sub */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <p className="text-sm font-extrabold text-slate-900 truncate">{title}</p>
+
+                          {/* 대표 */}
+                          {c.main_yesn && (
+                            <span className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-100 bg-amber-50 px-1.5 py-0.5">
+                              <Star size={11} className="text-amber-500 fill-amber-500" />
+                              <span className="text-[10px] font-bold text-amber-700">대표</span>
+                            </span>
+                          )}
+
+                          {/* draft */}
+                          {canEdit && c._state !== "keep" && (
+                            <span
+                              className={cn(
+                                "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-bold",
+                                c._state === "new" && "border-emerald-100 bg-emerald-50 text-emerald-700",
+                                c._state === "update" && "border-indigo-100 bg-indigo-50 text-indigo-700"
+                              )}
+                            >
+                              {c._state === "new" ? "NEW" : "EDIT"}
+                            </span>
+                          )}
+
+                          {/* 모바일 토글 버튼 */}
+                          {canEdit && (
+                            <button
+                              type="button"
+                              onClick={() => toggleOpen(fullIdx)}
+                              className={cn(
+                                "ml-auto grid h-8 w-8 shrink-0 place-items-center rounded-xl",
+                                "text-slate-500 transition hover:bg-slate-100 hover:text-slate-800",
+                                "active:scale-[0.98]",
+                                "sm:hidden"
+                              )}
+                              aria-label={isOpen(fullIdx) ? "담당자 입력 폼 접기" : "담당자 입력 폼 펼치기"}
+                            >
+                              {isOpen(fullIdx) ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                            </button>
+                          )}
+                        </div>
+
+                        {sub ? (
+                          <p className="mt-1 text-[12px] text-slate-500 truncate">{sub}</p>
+                        ) : (
+                          <p className="mt-1 text-[12px] text-slate-400 truncate">{canEdit ? "업무/연락처를 입력해 주세요" : "업무/연락처 정보가 없습니다"}</p>
+                        )}
+                      </div>
                     </div>
                   </div>
 
-                  {/* ✅ 조작 버튼은 편집모드에서만 노출 */}
+                  {/* 액션 영역 */}
                   {canEdit && (
-                    <div className="flex items-center gap-1 shrink-0">
-                      {/* 펼치기/접기 */}
+                    <div className="flex items-center justify-end gap-1 sm:shrink-0">
+                      {/* 데스크탑 토글 버튼 */}
                       <button
                         type="button"
                         onClick={() => toggleOpen(fullIdx)}
-                        className={cn("h-9 w-9 rounded-2xl grid place-items-center", "text-slate-500 hover:text-slate-800", "hover:bg-slate-100", "active:scale-[0.98] transition")}
+                        className={cn("hidden sm:grid h-9 w-9 place-items-center rounded-2xl", "text-slate-500 hover:text-slate-800", "hover:bg-slate-100 active:scale-[0.98] transition")}
                         aria-label={isOpen(fullIdx) ? "담당자 입력 폼 접기" : "담당자 입력 폼 펼치기"}
                       >
                         {isOpen(fullIdx) ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                       </button>
 
-                      {/* 대표로 지정(조작) */}
+                      {/* 대표 지정 */}
                       <button
                         type="button"
                         onClick={() => setMain(fullIdx)}
                         className={cn(
-                          "h-9 px-3 rounded-2xl text-xs font-semibold inline-flex items-center gap-1.5",
+                          "h-8 rounded-xl px-2.5 text-[11px] font-semibold inline-flex items-center gap-1.5",
                           "border transition active:scale-[0.98]",
                           c.main_yesn ? "bg-amber-50 border-amber-100 text-amber-700" : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
                         )}
                       >
-                        <Star size={14} className={cn(c.main_yesn ? "text-amber-600 fill-amber-600" : "text-slate-400")} />
-                        {c.main_yesn ? "대표" : "대표로"}
+                        <Star size={13} className={cn(c.main_yesn ? "text-amber-600 fill-amber-600" : "text-slate-400")} />
+                        대표
                       </button>
 
                       {/* 삭제 */}
@@ -187,19 +207,19 @@ export default function ContactEditor({ disabled, contacts, onAdd, onChange, onR
                         type="button"
                         onClick={() => onRemove(fullIdx)}
                         className={cn(
-                          "h-9 w-9 rounded-2xl grid place-items-center",
+                          "h-8 w-8 rounded-xl grid place-items-center",
                           "text-slate-400 hover:text-red-600",
-                          "hover:bg-red-50/60",
-                          "border border-transparent hover:border-red-100",
+                          "hover:bg-red-50/60 border border-transparent hover:border-red-100",
                           "active:scale-[0.98] transition"
                         )}
                         aria-label="담당자 삭제"
                       >
-                        <Trash2 size={15} />
+                        <Trash2 size={14} />
                       </button>
                     </div>
                   )}
                 </div>
+                {/* #endregion */}
                 {/* #endregion */}
 
                 {/* #region Form Fields */}

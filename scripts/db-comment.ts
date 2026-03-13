@@ -22,8 +22,5 @@ const files = [
 
 for (const file of files) {
   const cmd = `mysql -h ${host} -P ${port} -u ${user} -p${password} ${database} < ${file}`;
-  console.log(`[db:comment] applying ${file}`);
   execSync(cmd, { stdio: "inherit" });
 }
-
-console.log("[db:comment] all comment files applied");

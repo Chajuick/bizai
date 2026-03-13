@@ -18,6 +18,7 @@ import {
 export type { OrderQuickFormState };
 
 // #region UI Helpers
+
 function PreviewCard({
   title,
   desc,
@@ -32,30 +33,30 @@ function PreviewCard({
   return (
     <div
       className="
-        rounded-3xl border border-slate-200/70 bg-white
+        rounded-sm border border-slate-200/70 bg-white
         px-4 py-3
         shadow-[0_10px_28px_rgba(15,23,42,0.06)]
       "
     >
       <div className="space-y-2">
-        {/* 🔹 제목 + 칩 한 줄 */}
-        <div className="flex items-start gap-2 min-w-0">
-          <div className="flex-1 min-w-0">
-            <div className="text-sm font-black text-slate-900 truncate">{title}</div>
-          </div>
-
-          {chips ? <div className="flex items-center gap-1.5 shrink-0">{chips}</div> : null}
+        {/* 제목 */}
+        <div className="min-w-0">
+          <div className="text-sm font-black text-slate-900">{title}</div>
         </div>
 
-        {/* 🔹 설명 */}
-        {desc ? <div className="text-xs text-slate-600 line-clamp-2">{desc}</div> : null}
+        {/* 칩 */}
+        {chips ? <div className="flex flex-wrap items-center gap-1.5">{chips}</div> : null}
 
-        {/* 🔹 거래처 등 아이템 */}
+        {/* 설명 */}
+        {desc ? <div className="break-words text-xs leading-5 text-slate-600">{desc}</div> : null}
+
+        {/* 기타 아이템 */}
         {items ? <div className="space-y-1">{items}</div> : null}
       </div>
     </div>
   );
 }
+
 // #endregion
 
 export default function CreateOrderModal({
@@ -76,6 +77,7 @@ export default function CreateOrderModal({
   isSubmitting?: boolean;
 }) {
   // #region Derived
+
   const scheName = selectedPromise?.sche_name ?? "";
   const scheDesc = selectedPromise?.sche_desc ?? "";
   const clieName = selectedPromise?.clie_name ?? "";
@@ -90,6 +92,7 @@ export default function CreateOrderModal({
         minute: "2-digit",
       })
     : "";
+
   // #endregion
 
   return (
@@ -97,47 +100,57 @@ export default function CreateOrderModal({
       open={open}
       onOpenChange={onOpenChange}
       title="수주 생성"
-      subtitle={
-        selectedPromise ? (
-          <div className="space-y-2">
-            <PreviewCard
-              title={
-                <span className="flex items-center gap-2 min-w-0">
-                  <FileText size={14} className="text-slate-400" />
-                  <span className="truncate">{scheName}</span>
-                </span>
-              }
-              desc={scheDesc || (scheDateLabel ? `일시: ${scheDateLabel}` : undefined)}
-              chips={
-                <>
-                  {isAi ? (
-                    <Chip tone="violet" icon={Sparkles} label="AI 생성" />
-                  ) : (
-                    <Chip tone="slate" icon={Sparkles} label="수동" />
-                  )}
-                  {scheDateLabel ? <Chip tone="blue" icon={CalendarClock} label={scheDateLabel} /> : null}
-                </>
-              }
-            />
-
-            {clieName ? (
-              <div className="flex items-center gap-2 rounded-3xl border border-slate-200/70 bg-white px-4 py-3 shadow-[0_10px_28px_rgba(15,23,42,0.06)]">
-                <span className="inline-flex items-center gap-2">
-                  <Building2 size={14} className="text-slate-400" />
-                </span>
-                <span className="font-black text-slate-900 truncate text-sm">{clieName}</span>
-              </div>
-            ) : null}
-          </div>
-        ) : null
-      }
       actionLabel="수주 생성"
       actionTone="primary"
       isSubmitting={isSubmitting}
       onSubmit={onSubmit}
     >
+      {/* #region Preview */}
+      {selectedPromise ? (
+        <div className="space-y-2">
+          <PreviewCard
+            title={
+              <span className="flex min-w-0 items-center gap-2">
+                <FileText size={14} className="shrink-0 text-slate-400" />
+                <span className="truncate">{scheName}</span>
+              </span>
+            }
+            desc={scheDesc || (scheDateLabel ? `일시: ${scheDateLabel}` : undefined)}
+            chips={
+              <>
+                {isAi ? (
+                  <Chip tone="violet" icon={Sparkles} label="AI 생성" />
+                ) : (
+                  <Chip tone="slate" icon={Sparkles} label="수동" />
+                )}
+
+                {scheDateLabel ? (
+                  <Chip tone="blue" icon={CalendarClock} label={scheDateLabel} />
+                ) : null}
+              </>
+            }
+          />
+
+          {clieName ? (
+            <div
+              className="
+                flex items-center gap-2 rounded-3xl border border-slate-200/70
+                bg-white px-4 py-3
+                shadow-[0_10px_28px_rgba(15,23,42,0.06)]
+              "
+            >
+              <Building2 size={14} className="shrink-0 text-slate-400" />
+              <span className="min-w-0 truncate text-sm font-black text-slate-900">
+                {clieName}
+              </span>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+      {/* #endregion */}
+
+      {/* #region Form */}
       <div className="space-y-4">
-        {/* 상품/서비스 */}
         <TextField
           label="상품/서비스"
           required
@@ -150,14 +163,12 @@ export default function CreateOrderModal({
           }}
         />
 
-        {/* 예상 금액 */}
         <MoneyField
           label="예상 금액 (원)"
           value={orderForm.orde_pric ?? ""}
           onChange={(v) =>
             setOrderForm((f) => ({
               ...f,
-              // MoneyField는 "1,000,000" 같은 포맷이 올 수 있으니 저장은 콤마 제거한 string으로 통일
               orde_pric: v ? v.replace(/,/g, "") : "",
             }))
           }
@@ -169,7 +180,6 @@ export default function CreateOrderModal({
         />
 
         <div className="grid grid-cols-2 gap-3">
-          {/* 초기 상태 */}
           <SelectField
             label="초기 상태"
             value={orderForm.orde_stat}
@@ -184,10 +194,9 @@ export default function CreateOrderModal({
               { value: "negotiation", label: "협상" },
               { value: "confirmed", label: "확정" },
             ]}
-            triggerClassName="border-slate-200 px-3 w-full"
+            triggerClassName="w-full border-slate-200 px-3"
           />
 
-          {/* 계약일 */}
           <DateField
             label="계약일"
             value={orderForm.ctrt_date}
@@ -195,17 +204,17 @@ export default function CreateOrderModal({
           />
         </div>
 
-        {/* 메모 */}
         <TextAreaField
           label="메모"
           value={orderForm.orde_memo}
           onChange={(v) => setOrderForm((f) => ({ ...f, orde_memo: v }))}
           textareaProps={{
-            rows: 2,
+            rows: 3,
             placeholder: "일정 메모에서 자동 입력",
           }}
         />
       </div>
+      {/* #endregion */}
     </FormDialog>
   );
 }

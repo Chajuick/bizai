@@ -249,14 +249,6 @@ export function useSaleDetailVM(logId: number) {
 
     const r = await analyzeResult.refetch();
 
-    console.log("[handleAnalyzeCompleted] refetch result", {
-      aiStatus,
-      logId,
-      saleClieIdno: saleGet.data?.sale?.clie_idno,
-      queryData: r.data,
-      queryError: r.error,
-    });
-
     if (!r.data) {
       toast.success("AI 분석이 완료되었습니다.");
       return;
@@ -270,7 +262,6 @@ export function useSaleDetailVM(logId: number) {
 
     const opened = aiLink.maybeOpenPostAnalyzeModal(logId, r.data, !!saleGet.data?.sale?.clie_idno);
 
-    console.log("[handleAnalyzeCompleted] modal opened?", opened);
   }, [didHandleAnalyzeCompletion, analyze, utils, analyzeResult, aiLink, logId, saleGet.data?.sale?.clie_idno, aiStatus]);
 
   // aiex_stat 변화 감지

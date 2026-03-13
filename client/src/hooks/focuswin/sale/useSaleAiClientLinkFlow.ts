@@ -76,20 +76,11 @@ export function useSaleAiClientLinkFlow() {
   ) => {
     const aiName = analyzeResult.ai_client_name ?? null;
 
-    console.log("[maybeOpenPostAnalyzeModal] input", {
-      saleId,
-      analyzeResult,
-      hasClientLinked,
-      aiName,
-    });
-
     if (!aiName) {
-      console.log("[maybeOpenPostAnalyzeModal] blocked: no ai_client_name");
       return false;
     }
 
     if (hasClientLinked) {
-      console.log("[maybeOpenPostAnalyzeModal] blocked: already linked");
       return false;
     }
 
@@ -99,13 +90,6 @@ export function useSaleAiClientLinkFlow() {
       matched_idno: analyzeResult.matched_client_idno ?? null,
       matched_name: analyzeResult.matched_client_name ?? null,
       ai_contacts: analyzeResult.ai_contacts ?? [],
-    });
-
-    console.log("[maybeOpenPostAnalyzeModal] opened", {
-      saleId,
-      ai_client_name: aiName,
-      matched_idno: analyzeResult.matched_client_idno ?? null,
-      matched_name: analyzeResult.matched_client_name ?? null,
     });
 
     return true;

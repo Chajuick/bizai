@@ -37,7 +37,7 @@ export function SaleDetailModals({
   onPostAnalyzeConfirm,
   onPostAnalyzeDeny,
 }: SaleDetailModalsProps) {
-  console.log("[SaleDetailModals] postAnalyzeClientState", postAnalyzeClientState);
+
   return (
     <>
       <ConfirmActionDialog
