@@ -203,6 +203,7 @@ export const SaleGetOutput = z.object({
     aiex_stat: z.enum(AI_STATUSES),
 
     aiex_core: AiCoreOutput.nullable(),
+    aiex_confidence: z.number().nullable(),
   }),
 
   client_contact: z

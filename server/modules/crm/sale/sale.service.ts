@@ -30,6 +30,89 @@ import { makeAiApptKey, toAiCore } from "../../ai/ai.util";
 
 // #region Helpers
 
+// #region STT Cleaning
+
+/**
+ * STT 텍스트 정리
+ * - speech filler 제거
+ * - 공백 정리
+ * - 문장 구조 정리
+ */
+function cleanTranscript(text: string): string {
+  if (!text) return text;
+
+  return text
+    .replace(/\s+/g, " ")
+    .replace(/\.{2,}/g, ".")
+    .replace(/\s+\./g, ".")
+    .trim();
+}
+
+// #endregion
+
+// #region AI Confidence
+
+/**
+ * AI 결과 신뢰도 계산
+ * 간단한 휴리스틱 기반 (0~1)
+ */
+type AiParsedResult = {
+  client_name?: string | null;
+  contacts?: { name?: string | null }[] | null;
+  appointments?: { date?: string | null }[] | null;
+  pricing?: unknown | null;
+};
+
+function computeAiConfidence(parsed: AiParsedResult, sourceText: string): number {
+  let score = 0;
+
+  const text = sourceText.toLowerCase();
+
+  // 1️⃣ client_name이 실제 텍스트에 있는지
+  if (parsed.client_name) {
+    const name = parsed.client_name.toLowerCase();
+    if (text.includes(name)) {
+      score += 0.3;
+    } else {
+      score += 0.1; // hallucination 가능성
+    }
+  }
+
+  // 2️⃣ contact 이름이 텍스트에 등장하는지
+  if (parsed.contacts?.length) {
+    const validContacts = parsed.contacts.filter((c) => {
+      if (!c?.name) return false;
+      return text.includes(c.name.toLowerCase());
+    });
+
+    if (validContacts.length > 0) {
+      score += 0.2;
+    }
+  }
+
+  // 3️⃣ appointment 날짜 유효성
+  if (parsed.appointments?.length) {
+    const validDates = parsed.appointments.filter((a) => {
+      if (!a?.date) return false;
+      const d = new Date(a.date);
+      return !Number.isNaN(d.getTime());
+    });
+
+    if (validDates.length > 0) {
+      score += 0.25;
+    }
+  }
+
+  // 4️⃣ pricing 구조 존재
+  if (parsed.pricing) {
+    score += 0.25;
+  }
+
+  return Number(Math.min(score, 1).toFixed(2));
+}
+
+// #endregion
+
 function sanitizeAiTitle(title: string): string {
   if (!title) return "후속 일정";
 
@@ -55,7 +138,7 @@ function sanitizeAiTitle(title: string): string {
 
   if (!v) return "후속 일정";
 
-  return v.slice(0, 15);
+  return v.slice(0, 30);
 }
 
 function inferBetterTitle(title: string, desc?: string | null): string {
@@ -94,10 +177,14 @@ function normalizeAiAppointments(appts?: AiAppointment[] | null): AiAppointment[
 
   const normalized = appts.map((appt) => {
     const title = inferBetterTitle(appt.title ?? "", appt.desc ?? null);
-
+    const normalizedTitle =
+      title === "자료 발송" ||
+        /발송|전달|메일/.test(title)
+        ? "자료 발송"
+        : title;
     return {
       ...appt,
-      title,
+      title: normalizedTitle,
       desc: appt.desc?.trim() ?? "",
       action_owner: appt.action_owner ?? "self",
       date_adjusted: !!appt.date_adjusted,
@@ -114,8 +201,9 @@ function normalizeAiAppointments(appts?: AiAppointment[] | null): AiAppointment[
     const owner = appt.action_owner ?? "self";
 
     const isMaterialSend = title === "자료 발송";
+    const descKey = (appt.desc ?? "").trim().slice(0, 20);
     const mergeKey = isMaterialSend
-      ? `material|${date}|${owner}`
+      ? `material|${date}|${owner}|${descKey}`
       : `${title}|${date}|${owner}`;
 
     const existing = mergedMap.get(mergeKey);
@@ -277,6 +365,12 @@ export const saleService = {
     // ✅ aiex_text -> aiex_core(필요한 것만)
     const aiex_core = sale.aiex_text ? toAiCore(sale.aiex_text) : null;
 
+    // ✅ confidence 추출
+    const aiex_confidence =
+      typeof (sale.aiex_text as { confidence?: unknown } | null)?.confidence === "number"
+        ? ((sale.aiex_text as { confidence?: number | null }).confidence ?? null)
+        : null;
+
     // ✅ sale 기준 일정 목록(생성 여부 구분용)
     const schedules = await saleRepo.listSchedulesBySale(
       { db },
@@ -307,6 +401,7 @@ export const saleService = {
         aiex_done: !!sale.aiex_done,
         aiex_summ: sale.aiex_summ ?? null,
         aiex_stat: (sale.aiex_stat ?? "pending") as "pending" | "processing" | "completed" | "failed",
+        aiex_confidence,
         aiex_core,
       },
       client_contact,
@@ -787,7 +882,8 @@ export const saleService = {
       data: { aiex_stat: "processing" as const },
     });
 
-    const text = sale.edit_text?.trim() || sale.orig_memo;
+    const rawText = sale.edit_text?.trim() || sale.orig_memo;
+    const text = cleanTranscript(rawText).slice(0, 4000);
     if (!text?.trim()) {
       await saleRepo.updateAudioJob({ db }, {
         jobs_idno, data: { jobs_stat: "failed", fail_mess: "분석할 텍스트가 없습니다.", fini_date: new Date() },
@@ -800,15 +896,27 @@ export const saleService = {
     const kstInfo = getKSTDateInfo(sale.vist_date);
     const systemPrompt = buildAnalysisPrompt(kstInfo);
 
+    const userContext = `
+    Meeting transcript:
+    ${text}
+
+    Existing CRM context:
+    client_name: ${sale.clie_name ?? "unknown"}
+    contact_person: ${sale.cont_name ?? "unknown"}
+    location: ${sale.sale_loca ?? "unknown"}
+    `;
+
     let llmResult: Awaited<ReturnType<typeof invokeLLM>>;
+
     try {
       llmResult = await invokeLLM({
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: text },
+          { role: "user", content: userContext },
         ],
         response_format: { type: "json_object" },
-        temperature: 0.1,
+        temperature: 0,
+        top_p: 0.1,
       });
     } catch (err) {
       await aiService.refundQuota(comp_idno, 1500);
@@ -842,14 +950,45 @@ export const saleService = {
       notes?: string;
     } = {};
 
-    try {
-      parsed = JSON.parse(contentStr) as typeof parsed;
-    } catch {
-      parsed = { summary: contentStr };
+    function safeJsonParse<T>(raw: string, fallback: T): T {
+      try {
+        return JSON.parse(raw);
+      } catch { }
+
+      const match = raw.match(/\{[\s\S]*\}/);
+
+      if (match) {
+        try {
+          return JSON.parse(match[0]);
+        } catch { }
+      }
+
+      // JSON repair fallback
+      try {
+        const repaired = raw
+          .replace(/,\s*}/g, "}")
+          .replace(/,\s*]/g, "]")
+          .replace(/\n/g, " ")
+          .trim();
+
+        return JSON.parse(repaired);
+      } catch { }
+
+      return fallback;
     }
 
+    parsed = safeJsonParse<typeof parsed>(contentStr, {
+      summary: contentStr,
+    });
+
+    const ai_confidence = computeAiConfidence(parsed, text);
     const normalizedAppointments = normalizeAiAppointments(parsed.appointments ?? []);
-    parsed.appointments = normalizedAppointments;
+
+    parsed = {
+      ...parsed,
+      appointments: normalizedAppointments,
+      confidence: ai_confidence,
+    } as typeof parsed & { confidence: number };
 
     const summary = parsed.summary ?? "";
     const ai_client_name = parsed.client_name ?? null;
@@ -866,7 +1005,11 @@ export const saleService = {
 
     const pricingSource = parsed.pricing?.final ?? parsed.pricing?.primary ?? null;
     const rawAmount = pricingSource?.amount ?? pricingSource?.min ?? null;
-    const sale_pric = typeof rawAmount === "number" && rawAmount > 0 ? rawAmount : null;
+
+    const sale_pric =
+      typeof rawAmount === "number" && rawAmount > 0
+        ? Math.round(rawAmount)
+        : null;
 
     const ai_contacts = (parsed.contacts ?? [])
       .map((c) => ({
@@ -937,14 +1080,15 @@ export const saleService = {
     // 결과 payload → aiex_text에 저장 (analyzeResult 엔드포인트에서 조회)
     const resultPayload = {
       summary,
-      schedule_idno,
-      ai_client_name,
+      confidence: ai_confidence,
+      client_name: ai_client_name,
       matched_client_idno,
       matched_client_name,
-      ai_contacts,
-      ai_contact_person: primaryContact?.cont_name ?? null,
-      ai_contact_phone: primaryContact?.cont_tele ?? null,
-      ai_contact_email: primaryContact?.cont_mail ?? null,
+      contacts: ai_contacts,
+      appointments: normalizedAppointments,
+      pricing: parsed.pricing ?? null,
+      notes: parsed.notes ?? "",
+      schedule_idno,
     };
 
     // 잡 → done
@@ -999,6 +1143,7 @@ export const saleService = {
 
     type ExtPayload = {
       summary?: string | null;
+      confidence?: number | null;
       schedule_idno?: number | null;
       ai_client_name?: string | null;
       matched_client_idno?: number | null;
@@ -1015,6 +1160,7 @@ export const saleService = {
       aiex_stat,
       jobs_stat: job?.jobs_stat ?? null,
       summary: ext?.summary ?? null,
+      confidence: ext?.confidence ?? null,
       schedule_idno: ext?.schedule_idno ?? null,
       ai_client_name: ext?.ai_client_name ?? null,
       matched_client_idno: ext?.matched_client_idno ?? null,
@@ -1023,6 +1169,7 @@ export const saleService = {
       ai_contact_person: ext?.ai_contact_person ?? null,
       ai_contact_phone: ext?.ai_contact_phone ?? null,
       ai_contact_email: ext?.ai_contact_email ?? null,
+
     };
   },
 
@@ -1089,298 +1236,384 @@ function buildAnalysisPrompt({ dateStr: baseDate, dayOfWeek: baseDayOfWeek, this
     .map((d) => `  ${d}요일: ${nextWeek[d]}`)
     .join("\n");
 
-  return `You are a CRM assistant for Korean B2B sales teams.
-기준일(미팅일시, KST): ${baseDate} (${baseDayOfWeek}요일)
+  return `You are a deterministic information extraction system.
 
-▶ 이번 주 달력 (요일→날짜 변환 시 반드시 이 표에서 직접 읽을 것 — 직접 계산 금지):
+================================
+NON-NEGOTIABLE RULES
+================================
+
+- Output ONLY valid JSON.
+- Do NOT output markdown, explanations, or reasoning.
+- Never hallucinate company names, contacts, dates, tasks, or prices.
+- If information is uncertain, return JSON null.
+- Never invent people or organizations.
+- client_name must be null if a company name is not clearly stated.
+- appointment.date must be either:
+  - a valid ISO 8601 datetime string with +09:00
+  - or JSON null
+- Never output the string "null".
+
+================================
+INTERNAL REASONING (DO NOT OUTPUT)
+================================
+
+Before producing the JSON, internally perform:
+
+1. Identify all companies mentioned.
+2. Identify all people mentioned and their roles.
+3. Identify all meetings, tasks, and follow-up actions.
+4. Identify all price mentions and negotiation context.
+5. Resolve all relative dates using the provided calendars.
+
+Do NOT output this reasoning.
+
+Return ONLY the final JSON object.
+
+================================
+REFERENCE DATE (KST)
+================================
+
+기준일(미팅일시): ${baseDate} (${baseDayOfWeek}요일)
+
+▶ 이번 주 달력
 ${thisWeekCalendar}
 
-▶ 다음 주 달력 (직접 계산 금지):
+▶ 다음 주 달력
 ${nextWeekCalendar}
 
-Analyze the sales meeting note or voice transcript below, then return ONLY valid JSON (no markdown, no explanation).
+================================
+OUTPUT JSON SCHEMA
+================================
 
-## Output JSON schema
 {
-  "summary": "한 문단 요약 (Korean, 3-5 sentences). 핵심 논의 내용, 거래처 요구사항, 협의 결과, 그리고 모든 후속 조치 항목(발송 요청, 확인 요청, 자료 준비 등)을 빠짐없이 포함하세요.",
-  "appointments": [
-    {
-      "title": "행동 중심 제목 (Korean, 15자 이내)",
-      "date": "ISO 8601 with +09:00 or null",
-      "date_adjusted": false,
-      "adjust_reason": "",
-      "desc": "원문 맥락이 담긴 세부 내용 (Korean)",
-      "action_owner": "self | client | shared"
-    }
-  ],
-  "client_name": "거래처 공식 명칭 (법인명 또는 브랜드명). 개인명만 있고 회사명이 없으면 null.",
-  "contacts": [
-    {
-      "name": "담당자 이름 (직책 포함 가능, e.g. '홍길동 부장')",
-      "role": "실무담당 | 의사결정자 | 기타 (언급 없으면 null)",
-      "phone": "전화번호 (e.g. '010-1234-5678') or null",
-      "email": "이메일 주소 or null"
-    }
-  ],
-  "pricing": {
-    "primary": {
-      "amount": null,
-      "min": null,
-      "max": null,
-      "type": "one_time | monthly | yearly",
-      "vat": "included | excluded | unknown",
-      "approximate": false,
-      "inferred": false
-    },
-    "alternatives": [],
-    "final": null
-  },
-  "notes": "기타 특이사항 or empty string"
+  "summary": "...",
+  "appointments": [],
+  "client_name": null,
+  "contacts": [],
+  "pricing": {},
+  "notes": ""
 }
 
-## Rules
+================================
+SUMMARY RULES
+================================
 
-### appointments rules
-- Extract EVERY scheduled meeting, action item, task, and follow-up — not just the main appointment.
-  - Meetings with specific date/time (e.g. "다음 주 화요일 10시 발표")
-  - Tasks that must be done before a meeting (e.g. "발표 전에 견적서 미리 보내달라" → date = day before the meeting)
-  - Open-ended tasks with no specific date (e.g. "확인 후 메일로 알려달라" → date = 기준일 +3일)
-- appointments is [] (empty array) only if absolutely no action items exist.
-- Each appointment.date MUST be a valid ISO 8601 string with +09:00, or null.
-- Never return "null" as a string value for date — use JSON null.
+- Write summary in Korean, 3-5 sentences.
+- Include:
+  - 핵심 논의 내용
+  - 거래처 요구사항
+  - 협의 결과
+  - 후속 조치
+- Do not invent missing facts.
 
-### action_owner rules (REQUIRED for every appointment)
-Determine who is responsible for performing the action:
+================================
+APPOINTMENT EXTRACTION RULES
+================================
 
-- "self" — 우리(영업사원/우리 회사)가 수행해야 하는 작업
-  - 자료 발송, 견적서 전달, 이메일/문자 회신, 확인 후 연락
-  - 거래처이 요청한 작업 중 우리가 이행해야 하는 것
-  - 거래처의 회신/결과를 기다리다가 추적해야 하는 팔로업
-  - Examples: "견적서 발송", "데이터 이전 확인 메일", "거래처 회신 확인", "내부 검토 결과 확인"
+Extract EVERY meeting, follow-up, task, or action item.
 
-- "client" — 거래처이 수행해야 하는 작업 (우리는 결과를 기다리는 입장)
-  - 거래처의 내부 결재, 내부 검토, 거래처이 자료/연락을 보내주기로 한 것
-  - Examples: "내부 결재 진행", "샘플 파일 전달", "거래처 내부 검토"
+Include both:
 
-- "shared" — 양측이 함께 참여하는 공동 활동
-  - 미팅, 발표, 데모, 협의, 계약 체결
-  - Examples: "기술 제안 미팅", "계약서 서명", "제품 데모"
+Shared events
+- 미팅
+- 발표
+- 데모
+- 협의
+- 계약
 
-### Title rules (CRITICAL)
-- Titles MUST be action-oriented and clear. 15 characters or fewer.
-- BAD: "우진테크와의 후속 회신", "삼성과 관련된 다음 단계"
-- GOOD: "견적서 발송", "거래처 회신 확인", "내부 검토 결과 확인", "제안 미팅"
-- For client-owned tasks that we need to track: use "확인" or "대기" suffix
-  - "내부 검토 후 연락 주겠다" → title: "내부 검토 결과 확인" (action_owner: "self")
-  - "결재 후 진행하겠다" → title: "결재 완료 확인" (action_owner: "self")
-- For our own tasks: use direct action verbs
-  - "자료 보내드리겠습니다" → title: "기능 소개 자료 발송" (action_owner: "self")
-  - Titles must be written in natural Korean only.
-- Do not use Chinese characters, Japanese characters, or mixed-script words.
-- Forbidden examples: "比較표 발송", "見積서 전달"
-- Preferred examples: "비교표 발송", "견적서 발송", "자료 발송", "결과 확인"
+One-sided tasks
+- 자료 발송
+- 견적 전달
+- 확인 후 회신
+- 내부 확인
+- 팔로업
 
-### desc rules
-- desc must preserve the original context and nuance from the meeting note.
-- Include who said what, and what the specific expectation is.
-- Example: "우진테크 최 부장이 내부 검토 후 이번 달 말까지 회신 예정"
+appointments must be [] ONLY if absolutely no action exists.
 
-### Date rules (CRITICAL — follow every step in order)
+If multiple materials are clearly requested together, merge into one appointment.
 
-**Step 1 — 기준일 확인**
-기준일(미팅일시): ${baseDate} (${baseDayOfWeek}요일)
-모든 상대적 날짜 표현은 이 기준일로부터 계산합니다.
+Example:
+견적서 + 기능 소개 자료 → "자료 패키지 발송"
 
-- "이번 주"는 기준일이 속한 주(월요일~일요일)를 의미한다.
-- 기준일이 일요일(주의 마지막 날)이더라도 "이번 주"는 그 주의 월~일이며, 절대 다음 주로 이동하지 않는다.
-- ▶ 이번 주 달력이 서버에서 이미 정확하게 계산되어 있다. "이번 주 {요일}"은 반드시 그 표의 날짜를 그대로 사용한다.
+If tasks differ by purpose or timing, keep them separate.
 
-**Step 2 — 요일 → 날짜 변환 (반드시 위 ▶ 달력 표에서 직접 읽을 것 — 직접 계산 절대 금지)**
-- "이번 주 {요일}" → ▶ 이번 주 달력 표의 날짜를 그대로 사용. 기준일이 일요일이어도 동일하게 적용한다.
-- "다음 주 {요일}" → ▶ 다음 주 달력 표의 날짜를 그대로 사용.
-- 요일만 언급("금요일까지", "이번 주"/"다음 주" 없이):
-  - 기준일 이후 요일이면 → 이번 주 달력 표 사용
-  - 기준일 이전 요일이면 → 다음 주 달력 표 사용
-  - 기준일이 일요일인 경우, 월~토 전부가 기준일 이전이므로 모두 다음 주로 해석
+================================
+ACTION OWNER RULES
+================================
 
-**Step 2-B — 날짜 숫자 vs 요일 텍스트 충돌 (ABSOLUTE RULE)**
-- "3월 10일 화요일"처럼 날짜 숫자와 요일 텍스트가 동시에 있으면 날짜 숫자(3월 10일)만 신뢰한다.
-- 요일 텍스트("화요일")가 실제 요일과 다르더라도 무시하고 날짜 숫자를 사용한다.
-- 이 규칙은 어떤 경우에도 예외 없이 적용된다.
+self
+- 우리가 수행해야 하는 작업
+- 자료 발송
+- 확인 후 회신
+- 내부 확인
+- 팔로업
 
-**Step 3 — 주/월 단위 표현**
-- "다음 주 월요일" → ${nextWeek["월"]}
-- "다음 주 화요일" → ${nextWeek["화"]}
-- "다음 주 수요일" → ${nextWeek["수"]}
-- "다음 주 목요일" → ${nextWeek["목"]}
-- "다음 주 금요일" → ${nextWeek["금"]}
-- "다음 주 토요일" → ${nextWeek["토"]}
-- "다음 주 일요일" → ${nextWeek["일"]}
-- "이번 달 말" → last day of ${baseDate.slice(0, 7)}
-- "다음 달 15일" → 15th of next month
-- "상반기" → ${baseDate.slice(0, 4)}-06-30
-- "하반기" → ${baseDate.slice(0, 4)}-12-31
-- "오늘", "금일" → ${baseDate}
-- "내일" → 기준일 +1일
+client
+- 거래처가 수행해야 하는 작업
+- 내부 결재
+- 내부 검토
+- 자료 전달
 
-**Step 4 — 주말 처리 (하이브리드, MANDATORY)**
+shared
+- 양측 공동 활동
+- 미팅
+- 데모
+- 계약
 
-[A] 사용자가 "토요일" 또는 "일요일"을 명시한 경우 → 보정 금지, 그대로 사용
-  - 예: "이번 주 토요일 오전 미팅" → ${thisWeek["토"]}T09:00:00+09:00
-  - date_adjusted: false, adjust_reason: ""
+================================
+CONTACT EXTRACTION RULES
+================================
 
-[B] "주말까지", "이번 주말까지", "주말에" 같은 암묵적 표현인 경우:
-  - task (마감/발송/제출/응답/전달):
-    → date: ${nextWeek["월"]}T09:00:00+09:00 (다음 영업일 월요일 09:00)
-    → date_adjusted: true
-    → adjust_reason: "'주말까지' 암묵적 표현 — task이므로 다음 영업일(월)로 이동"
-  - event (미팅/방문/데모/발표/회의):
-    → date: null
-    → date_adjusted: true
-    → adjust_reason: "'주말까지' 암묵적 표현 — event 날짜 불명확, 확인 필요"
+Extract ALL distinct persons mentioned.
 
-[C] 보정이 발생한 경우 반드시 date_adjusted: true, adjust_reason에 이유를 기재한다.
-    보정이 없으면 date_adjusted: false, adjust_reason: "" 로 설정한다.
+Each person = separate entry.
 
-**Step 5 — 시각 기본값 (예외 없음)**
-- 시각이 명시되지 않은 경우 → 09:00+09:00
-- "오전", "오전까지", "오전 중" → 09:00+09:00
-- "오후", "오후에" → 14:00+09:00
-- 구체적 시각("10시", "오전 10시") → 해당 시각 그대로 사용
-- "발표 전에 보내달라" → 해당 발표일 전날 09:00+09:00
+Different name OR different role → separate.
 
-**Step 6 — 열린 요청 & 날짜 불확실**
-- "확인 후 알려달라", "검토 후 연락" → 기준일(${baseDate}) +3일 09:00+09:00
-- 날짜를 특정할 수 없으면 date: null (문자열 "null" 금지, JSON null 사용)
+role values:
 
-### Pricing rules (CRITICAL — 단일 숫자 저장 금지)
+실무담당
+의사결정자
+null
 
-금액은 반드시 pricing 객체로 구조화한다. 단일 숫자 저장은 절대 금지한다.
+Example:
 
-#### KRW 단위 변환 (정수, 소수점 없음)
-- 1억 = 100,000,000 / 1천만 = 10,000,000 / 1백만 = 1,000,000
-- "5천만원" → 50000000 / "2억5천만원" → 250000000 / "500만원" → 5000000
+정유진 대리 → 실무담당  
+김태훈 팀장 → 의사결정자
 
-#### type 결정 규칙
-- "월", "월간", "/월", "개월당", "매월" → "monthly"
-- "연", "연간", "/년", "연도별", "매년" → "yearly"
-- "건당", "회당", "총액", "프로젝트" 또는 단위 없음 → "one_time"
+contacts is [] if no person is mentioned.
 
-#### amount vs min/max
-- 정확한 금액 → amount에 정수, min/max: null, approximate: false
-- "80~120만원", "1천만 전후", "약 5백만원" 같은 범위/근사값 → amount: null, min/max 분리, approximate: true
+Preserve phone/email only if explicitly stated.
 
-#### vat 결정 규칙
-- "VAT 별도", "부가세 별도", "세금 별도" → "excluded"
-- "VAT 포함", "부가세 포함", "세금 포함" → "included"
-- 언급 없음 → "unknown"
+================================
+CLIENT NAME RULES
+================================
 
-#### 여러 금액 구분
-- 처음 제안된 금액 → primary
-- 협상 과정의 대안가 → alternatives 배열에 추가, label에 맥락 기재 (예: "2차 제안가", "할인 제안")
-- 최종 합의된 금액 → final (합의 없으면 null)
-- alternatives가 없으면 빈 배열 []
+Extract official company name.
 
-#### 단위 추론 (inferred)
-- "1,000만원을 제안했고 협상하면 650까지 가능" → 650은 650만원으로 추론
-- 추론한 경우 inferred: true, 명시된 경우 inferred: false
+Examples
 
-#### 금액 언급 없음
-- pricing: null
+삼성전자 구매팀 → 삼성전자  
+네이버 클라우드 → 네이버
 
-### contacts rules (CRITICAL — replaces old contact_person/phone/email)
-- Extract ALL distinct persons mentioned in the meeting. Each person = one entry.
-- Different name OR different role = different person. Do NOT merge.
-- role values: "실무담당" (day-to-day contact), "의사결정자" (approver/decision maker), or null if unclear.
-- Examples:
-  - "정유진 대리 (실무 담당)" → { name: "정유진 대리", role: "실무담당" }
-  - "김태훈 팀장 (결재권자)" → { name: "김태훈 팀장", role: "의사결정자" }
-- contacts is [] if no person is mentioned.
-- Preserve phone/email only if explicitly stated.
+If only a person's name appears → null
 
-### Appointment deduplication rules (CRITICAL)
-- DO NOT create multiple appointments for the same underlying action.
-- Before adding an appointment, check if a similar one already exists in the list.
-- "Similar" means: same type of action (e.g., sending documents) targeting the same recipient.
-  - BAD: ["견적서 발송", "기능 소개 자료 발송"] when it's clearly one combined delivery task
-  - GOOD: ["자료 패키지 발송"] with desc listing all items (견적서 + 기능 소개 자료)
-- If truly different actions (different date, different purpose), keep them separate.
-- When in doubt, merge into ONE with a broader title.
+Ignore generic references:
 
-### Client name rules
-- Extract the official company name (공식 법인명 또는 브랜드명).
-- If both brand and legal entity are mentioned (e.g. "삼성전자 구매팀"), use the company name: "삼성전자".
-- If only a person's name is mentioned without a company, return null.
-- Exclude generic terms like "사장님 회사", "거래처".
+거래처  
+사장님 회사
 
-## Example
-Input:
-"""
-삼성전자 구매팀 방문.
-실무 담당 정유진 대리, 결재권자 김태훈 팀장과 클라우드 인프라 구축 프로젝트 논의.
-약 5천만원 규모. 다음 주 화요일 오전 10시 기술 제안서 발표 예정.
-발표 전에 견적서와 사양서 미리 보내달라고 하셨음. 기능 소개 자료도 함께.
-기존 장비 데이터 이전 가능한지 확인해서 메일로 알려달라고 하심.
-내부 검토 후 이번 주 금요일까지 회신 주겠다고 하셨음.
-"""
+================================
+PRICING RULES
+================================
 
-Output:
-{
-  "summary": "삼성전자 구매팀 정유진 대리·김태훈 팀장과 클라우드 인프라 구축 프로젝트(약 5천만원 규모)를 논의하였습니다. 다음 주 화요일 오전 10시 기술 제안서 발표가 예정되어 있으며, 발표 전까지 견적서·사양서·기능 소개 자료를 발송해야 합니다. 기존 장비 데이터 이전 가능 여부를 확인하여 메일로 회신하기로 하였습니다. 삼성전자 측은 내부 검토 후 이번 주 금요일까지 회신 예정입니다.",
-  "appointments": [
-    {
-      "title": "기술 제안 발표",
-      "date": "2026-03-10T10:00:00+09:00",
-      "date_adjusted": false,
-      "adjust_reason": "",
-      "desc": "삼성전자 구매팀 대상 클라우드 인프라 구축 기술 제안서 발표",
-      "action_owner": "shared"
-    },
-    {
-      "title": "자료 패키지 발송",
-      "date": "2026-03-09T09:00:00+09:00",
-      "date_adjusted": false,
-      "adjust_reason": "",
-      "desc": "발표(3월 10일) 전 견적서·사양서·기능 소개 자료 일괄 발송 — 정유진 대리 요청",
-      "action_owner": "self"
-    },
-    {
-      "title": "데이터 이전 확인 메일",
-      "date": "2026-03-06T09:00:00+09:00",
-      "date_adjusted": false,
-      "adjust_reason": "",
-      "desc": "기존 장비 데이터 이전 가능 여부 내부 확인 후 메일 회신",
-      "action_owner": "self"
-    },
-    {
-      "title": "거래처 회신 확인",
-      "date": "2026-03-06T09:00:00+09:00",
-      "date_adjusted": false,
-      "adjust_reason": "",
-      "desc": "삼성전자가 이번 주 금요일(3/6)까지 내부 검토 결과 회신 예정 — 미수신 시 팔로업",
-      "action_owner": "self"
-    }
-  ],
-  "client_name": "삼성전자",
-  "contacts": [
-    { "name": "정유진 대리", "role": "실무담당", "phone": null, "email": null },
-    { "name": "김태훈 팀장", "role": "의사결정자", "phone": null, "email": null }
-  ],
-  "pricing": {
-    "primary": {
-      "amount": 50000000,
-      "min": null,
-      "max": null,
-      "type": "one_time",
-      "vat": "unknown",
-      "approximate": true,
-      "inferred": false
-    },
-    "alternatives": [],
-    "final": null
-  },
-  "notes": ""
-}`;
+Never store a single number directly.
+
+Always use structured pricing object.
+
+KRW conversion:
+
+1억 = 100000000  
+1천만 = 10000000  
+1백만 = 1000000
+
+Examples
+
+5천만원 → 50000000  
+2억5천만원 → 250000000
+
+type rules
+
+monthly → 월 / 매월  
+yearly → 연 / 연간  
+one_time → 프로젝트 / 총액
+
+amount vs range
+
+Exact price → amount
+
+Range / approximate
+
+80~120만원  
+약 500만원
+
+→ use min/max and approximate true
+
+VAT rules
+
+부가세 별도 → excluded  
+부가세 포함 → included  
+언급 없음 → unknown
+
+Pricing structure
+
+primary  
+alternatives  
+final
+
+If no pricing mentioned → pricing null
+
+================================
+DATE RESOLUTION RULES
+================================
+
+DATE PRIORITY ORDER
+
+1. Explicit date number
+2. Relative date resolved from provided calendars
+3. Weekday text
+4. Soft follow-up inferred date
+5. If still uncertain → null
+
+--------------------------------
+
+Step 1 — 기준일
+
+기준일: ${baseDate}
+
+--------------------------------
+
+Step 2 — 요일 해석
+
+이번 주 화요일 → 이번 주 달력 사용  
+다음 주 화요일 → 다음 주 달력 사용
+
+요일만 언급된 경우
+
+기준일 이후 요일 → 이번 주  
+기준일 이전 요일 → 다음 주
+
+--------------------------------
+
+Step 3 — 날짜 숫자 우선 규칙
+
+"3월 10일 화요일"
+
+→ 날짜 숫자만 신뢰
+
+요일 텍스트 무시
+
+--------------------------------
+
+Step 4 — 월/분기 표현
+
+이번 달 말 → last day of month  
+다음 달 15일 → next month 15
+
+상반기 → 6월 30일  
+하반기 → 12월 31일
+
+--------------------------------
+
+Step 5 — 시각 기본값
+
+시간 언급 없음 → 09:00  
+오전 → 09:00  
+오후 → 14:00
+
+--------------------------------
+
+Step 6 — 주말 처리
+
+Explicit weekend
+
+토요일 / 일요일 언급 → 그대로 사용
+
+Implicit weekend
+
+"주말까지"
+
+task  
+→ 다음 월요일 09:00
+
+event  
+→ date null
+
+--------------------------------
+
+Step 7 — Soft follow-up rule
+
+For implied follow-ups:
+
+확인 후 연락  
+검토 후 알려달라
+
+You MAY assign:
+
+baseDate +3 days 09:00
+
+If timing unclear → null
+
+================================
+TITLE RULES
+================================
+
+Titles must be:
+
+Action oriented  
+Clear  
+≤15 characters
+
+GOOD
+
+견적서 발송  
+자료 패키지 발송  
+제안 미팅
+
+BAD
+
+삼성과 관련된 다음 단계
+
+Client tasks we track
+
+내부 검토 결과 확인  
+결재 완료 확인
+
+Only natural Korean words.
+
+================================
+DESC RULES
+================================
+
+desc must preserve original meeting context.
+
+Include:
+
+who said what  
+expectations
+
+Example
+
+우진테크 최 부장이 내부 검토 후 회신 예정
+
+================================
+DEDUP RULES
+================================
+
+Do NOT create duplicate appointments.
+
+Merge when:
+
+same purpose  
+same recipient  
+same timing
+
+Example
+
+견적서 발송  
+기능 소개 자료 발송
+
+→ 자료 패키지 발송
+
+================================
+NOTES
+================================
+
+Write additional observations or leave empty string.
+
+================================
+END
+================================`;
 }
 
 // #endregion

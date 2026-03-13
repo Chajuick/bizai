@@ -8,7 +8,6 @@ import { svcCtxFromTrpc } from "../../../core/svcCtx";
 import {
   ClientContactCreateInput,
   ClientContactDeleteInput,
-  ClientContactItemOutput,
   ClientContactListInput,
   ClientContactListOutput,
   ClientContactUpdateInput,
@@ -28,6 +27,7 @@ import {
   ClientUpdateInput,
   ClientUploadInput,
   ClientUploadOutput,
+  ClientPreviewOutput,
 } from "./client.dto";
 
 import { clientService } from "./client.service";
@@ -66,6 +66,15 @@ export const clientRouter = router({
     .output(ClientItemOutput.nullable())
     .query(({ ctx, input }) =>
       clientService.getClient(svcCtxFromTrpc(ctx), input.clie_idno)
+    ),
+  // #endregion
+
+  // #region preview
+  preview: protectedProcedure
+    .input(ClientIdInput)
+    .output(ClientPreviewOutput)
+    .query(({ ctx, input }) =>
+      clientService.getClientPreview(svcCtxFromTrpc(ctx), input.clie_idno)
     ),
   // #endregion
 

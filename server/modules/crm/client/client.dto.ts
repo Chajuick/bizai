@@ -240,6 +240,39 @@ export type ClientUploadOutput = z.infer<typeof ClientUploadOutput>;
 export type ClientUploadRowError = z.infer<typeof ClientUploadRowError>;
 // #endregion
 
+// #region Preview
+export const ClientPreviewSaleItemOutput = z.object({
+  sale_idno: z.number().int().positive(),
+  vist_date: IsoDateTime,
+  orig_memo: z.string().nullable().optional(),
+  aiex_summ: z.string().nullable().optional(),
+});
+
+export const ClientPreviewScheduleItemOutput = z.object({
+  sche_idno: z.number().int().positive(),
+  sche_name: z.string(),
+  sche_date: IsoDateTime,
+  sche_stat: z.string(),
+  actn_ownr: z.string().nullable().optional(),
+});
+
+export const ClientPreviewOutput = z.object({
+  clie_idno: z.number().int().positive(),
+  clie_name: z.string(),
+  main_contact: z.object({
+    cont_name: z.string().nullable(),
+    cont_role: z.string().nullable(),
+    cont_tele: z.string().nullable(),
+    cont_mail: z.string().nullable(),
+  }).nullable(),
+  last_vist_date: IsoDateTimeNullable.optional(),
+  open_schedule_count: z.number().int(),
+  recent_sales: z.array(ClientPreviewSaleItemOutput),
+  upcoming_schedules: z.array(ClientPreviewScheduleItemOutput),
+});
+export type ClientPreviewOutput = z.infer<typeof ClientPreviewOutput>;
+// #endregion
+
 // #region Service Contracts (Type Helpers)
 export type ClientCreatePayload = z.infer<typeof ClientCreateInput>;
 export type ClientUpdatePayload = Omit<z.infer<typeof ClientUpdateInput>, "clie_idno">;
@@ -247,4 +280,7 @@ export type ClientSort = { field: ClientSortField; dir: "asc" | "desc" };
 
 export type ClientContactCreatePayload = z.infer<typeof ClientContactCreateInput>;
 export type ClientContactUpdatePayload = z.infer<typeof ClientContactUpdateInput>;
+
+export type ClientPreviewSaleItem = z.infer<typeof ClientPreviewSaleItemOutput>;
+export type ClientPreviewScheduleItem = z.infer<typeof ClientPreviewScheduleItemOutput>;
 // #endregion

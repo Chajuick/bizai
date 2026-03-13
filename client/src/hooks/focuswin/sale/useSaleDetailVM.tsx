@@ -51,16 +51,10 @@ export function useSaleDetailVM(logId: number) {
   // polling: aiex_stat가 pending/processing일 때 3초마다 재조회
   const [shouldPoll, setShouldPoll] = useState(false);
 
-  const saleGet = trpc.crm.sale.get.useQuery(
-    { sale_idno: logId },
-    { enabled: Number.isFinite(logId), refetchInterval: shouldPoll ? 3000 : false }
-  );
+  const saleGet = trpc.crm.sale.get.useQuery({ sale_idno: logId }, { enabled: Number.isFinite(logId), refetchInterval: shouldPoll ? 3000 : false });
 
   // analyzeResult: 워커 완료 후 모달용 데이터 조회 (수동 fetch)
-  const analyzeResult = trpc.crm.sale.analyzeResult.useQuery(
-    { sale_idno: logId },
-    { enabled: false }
-  );
+  const analyzeResult = trpc.crm.sale.analyzeResult.useQuery({ sale_idno: logId }, { enabled: false });
 
   const analyze = trpc.crm.sale.analyze.useMutation();
   const del = trpc.crm.sale.delete.useMutation();
@@ -138,17 +132,15 @@ export function useSaleDetailVM(logId: number) {
 
   const ai = useMemo(() => {
     const core = (log?.sale.aiex_core ?? null) as AiCore | null;
-
     return {
       summary: log?.sale.aiex_summ ?? null,
+      confidence: log?.sale.aiex_confidence ?? null,
       core,
-
       pricing: (core?.pricing ?? null) as AiCorePricing,
       appointments: core?.appointments ?? [],
       notes: core?.notes?.trim() ? core.notes.trim() : null,
     };
-  }, [log?.sale.aiex_summ, log?.sale.aiex_core]);
-
+  }, [log?.sale.aiex_summ, log?.sale.aiex_core, log?.sale.aiex_confidence]);
   // #endregion
 
   // #region Derived (AI actions → schedule matching)
@@ -159,7 +151,7 @@ export function useSaleDetailVM(logId: number) {
 
     const schedules = log?.schedules ?? [];
 
-    return core.appointments.map((a) => {
+    return core.appointments.map(a => {
       // key는 서버에서 내려오는 appointment.key 사용 (필수)
       const key = a.key;
 
@@ -171,7 +163,7 @@ export function useSaleDetailVM(logId: number) {
         };
       }
 
-      const matched = schedules.find((s) => s.aiex_keys === key);
+      const matched = schedules.find(s => s.aiex_keys === key);
 
       if (matched) {
         return {
@@ -228,14 +220,11 @@ export function useSaleDetailVM(logId: number) {
     const prev = prevAiStatusRef.current;
     prevAiStatusRef.current = aiStatus;
 
-    if (
-      prev !== undefined &&
-      (prev === "pending" || prev === "processing")
-    ) {
+    if (prev !== undefined && (prev === "pending" || prev === "processing")) {
       if (aiStatus === "completed") {
         analyze.reset(); // 배너 초기화 (완료 알림은 토스트로)
         utils.crm.sale.list.invalidate();
-        analyzeResult.refetch().then((r) => {
+        analyzeResult.refetch().then(r => {
           if (!r.data) {
             toast.success("AI 분석이 완료되었습니다.");
             return;
@@ -250,7 +239,7 @@ export function useSaleDetailVM(logId: number) {
         toast.error("AI 분석에 실패했습니다. 잠시 후 다시 시도해주세요.");
       }
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [aiStatus]);
 
   // #endregion
@@ -361,14 +350,14 @@ export function useSaleDetailVM(logId: number) {
           variant: "primary" as const,
         }
       : aiStatus === "processing"
-      ? {
-          label: "AI 분석 중...",
-          icon: <Loader2 size={16} className="animate-spin" />,
-          onClick: () => {},
-          disabled: true,
-          variant: "primary" as const,
-        }
-      : undefined;
+        ? {
+            label: "AI 분석 중...",
+            icon: <Loader2 size={16} className="animate-spin" />,
+            onClick: () => {},
+            disabled: true,
+            variant: "primary" as const,
+          }
+        : undefined;
 
   const actions = isEditing
     ? [{ label: "취소", icon: <XCircle size={16} />, onClick: cancelEdit, variant: "outline" as const }]

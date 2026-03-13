@@ -70,7 +70,7 @@ export async function verifySession(
 
     return { userId, name };
   } catch (error) {
-    logger.debug({ err: String(error) }, "auth: session verification failed");
+    logger.debug({ err: error }, "auth: session verification failed");
     return null;
   }
 }
@@ -80,19 +80,34 @@ export async function verifySession(
 export async function authenticateRequest(req: Request): Promise<User> {
   const cookies = parseCookies(req.headers.cookie);
   const sessionCookie = cookies.get(COOKIE_NAME);
+
   const session = await verifySession(sessionCookie);
 
   if (!session) {
     throw ForbiddenError("Invalid session cookie");
   }
 
-  const user = await userRepo.findById(session.userId);
+  let user: User | null = null;
+
+  try {
+    user = await userRepo.findById(session.userId);
+  } catch (err) {
+    logger.error(
+      {
+        stage: "authenticateRequest.userLookup",
+        userId: session.userId,
+        err,
+      },
+      "auth: user lookup failed"
+    );
+    throw err;
+  }
 
   if (!user) {
     throw ForbiddenError("User not found");
   }
 
-  // 마지막 로그인 시간 갱신 — fire-and-forget (응답 지연 없음)
+  // 마지막 로그인 시간 갱신 — fire-and-forget
   void userRepo.upsertById(user.user_idno, { last_sign: new Date() });
 
   return user;

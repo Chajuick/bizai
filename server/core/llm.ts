@@ -19,7 +19,7 @@ export type FileContent = {
   type: "file_url";
   file_url: {
     url: string;
-    mime_type?: "audio/mpeg" | "audio/wav" | "application/pdf" | "audio/mp4" | "video/mp4" ;
+    mime_type?: "audio/mpeg" | "audio/wav" | "application/pdf" | "audio/mp4" | "video/mp4";
   };
 };
 
@@ -63,6 +63,7 @@ export type InvokeParams = {
   maxTokens?: number;
   max_tokens?: number;
   temperature?: number;
+  top_p?: number;
   outputSchema?: OutputSchema;
   output_schema?: OutputSchema;
   responseFormat?: ResponseFormat;
@@ -282,6 +283,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     toolChoice,
     tool_choice,
     temperature,
+    top_p,
     outputSchema,
     output_schema,
     responseFormat,
@@ -306,7 +308,9 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   }
 
   payload.max_tokens = 32768;
+
   if (temperature !== undefined) payload.temperature = temperature;
+  if (top_p !== undefined) payload.top_p = top_p;
 
   const normalizedResponseFormat = normalizeResponseFormat({
     responseFormat,

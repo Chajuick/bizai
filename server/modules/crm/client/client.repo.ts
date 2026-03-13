@@ -1,9 +1,9 @@
 // server/modules/crm/client/client.repo.ts
 
 // #region Imports
-import { and, asc, desc, eq, like } from "drizzle-orm";
+import { and, asc, desc, eq, like, gte, sql, count } from "drizzle-orm";
 
-import { CRM_CLIENT, CRM_CLIENT_CONT } from "../../../../drizzle/schema";
+import { CRM_CLIENT, CRM_CLIENT_CONT, CRM_SALE, CRM_SCHEDULE } from "../../../../drizzle/schema";
 import { escapeLike } from "../shared/like";
 import { getInsertId } from "../../../core/db";
 import type { DbOrTx } from "../../../core/db/tx";
@@ -389,6 +389,82 @@ export const clientRepo = {
       .limit(1);
 
     return row ?? null;
+  },
+  // #endregion
+
+  // #region listRecentSalesByClient
+  async listRecentSalesByClient(
+    { db }: RepoDeps,
+    params: { comp_idno: number; clie_idno: number; limit?: number }
+  ) {
+    return db
+      .select({
+        sale_idno: CRM_SALE.sale_idno,
+        vist_date: CRM_SALE.vist_date,
+        orig_memo: CRM_SALE.orig_memo,
+        aiex_summ: CRM_SALE.aiex_summ,
+      })
+      .from(CRM_SALE)
+      .where(
+        and(
+          eq(CRM_SALE.comp_idno, params.comp_idno),
+          eq(CRM_SALE.clie_idno, params.clie_idno),
+          eq(CRM_SALE.enab_yesn, true),
+        )
+      )
+      .orderBy(desc(CRM_SALE.vist_date), desc(CRM_SALE.sale_idno))
+      .limit(params.limit ?? 3);
+  },
+  // #endregion
+
+  // #region listUpcomingSchedulesByClient
+  async listUpcomingSchedulesByClient(
+    { db }: RepoDeps,
+    params: { comp_idno: number; clie_idno: number; now?: Date; limit?: number }
+  ) {
+    const now = params.now ?? new Date();
+
+    return db
+      .select({
+        sche_idno: CRM_SCHEDULE.sche_idno,
+        sche_name: CRM_SCHEDULE.sche_name,
+        sche_date: CRM_SCHEDULE.sche_date,
+        sche_stat: CRM_SCHEDULE.sche_stat,
+        actn_ownr: CRM_SCHEDULE.actn_ownr,
+      })
+      .from(CRM_SCHEDULE)
+      .where(
+        and(
+          eq(CRM_SCHEDULE.comp_idno, params.comp_idno),
+          eq(CRM_SCHEDULE.clie_idno, params.clie_idno),
+          eq(CRM_SCHEDULE.enab_yesn, true),
+          gte(CRM_SCHEDULE.sche_date, now),
+        )
+      )
+      .orderBy(asc(CRM_SCHEDULE.sche_date), asc(CRM_SCHEDULE.sche_idno))
+      .limit(params.limit ?? 3);
+  },
+  // #endregion
+
+  // #region countOpenSchedulesByClient
+  async countOpenSchedulesByClient(
+    { db }: RepoDeps,
+    params: { comp_idno: number; clie_idno: number }
+  ): Promise<number> {
+    const [row] = await db
+      .select({
+        count: count(),
+      })
+      .from(CRM_SCHEDULE)
+      .where(
+        and(
+          eq(CRM_SCHEDULE.comp_idno, params.comp_idno),
+          eq(CRM_SCHEDULE.clie_idno, params.clie_idno),
+          eq(CRM_SCHEDULE.enab_yesn, true),
+        )
+      );
+
+    return Number(row?.count ?? 0);
   },
   // #endregion
 

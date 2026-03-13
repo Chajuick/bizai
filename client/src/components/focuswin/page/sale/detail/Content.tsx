@@ -62,6 +62,7 @@ export default function SaleDetailContent({ vm }: Props) {
                 aiSummary={vm.ai.summary}
                 aiActions={vm.aiActions}
                 pricing={vm.ai.pricing}
+                confidence={vm.ai.confidence}
               />
             </Section>
           ) : null}

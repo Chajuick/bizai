@@ -6,46 +6,99 @@ import mysql from "mysql2/promise";
 
 import * as schema from "../../../drizzle/schema";
 import { ENV } from "../env/env";
+import { logger } from "../logger";
 // #endregion
+
 
 // #region Types
-/**
- * DbClient
- * - drizzle(mysql2) DB 타입 (schema 주입)
- * - repo/service에서 db as any를 제거하기 위한 핵심
- */
+
 export type DbClient = MySql2Database<typeof schema>;
+
 // #endregion
+
 
 // #region Singleton
+
 let _db: DbClient | null = null;
 let _pool: mysql.Pool | null = null;
+
 // #endregion
 
+
+// #region Helpers
+
+function parseDbHost(url: string) {
+  try {
+    const u = new URL(url);
+    return {
+      host: u.hostname,
+      port: u.port || "3306",
+      database: u.pathname.replace("/", ""),
+    };
+  } catch {
+    return null;
+  }
+}
+
+// #endregion
+
+
 // #region Factory
-/**
- * getDb
- *
- * - 단일 DB 인스턴스 싱글톤
- * - 인프라 레벨에서만 제공 (domain 로직 금지)
- * - schema를 주입해 타입 안정성을 강하게 가져간다.
- */
+
 export function getDb(): DbClient {
+
   if (_db) return _db;
 
   const url = process.env.DATABASE_URL;
-  if (!url) throw new Error("[DB] DATABASE_URL is not configured.");
 
-  // mysql2 pool (연결 안정성/성능)
-  // connectionLimit: DB 최대 동시 연결 수 제한 (기본값 무제한 → MySQL max_connections 초과 방지)
+  if (!url) {
+    throw new Error("[DB] DATABASE_URL is not configured.");
+  }
+
+  const dbInfo = parseDbHost(url);
+
+  logger.info(
+    {
+      host: dbInfo?.host,
+      port: dbInfo?.port,
+      database: dbInfo?.database,
+      poolSize: ENV.dbPoolSize,
+    },
+    "[DB] creating connection pool",
+  );
+
   _pool = mysql.createPool({
     uri: url,
     connectionLimit: ENV.dbPoolSize,
     waitForConnections: true,
     queueLimit: 0,
-    // 서버 환경에 관계없이 UTC 기준으로 날짜 처리 (Invalid Date / zero-date 방지)
     timezone: "+00:00",
   });
+
+  /**
+   * DB Health Check
+   * 서버 시작 시 DB 연결 테스트
+   */
+  _pool
+    .getConnection()
+    .then((conn) => {
+
+      logger.info("[DB] connection established");
+
+      conn.release();
+
+    })
+    .catch((err) => {
+
+      logger.error(
+        {
+          code: err.code,
+          message: err.message,
+        },
+        "[DB] connection failed",
+      );
+
+    });
 
   _db = drizzle(_pool, {
     schema,
@@ -56,16 +109,19 @@ export function getDb(): DbClient {
 }
 
 /**
- * getPool
- * - 필요 시 raw mysql2 pool 접근용(옵션)
- * - 웬만하면 drizzle만 쓰는 걸 권장
+ * raw mysql pool 접근
  */
 export function getPool(): mysql.Pool {
+
   if (!_pool) {
-    // getDb()를 먼저 호출하게 유도
     getDb();
   }
-  if (!_pool) throw new Error("[DB] Pool is not initialized.");
+
+  if (!_pool) {
+    throw new Error("[DB] Pool is not initialized.");
+  }
+
   return _pool;
 }
+
 // #endregion

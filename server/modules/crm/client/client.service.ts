@@ -732,5 +732,62 @@ export const clientService = {
     return { inserted, updated, failed: errors.length, errors };
   },
   // #endregion
+  
+  // #region getClientPreview
+  async getClientPreview(ctx: ServiceCtx, clie_idno: number) {
+    const db = getDb();
+
+    const client = await clientRepo.getById(
+      { db },
+      { comp_idno: ctx.comp_idno, clie_idno }
+    );
+
+    if (!client) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "거래처를 찾을 수 없습니다.",
+      });
+    }
+
+    const [mainContact, recentSales, upcomingSchedules, openScheduleCount] =
+      await Promise.all([
+        clientRepo.getMainContact({ db }, { comp_idno: ctx.comp_idno, clie_idno }),
+        clientRepo.listRecentSalesByClient({ db }, { comp_idno: ctx.comp_idno, clie_idno, limit: 3 }),
+        clientRepo.listUpcomingSchedulesByClient({ db }, { comp_idno: ctx.comp_idno, clie_idno, limit: 3 }),
+        clientRepo.countOpenSchedulesByClient({ db }, { comp_idno: ctx.comp_idno, clie_idno }),
+      ]);
+
+    const lastVistDate =
+      recentSales.length > 0 ? recentSales[0]?.vist_date ?? null : null;
+
+    return {
+      clie_idno: Number(client.clie_idno),
+      clie_name: client.clie_name,
+      main_contact: mainContact
+        ? {
+          cont_name: mainContact.cont_name ?? null,
+          cont_role: mainContact.cont_role ?? null,
+          cont_tele: mainContact.cont_tele ?? null,
+          cont_mail: mainContact.cont_mail ?? null,
+        }
+        : null,
+      last_vist_date: lastVistDate,
+      open_schedule_count: openScheduleCount,
+      recent_sales: recentSales.map((s) => ({
+        sale_idno: Number(s.sale_idno),
+        vist_date: s.vist_date,
+        orig_memo: s.orig_memo ?? null,
+        aiex_summ: s.aiex_summ ?? null,
+      })),
+      upcoming_schedules: upcomingSchedules.map((s) => ({
+        sche_idno: Number(s.sche_idno),
+        sche_name: s.sche_name,
+        sche_date: s.sche_date,
+        sche_stat: s.sche_stat,
+        actn_ownr: s.actn_ownr ?? null,
+      })),
+    };
+  },
+  // #endregion
 } as const;
 // #endregion

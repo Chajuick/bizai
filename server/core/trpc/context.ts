@@ -80,7 +80,7 @@ function mapUserAuthToRole(user_auth: string | null | undefined): AppRole {
 
 /**
  * normalizeCompanyRole
- * - CORE_COMPANY_USER.role_code 값을 CompanyRole로 정규화
+ * - CORE_COMPANY_USER.comp_role 값을 CompanyRole로 정규화
  */
 function normalizeCompanyRole(raw: string | null | undefined): CompanyRole | null {
   if (!raw) return null;
@@ -89,6 +89,74 @@ function normalizeCompanyRole(raw: string | null | undefined): CompanyRole | nul
   if (v === "admin") return "admin";
   if (v === "member") return "member";
   return null;
+}
+// #endregion
+
+// #region Error Helpers
+/**
+ * extractErrorMeta
+ * - Drizzle/mysql2/JWT 등 다양한 에러에서
+ *   로그에 남기기 좋은 공통 필드를 평탄화해서 추출한다.
+ * - logger.error({ err }) 만으로는 cause 내부가 예쁘게 안 찍힐 수 있어서
+ *   필요한 필드를 직접 꺼내어 구조화 로그로 남긴다.
+ */
+function extractErrorMeta(err: unknown) {
+  const e = err as {
+    name?: string;
+    message?: string;
+    stack?: string;
+    cause?: {
+      name?: string;
+      message?: string;
+      code?: string;
+      errno?: number;
+      sqlMessage?: string;
+      sqlState?: string;
+      sql?: string;
+      address?: string;
+      port?: number;
+    };
+  };
+
+  return {
+    err_name: e?.name,
+    err_message: e?.message,
+    err_stack: e?.stack,
+
+    cause_name: e?.cause?.name,
+    cause_message: e?.cause?.message,
+    cause_code: e?.cause?.code,
+    cause_errno: e?.cause?.errno,
+    cause_sql_message: e?.cause?.sqlMessage,
+    cause_sql_state: e?.cause?.sqlState,
+    cause_sql: e?.cause?.sql,
+    cause_address: e?.cause?.address,
+    cause_port: e?.cause?.port,
+  };
+}
+
+/**
+ * isExpectedAuthError
+ * - 인증 관련 예상 가능한 오류는 public context로 안전하게 폴백한다.
+ * - 예:
+ *   - 세션 없음
+ *   - JWT 만료/손상
+ *   - 사용자 없음
+ *
+ * 주의:
+ * - DB 연결 실패, DrizzleQueryError, mysql2 연결 오류 등은
+ *   인증 오류가 아니라 "서버 내부 장애"로 취급해야 한다.
+ */
+function isExpectedAuthError(err: unknown): boolean {
+  return (
+    err instanceof Error &&
+    (err.message.includes("ForbiddenError") ||
+      err.message.includes("Invalid session") ||
+      err.message.includes("User not found") ||
+      err.name === "JWTExpired" ||
+      err.name === "JWSInvalid" ||
+      err.name === "JWTInvalid")
+  );
 }
 // #endregion
 
@@ -102,8 +170,8 @@ export async function createContext(opts: CreateExpressContextOptions): Promise<
   let comp_role: CompanyRole | null = null;
   // #endregion
 
+  // #region 1) Authenticate (optional)
   try {
-    // #region 1) Authenticate (optional)
     const authed = await sdk.authenticateRequest(opts.req);
 
     if (authed) {
@@ -112,10 +180,48 @@ export async function createContext(opts: CreateExpressContextOptions): Promise<
         role: mapUserAuthToRole((authed as { user_auth?: string | null }).user_auth),
       };
     }
-    // #endregion
+  } catch (err) {
+    // JWT 검증 실패/세션 없음/사용자 없음 → 정상 public context 폴백
+    if (isExpectedAuthError(err)) {
+      logger.debug(
+        {
+          requestId,
+          path: opts.req.originalUrl ?? opts.req.url,
+          method: opts.req.method,
+          stage: "authenticateRequest",
+          ...extractErrorMeta(err),
+        },
+        "auth token rejected — fallback to public context",
+      );
 
-    // #region 2) Resolve company by membership
-    if (user) {
+      user = null;
+      comp_idno = null;
+      comp_role = null;
+    } else {
+      // DB 장애/예상치 못한 예외 → 은닉하지 말고 500 전파
+      logger.error(
+        {
+          requestId,
+          path: opts.req.originalUrl ?? opts.req.url,
+          method: opts.req.method,
+          stage: "authenticateRequest",
+          ...extractErrorMeta(err),
+        },
+        "createContext failed during authentication",
+      );
+
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+        cause: err,
+      });
+    }
+  }
+  // #endregion
+
+  // #region 2) Resolve company by membership
+  if (user) {
+    try {
       const db = getDb();
 
       // x-comp-id 헤더: 프론트 WorkspaceSwitcher에서 전달 (optional)
@@ -125,8 +231,8 @@ export async function createContext(opts: CreateExpressContextOptions): Promise<
           ? parseInt(rawXCompId, 10)
           : NaN;
 
+      // #region 2-1) Requested company membership
       if (!isNaN(requestedCompId) && requestedCompId > 0) {
-        // 요청된 회사에 대한 멤버십 검증
         const [m] = await db
           .select({
             comp_idno: CORE_COMPANY_USER.comp_idno,
@@ -147,8 +253,10 @@ export async function createContext(opts: CreateExpressContextOptions): Promise<
           comp_role = normalizeCompanyRole(m.comp_role);
         }
       }
+      // #endregion
 
-      // x-comp-id 없거나 해당 회사 멤버십 없음 → 기본 회사 (가입일 오름차순 첫 번째)
+      // #region 2-2) Default company fallback
+      // x-comp-id 없거나 멤버십이 없으면 가입일 가장 이른 활성 회사 선택
       if (comp_idno === null) {
         const [membership] = await db
           .select({
@@ -168,37 +276,31 @@ export async function createContext(opts: CreateExpressContextOptions): Promise<
         comp_idno = membership?.comp_idno ?? null;
         comp_role = normalizeCompanyRole(membership?.comp_role);
       }
-    }
-    // #endregion
-  } catch (err) {
-    // #region 에러 분기
-    // JWT 검증 실패/세션 없음 → 정상 폴백 (public context)
-    // DB 장애/예상치 못한 에러 → 500 전파 (은닉 금지)
-    const isAuthError =
-      err instanceof Error &&
-      (err.message.includes("ForbiddenError") ||
-        err.message.includes("Invalid session") ||
-        err.message.includes("User not found") ||
-        err.name === "JWTExpired" ||
-        err.name === "JWSInvalid" ||
-        err.name === "JWTInvalid");
+      // #endregion
+    } catch (err) {
+      logger.error(
+        {
+          requestId,
+          path: opts.req.originalUrl ?? opts.req.url,
+          method: opts.req.method,
+          stage: "resolveCompanyMembership",
+          user_idno: user.user_idno,
+          x_comp_id: opts.req.headers["x-comp-id"],
+          ...extractErrorMeta(err),
+        },
+        "createContext failed during company resolution",
+      );
 
-    if (isAuthError) {
-      logger.debug({ requestId, err: (err as Error).message }, "auth token rejected — public context");
-      user = null;
-      comp_idno = null;
-      comp_role = null;
-    } else {
-      logger.error({ requestId, err }, "createContext unexpected error — propagating 500");
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
         message: "서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
         cause: err,
       });
     }
-    // #endregion
   }
+  // #endregion
 
+  // #region Return
   return {
     req: opts.req,
     res: opts.res,
@@ -207,5 +309,6 @@ export async function createContext(opts: CreateExpressContextOptions): Promise<
     comp_idno,
     comp_role,
   };
+  // #endregion
 }
 // #endregion
