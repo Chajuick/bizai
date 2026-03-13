@@ -1157,6 +1157,7 @@ export const saleService = {
     const ext = job?.aiex_text as ExtPayload | null;
 
     return {
+      debug_marker: "SERVER_NEW_CODE_V1",
       aiex_stat,
       jobs_stat: job?.jobs_stat ?? null,
       summary: ext?.summary ?? null,
@@ -1169,7 +1170,6 @@ export const saleService = {
       ai_contact_person: ext?.ai_contact_person ?? null,
       ai_contact_phone: ext?.ai_contact_phone ?? null,
       ai_contact_email: ext?.ai_contact_email ?? null,
-
     };
   },
 
