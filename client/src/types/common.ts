@@ -13,7 +13,8 @@ export type ConfirmTarget =
   | { kind: "shipment"; id: number; title: string; metas: ConfirmMeta[] }
   | { kind: "order"; id: number; title: string; metas: ConfirmMeta[] }
   | { kind: "schedule"; id: number; title: string; metas: ConfirmMeta[] }
-  | { kind: "client"; id: number; title: string; metas: ConfirmMeta[] };
+  | { kind: "client"; id: number; title: string; metas: ConfirmMeta[] }
+  | { kind: "expense"; id: number; title: string; metas: ConfirmMeta[] };
 
 export type ConfirmState =
   | null

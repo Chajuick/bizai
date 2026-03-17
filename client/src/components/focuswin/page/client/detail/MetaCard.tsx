@@ -12,6 +12,12 @@ import type { ClientRow } from "@/types/client";
 type Props = {
   client?: ClientRow | null;
 };
+
+const CLIENT_TYPE_BADGE: Record<string, { label: string; cls: string }> = {
+  sales:    { label: "매출사", cls: "bg-blue-100 text-blue-700 border-blue-200" },
+  purchase: { label: "매입사", cls: "bg-orange-100 text-orange-700 border-orange-200" },
+  both:     { label: "매출+매입", cls: "bg-purple-100 text-purple-700 border-purple-200" },
+};
 // #endregion
 
 export default function ClientDetailMetaCard({ client }: Props) {
@@ -21,8 +27,17 @@ export default function ClientDetailMetaCard({ client }: Props) {
 
   if (!hasMeta) return null;
 
+  const typeBadge = CLIENT_TYPE_BADGE[client.clie_type ?? "sales"] ?? CLIENT_TYPE_BADGE.sales;
+
   return (
     <Card>
+      {/* 거래처 유형 뱃지 */}
+      <div className="mb-3">
+        <span className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold ${typeBadge.cls}`}>
+          {typeBadge.label}
+        </span>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {client.clie_name && <MetaItem icon={Building2} label="거래처" value={client.clie_name} tone="blue" />}
 

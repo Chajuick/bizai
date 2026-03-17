@@ -29,6 +29,9 @@ export const orderService = {
       ? { field: input.sort.field, dir: input.sort.dir }
       : undefined;
 
+    const from = input?.from ? new Date(input.from) : undefined;
+    const to   = input?.to   ? new Date(input.to)   : undefined;
+
     const rows = await orderRepo.list(
       { db },
       {
@@ -40,6 +43,8 @@ export const orderService = {
         offset: page.offset,
         sort,
         onlyEnabled: true,
+        from,
+        to,
       }
     );
 

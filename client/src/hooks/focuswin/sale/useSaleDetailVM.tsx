@@ -90,7 +90,8 @@ export function useSaleDetailVM(logId: number) {
   });
 
   // AI 분석 완료 후 후처리(토스트/모달)를 중복 실행하지 않기 위한 플래그
-  const [didHandleAnalyzeCompletion, setDidHandleAnalyzeCompletion] = useState(false);
+  // ref 사용: state 변경 시 callback 재생성 → effect 재실행 사이클 방지
+  const didHandleAnalyzeCompletion = useRef(false);
 
   // #endregion
 
@@ -240,9 +241,9 @@ export function useSaleDetailVM(logId: number) {
    * - 중복 실행 방지를 위해 didHandleAnalyzeCompletion 플래그 사용
    */
   const handleAnalyzeCompleted = useCallback(async () => {
-    if (didHandleAnalyzeCompletion) return;
+    if (didHandleAnalyzeCompletion.current) return;
 
-    setDidHandleAnalyzeCompletion(true);
+    didHandleAnalyzeCompletion.current = true;
 
     analyze.reset();
     await utils.crm.sale.list.invalidate();
@@ -260,9 +261,9 @@ export function useSaleDetailVM(logId: number) {
       toast.success("AI 분석이 완료되었습니다.");
     }
 
-    const opened = aiLink.maybeOpenPostAnalyzeModal(logId, r.data, !!saleGet.data?.sale?.clie_idno);
+    aiLink.maybeOpenPostAnalyzeModal(logId, r.data, !!saleGet.data?.sale?.clie_idno);
 
-  }, [didHandleAnalyzeCompletion, analyze, utils, analyzeResult, aiLink, logId, saleGet.data?.sale?.clie_idno, aiStatus]);
+  }, [analyze, utils, analyzeResult, aiLink, logId, saleGet.data?.sale?.clie_idno]);
 
   // aiex_stat 변화 감지
   // 1) pending/processing -> completed 전환 시 완료 처리
@@ -283,17 +284,17 @@ export function useSaleDetailVM(logId: number) {
 
       if (aiStatus === "failed") {
         analyze.reset(); // 배너 초기화
-        setDidHandleAnalyzeCompletion(false);
+        didHandleAnalyzeCompletion.current = false;
         toast.error("AI 분석에 실패했습니다. 잠시 후 다시 시도해주세요.");
         return;
       }
     }
 
     // 등록 페이지에서 넘어온 직후, 첫 조회가 이미 completed인 경우도 처리
-    if (isFromAnalyze && aiStatus === "completed" && !didHandleAnalyzeCompletion) {
+    if (isFromAnalyze && aiStatus === "completed" && !didHandleAnalyzeCompletion.current) {
       void handleAnalyzeCompleted();
     }
-  }, [aiStatus, isFromAnalyze, didHandleAnalyzeCompletion, handleAnalyzeCompleted, analyze]);
+  }, [aiStatus, isFromAnalyze, handleAnalyzeCompleted, analyze]);
 
   // #endregion
 
@@ -335,7 +336,7 @@ export function useSaleDetailVM(logId: number) {
   const runAnalyze = async () => {
     try {
       // 재분석 시작 시 완료 후처리 플래그 초기화
-      setDidHandleAnalyzeCompletion(false);
+      didHandleAnalyzeCompletion.current = false;
 
       await analyze.mutateAsync({ sale_idno: logId });
       await utils.crm.sale.get.invalidate({ sale_idno: logId }); // → aiex_stat=pending 반영

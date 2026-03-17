@@ -5,6 +5,8 @@ import { protectedProcedure, router } from "../../../core/trpc";
 import { svcCtxFromTrpc } from "../../../core/svcCtx";
 
 import {
+  ScheduleCalendarListInput,
+  ScheduleCalendarListOutput,
   ScheduleCreateInput,
   ScheduleDeleteInput,
   ScheduleIdInput,
@@ -38,6 +40,13 @@ export const scheduleRouter = router({
     .input(ScheduleIdInput)
     .output(ScheduleItemOutput.nullable())
     .query(({ ctx, input }) => scheduleService.getSchedule(svcCtxFromTrpc(ctx), input.sche_idno)),
+  // #endregion
+
+  // #region calendarList
+  calendarList: protectedProcedure
+    .input(ScheduleCalendarListInput)
+    .output(ScheduleCalendarListOutput)
+    .query(({ ctx, input }) => scheduleService.calendarListSchedules(svcCtxFromTrpc(ctx), input)),
   // #endregion
 
   // #region create

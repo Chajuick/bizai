@@ -26,6 +26,7 @@ const emptyClientDraft = (): ClientDraft => ({
   clie_idno: undefined,
   clie_name: "",
   bizn_numb: "",
+  clie_type: "sales",
   indu_type: "",
   clie_addr: "",
   clie_memo: "",
@@ -61,6 +62,7 @@ export function useClientDetailVM() {
   const utils = trpc.useUtils();
 
   const clientId = Number(id);
+  const isValidId = Number.isFinite(clientId) && clientId > 0;
 
   const goList = useCallback(() => navigate("/clie-list"), [navigate]);
 
@@ -70,22 +72,27 @@ export function useClientDetailVM() {
 
   const clientGet = trpc.crm.client.get.useQuery(
     { clie_idno: clientId },
-    { enabled: Number.isFinite(clientId) }
+    { enabled: isValidId }
   );
 
   const contactsList = trpc.crm.client.contact.list.useQuery(
     { clie_idno: clientId },
-    { enabled: Number.isFinite(clientId) }
+    { enabled: isValidId }
   );
 
   const logsQuery = trpc.crm.sale.list.useQuery(
     { clie_idno: clientId },
-    { enabled: Number.isFinite(clientId) }
+    { enabled: isValidId }
   );
 
   const ordersQuery = trpc.crm.order.list.useQuery(
     { clie_idno: clientId },
-    { enabled: Number.isFinite(clientId) }
+    { enabled: isValidId }
+  );
+
+  const schedulesQuery = trpc.crm.schedule.list.useQuery(
+    undefined,
+    { enabled: isValidId, staleTime: 30_000 }
   );
 
   const saveWithContacts = trpc.crm.client.saveWithContacts.useMutation();
@@ -147,6 +154,7 @@ export function useClientDetailVM() {
       clie_idno: client.clie_idno,
       clie_name: client.clie_name ?? "",
       bizn_numb: client.bizn_numb ?? "",
+      clie_type: (client.clie_type as "sales" | "purchase" | "both") ?? "sales",
       indu_type: client.indu_type ?? "",
       clie_addr: client.clie_addr ?? "",
       clie_memo: client.clie_memo ?? "",
@@ -169,6 +177,7 @@ export function useClientDetailVM() {
         clie_idno: client.clie_idno,
         clie_name: client.clie_name ?? "",
         bizn_numb: client.bizn_numb ?? "",
+        clie_type: (client.clie_type as "sales" | "purchase" | "both") ?? "sales",
         indu_type: client.indu_type ?? "",
         clie_addr: client.clie_addr ?? "",
         clie_memo: client.clie_memo ?? "",
@@ -275,6 +284,7 @@ export function useClientDetailVM() {
           clie_idno: clientId,
           clie_name: clientForm.clie_name,
           bizn_numb: clientForm.bizn_numb || null,
+          clie_type: clientForm.clie_type,
           indu_type: clientForm.indu_type,
           clie_addr: clientForm.clie_addr,
           clie_memo: clientForm.clie_memo,
@@ -314,6 +324,7 @@ export function useClientDetailVM() {
 
   const handleConfirmAction = async (c: NonNullable<ConfirmState>) => {
     if (c.intent !== "delete") return;
+    if (!Number.isFinite(c.target.id) || c.target.id <= 0) return;
 
     await deleteClient.mutateAsync({ clie_idno: c.target.id });
     toast.success("거래처를 삭제했어요.");
@@ -388,6 +399,8 @@ export function useClientDetailVM() {
     logsLoading: logsQuery.isLoading,
     orders: ordersQuery.data?.items ?? [],
     ordersLoading: ordersQuery.isLoading,
+    schedules: (schedulesQuery.data?.items ?? []).filter((s) => s.clie_idno === clientId),
+    schedulesLoading: schedulesQuery.isLoading,
     totalOrderAmount,
 
     // editing

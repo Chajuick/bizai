@@ -120,6 +120,17 @@ export const ScheduleStatsOutput = z.object({
 export type ScheduleStatsOutput = z.infer<typeof ScheduleStatsOutput>;
 // #endregion
 
+// #region Calendar
+export const ScheduleCalendarListInput = z.object({
+  year: z.number().int().min(2000).max(2100),
+  month: z.number().int().min(1).max(12), // 1-based
+});
+export type ScheduleCalendarListInput = z.infer<typeof ScheduleCalendarListInput>;
+
+export const ScheduleCalendarListOutput = z.array(ScheduleItemOutput);
+export type ScheduleCalendarListOutput = z.infer<typeof ScheduleCalendarListOutput>;
+// #endregion
+
 // #region Service Contracts
 export type ScheduleListInputType = z.infer<typeof ScheduleListInput>;
 export type ScheduleCreatePayload = z.infer<typeof ScheduleCreateInput>;

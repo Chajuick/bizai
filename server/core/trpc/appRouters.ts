@@ -13,6 +13,7 @@ import { orderRouter } from "../../modules/crm/order/order.router";
 import { shipmentRouter } from "../../modules/crm/shipment/shipment.router";
 import { dashboardRouter } from "../../modules/crm/dashboard/dashboard.router";
 import { fileRouter } from "../../modules/crm/file/file.router";
+import { expenseRouter } from "../../modules/crm/expense/expense.router";
 import { companyRouter } from "../../modules/org/company/company.router";
 import { billingRouter } from "../../modules/billing/billing.router";
 // #endregion
@@ -59,6 +60,7 @@ export const appRouter = router({
     shipment: shipmentRouter,
     dashboard: dashboardRouter,
     files: fileRouter,
+    expense: expenseRouter,
   }),
   // #endregion
 });

@@ -211,7 +211,7 @@ export const userRepo = {
         {
           repo: "userRepo",
           method: "createByEmail",
-          input,
+          input: { ...input, passwd_hash: "[REDACTED]" },
           err,
         },
         "userRepo.createByEmail failed"

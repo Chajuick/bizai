@@ -13,17 +13,9 @@ type HeaderActionBase = {
   danger?: boolean;
 };
 
-export type HeaderAction =
-  | (HeaderActionBase & { onClick: () => void })
-  | (HeaderActionBase & { href: string });
+export type HeaderAction = (HeaderActionBase & { onClick: () => void }) | (HeaderActionBase & { href: string });
 
-function SolidAction({
-  action,
-  mobileFull = false,
-}: {
-  action: HeaderAction;
-  mobileFull?: boolean;
-}) {
+function SolidAction({ action, mobileFull = false }: { action: HeaderAction; mobileFull?: boolean }) {
   const v = action.variant ?? "primary";
 
   const base = cn(
@@ -37,8 +29,8 @@ function SolidAction({
     v === "primary" || v === "success" || v === "danger"
       ? cn(base, "text-white")
       : v === "secondary"
-      ? cn(base, "text-slate-700 bg-slate-50 border border-slate-200 hover:bg-slate-100")
-      : cn(base, "text-slate-700 bg-white border border-slate-200 hover:bg-slate-50");
+        ? cn(base, "text-slate-700 bg-slate-50 border border-slate-200 hover:bg-slate-100")
+        : cn(base, "text-slate-700 bg-white border border-slate-200 hover:bg-slate-50");
 
   const style =
     v === "primary"
@@ -47,16 +39,16 @@ function SolidAction({
           boxShadow: "0 10px 26px rgba(37,99,235,0.20)",
         } as React.CSSProperties)
       : v === "success"
-      ? ({
-          background: "linear-gradient(135deg,#10b981,#059669)",
-          boxShadow: "0 10px 26px rgba(16,185,129,0.20)",
-        } as React.CSSProperties)
-      : v === "danger"
-      ? ({
-          background: "linear-gradient(135deg,#ef4444,#dc2626)",
-          boxShadow: "0 10px 26px rgba(239,68,68,0.22)",
-        } as React.CSSProperties)
-      : undefined;
+        ? ({
+            background: "linear-gradient(135deg,#10b981,#059669)",
+            boxShadow: "0 10px 26px rgba(16,185,129,0.20)",
+          } as React.CSSProperties)
+        : v === "danger"
+          ? ({
+              background: "linear-gradient(135deg,#ef4444,#dc2626)",
+              boxShadow: "0 10px 26px rgba(239,68,68,0.22)",
+            } as React.CSSProperties)
+          : undefined;
 
   const content = (
     <>
@@ -72,7 +64,7 @@ function SolidAction({
         aria-label={action.ariaLabel ?? action.label}
         className={cls}
         style={style}
-        onClick={(e) => {
+        onClick={e => {
           if (action.disabled) e.preventDefault();
         }}
       >
@@ -82,26 +74,13 @@ function SolidAction({
   }
 
   return (
-    <button
-      type="button"
-      onClick={action.onClick}
-      disabled={action.disabled}
-      aria-label={action.ariaLabel ?? action.label}
-      className={cls}
-      style={style}
-    >
+    <button type="button" onClick={action.onClick} disabled={action.disabled} aria-label={action.ariaLabel ?? action.label} className={cls} style={style}>
       {content}
     </button>
   );
 }
 
-function GhostAction({
-  action,
-  mobileFull = false,
-}: {
-  action: HeaderAction;
-  mobileFull?: boolean;
-}) {
+function GhostAction({ action, mobileFull = false }: { action: HeaderAction; mobileFull?: boolean }) {
   const title = action.ariaLabel ?? action.label;
   const dangerCls = action.danger ? "border-red-200 text-red-600 hover:bg-red-50" : "";
 
@@ -130,38 +109,20 @@ function GhostAction({
 
   if (mobileFull) {
     return (
-      <button
-        type="button"
-        onClick={action.onClick}
-        disabled={action.disabled}
-        aria-label={title}
-        className={cls}
-      >
+      <button type="button" onClick={action.onClick} disabled={action.disabled} aria-label={title} className={cls}>
         {content}
       </button>
     );
   }
 
   return (
-    <IconButton
-      title={title}
-      onClick={action.onClick}
-      disabled={action.disabled}
-      stopPropagation={false}
-      className={dangerCls}
-    >
+    <IconButton title={title} onClick={action.onClick} disabled={action.disabled} stopPropagation={false} className={dangerCls}>
       {action.icon}
     </IconButton>
   );
 }
 
-function ActionButton({
-  action,
-  mobileFull = false,
-}: {
-  action: HeaderAction;
-  mobileFull?: boolean;
-}) {
+function ActionButton({ action, mobileFull = false }: { action: HeaderAction; mobileFull?: boolean }) {
   const v = action.variant ?? "primary";
   if (v === "ghost") return <GhostAction action={action} mobileFull={mobileFull} />;
   return <SolidAction action={action} mobileFull={mobileFull} />;
@@ -184,14 +145,11 @@ export default function PageHeader({
   actions?: HeaderAction[];
   children?: React.ReactNode;
 }) {
-  const allActions = [
-    ...actions.map((a) => ({ ...a, variant: a.variant ?? "ghost" as const })),
-    ...(primaryAction ? [primaryAction] : []),
-  ];
+  const allActions = [...actions.map(a => ({ ...a, variant: a.variant ?? ("ghost" as const) })), ...(primaryAction ? [primaryAction] : [])];
 
   return (
     <div
-      className="sticky top-0 z-20 -mx-4 lg:-mx-6 px-4 lg:px-6 pt-3 pb-4 border-b"
+      className="-mx-4 px-4 pt-3 pb-4 border-b"
       style={{
         background: "rgba(255,255,255,0.86)",
         borderColor: "rgba(15,23,42,0.08)",
@@ -203,41 +161,25 @@ export default function PageHeader({
         <div className="flex items-start gap-2">
           {onBack ? (
             <div className="shrink-0 -ml-2">
-              <button
-                onClick={onBack}
-                className="p-2 rounded-xl hover:bg-slate-50 transition text-slate-700"
-                aria-label="뒤로"
-              >
+              <button onClick={onBack} className="p-2 rounded-xl hover:bg-slate-50 transition text-slate-700" aria-label="뒤로">
                 <ArrowLeft size={18} />
               </button>
             </div>
           ) : null}
 
           <div className="min-w-0 flex-1 pr-1">
-            <p className="text-[11px] font-extrabold tracking-[0.18em] text-slate-400 uppercase">
-              {kicker}
-            </p>
+            <p className="text-[11px] font-extrabold tracking-[0.18em] text-slate-400 uppercase">{kicker}</p>
 
-            <h1 className="mt-0.5 text-[22px] leading-tight font-black text-slate-900 break-keep">
-              {title}
-            </h1>
+            <h1 className="mt-0.5 text-[22px] leading-tight font-black text-slate-900 break-keep">{title}</h1>
 
-            {description ? (
-              <p className="mt-2 text-sm leading-6 text-slate-500 break-keep">
-                {description}
-              </p>
-            ) : null}
+            {description ? <p className="mt-2 text-sm leading-6 text-slate-500 break-keep">{description}</p> : null}
           </div>
         </div>
 
         {allActions.length > 0 ? (
           <div className="mt-4 grid grid-cols-2 gap-2">
-            {allActions.map((a) => (
-              <ActionButton
-                key={a.key ?? a.label}
-                action={a}
-                mobileFull
-              />
+            {allActions.map(a => (
+              <ActionButton key={a.key ?? a.label} action={a} mobileFull />
             ))}
           </div>
         ) : null}
@@ -252,39 +194,26 @@ export default function PageHeader({
             <div className="flex items-start gap-2">
               {onBack ? (
                 <div className="shrink-0 -ml-2">
-                  <button
-                    onClick={onBack}
-                    className="p-2 rounded-xl hover:bg-slate-50 transition text-slate-700"
-                    aria-label="뒤로"
-                  >
+                  <button onClick={onBack} className="p-2 rounded-xl hover:bg-slate-50 transition text-slate-700" aria-label="뒤로">
                     <ArrowLeft size={18} />
                   </button>
                 </div>
               ) : null}
 
               <div className="min-w-0 flex-1">
-                <p className="text-[11px] font-extrabold tracking-[0.18em] text-slate-400 uppercase">
-                  {kicker}
-                </p>
+                <p className="text-[11px] font-extrabold tracking-[0.18em] text-slate-400 uppercase">{kicker}</p>
 
-                <h1 className="text-base sm:text-lg font-black text-slate-900 min-w-0">
-                  {title}
-                </h1>
+                <h1 className="text-base sm:text-lg font-black text-slate-900 min-w-0">{title}</h1>
 
-                {description ? (
-                  <p className="mt-1 text-sm text-slate-500">{description}</p>
-                ) : null}
+                {description ? <p className="mt-1 text-sm text-slate-500">{description}</p> : null}
               </div>
             </div>
           </div>
 
           {primaryAction || actions.length > 0 ? (
             <div className="flex items-center gap-2 shrink-0">
-              {actions.map((a) => (
-                <ActionButton
-                  key={a.key ?? a.label}
-                  action={{ ...a, variant: a.variant ?? "ghost" }}
-                />
+              {actions.map(a => (
+                <ActionButton key={a.key ?? a.label} action={{ ...a, variant: a.variant ?? "ghost" }} />
               ))}
               {primaryAction ? <ActionButton action={primaryAction} /> : null}
             </div>

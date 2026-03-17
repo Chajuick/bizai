@@ -9,6 +9,9 @@ import SaleRegistPage from "@/pages/sale/SaleRegistPage";
 import ScheduleListPage from "@/pages/schedule/ScheduleListPage";
 import OrderListPage from "@/pages/order/OrderListPage";
 import ShipmentList from "@/pages/shipment/ShipmentList";
+import ExpenseListPage from "@/pages/expense/ExpenseListPage";
+import ExpenseCreatePage from "@/pages/expense/ExpenseCreatePage";
+import ExpenseDetailPage from "@/pages/expense/ExpenseDetailPage";
 import ClientListPage from "@/pages/client/ClientListPage";
 import ClientDetailPage from "@/pages/client/ClientDetailPage";
 import ClientRegistPage from "@/pages/client/ClientRegistPage";
@@ -33,6 +36,9 @@ export function AppGuard() {
         <Route path="/sche-list" component={ScheduleListPage} />
         <Route path="/orde-list" component={OrderListPage} />
         <Route path="/ship-list" component={ShipmentList} />
+        <Route path="/expe-list" component={ExpenseListPage} />
+        <Route path="/expe-list/new" component={ExpenseCreatePage} />
+        <Route path="/expe-list/:id" component={ExpenseDetailPage} />
         <Route path="/clie-list" component={ClientListPage} />
         <Route path="/clie-list/regi" component={ClientRegistPage} />
         <Route path="/clie-list/:id" component={ClientDetailPage} />

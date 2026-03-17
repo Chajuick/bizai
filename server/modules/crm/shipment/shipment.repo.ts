@@ -1,7 +1,7 @@
 // server/modules/crm/shipment/shipment.repo.ts
 
 // #region Imports
-import { and, asc, desc, eq, like, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, like, lte, sql } from "drizzle-orm";
 
 import { CRM_SHIPMENT, type InsertShipment } from "../../../../drizzle/schema";
 import { escapeLike } from "../shared/like";
@@ -22,6 +22,8 @@ export const shipmentRepo = {
       orde_idno?: number;
       ship_stat?: "pending" | "delivered" | "invoiced" | "paid";
       search?: string;
+      from?: Date;
+      to?: Date;
 
       limit: number;
       offset: number;
@@ -34,7 +36,9 @@ export const shipmentRepo = {
       eq(CRM_SHIPMENT.enab_yesn, true),
       params.orde_idno ? eq(CRM_SHIPMENT.orde_idno, params.orde_idno) : undefined,
       params.ship_stat ? eq(CRM_SHIPMENT.ship_stat, params.ship_stat) : undefined,
-      params.search ? like(CRM_SHIPMENT.clie_name, `%${escapeLike(params.search)}%`) : undefined
+      params.search ? like(CRM_SHIPMENT.clie_name, `%${escapeLike(params.search)}%`) : undefined,
+      params.from ? gte(CRM_SHIPMENT.crea_date, params.from) : undefined,
+      params.to   ? lte(CRM_SHIPMENT.crea_date, params.to)   : undefined
     );
 
     // sort field 안전 처리(화이트리스트)

@@ -4,6 +4,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { handleApiError } from "@/lib/handleApiError";
+import { useDateRange } from "@/components/focuswin/common/filters/date-range-filter";
 
 import { formatKRW } from "@/lib/format";
 
@@ -51,8 +52,12 @@ const EMPTY_DELIVERY_FORM: OrderShipmentFormState = {
 // #endregion
 
 export function useOrderListVM() {
+  // #region Date range filter
+  const { range: dateRange, setPreset: setDatePreset, setCustomRange } = useDateRange("30d");
+  // #endregion
+
   // #region Base VM (list/paging/stats)
-  const orderVM = useOrderVM();
+  const orderVM = useOrderVM(dateRange);
   // #endregion
 
   // #region Actions (mutations + refresh)
@@ -341,6 +346,19 @@ export function useOrderListVM() {
   };
   // #endregion
 
+  // #region Period stats (조회 기간 기준, 로드된 항목 기반)
+  const periodStats = useMemo(() => {
+    let total = 0;
+    let confirmed = 0;
+    for (const o of orderVM.items) {
+      const price = Number(o.orde_pric || 0);
+      if (o.orde_stat !== "canceled") total += price;
+      if (o.orde_stat === "confirmed") confirmed += price;
+    }
+    return { total, confirmed };
+  }, [orderVM.items]);
+  // #endregion
+
   // #region Public API
   return {
     // status
@@ -351,11 +369,13 @@ export function useOrderListVM() {
     // data
     orders: orderVM.items,
 
-    // financial stats (Header용)
-    stats: {
-      total: orderVM.stats.totalPipeline,
-      confirmed: orderVM.stats.confirmedAmount,
-    },
+    // financial stats (Header용 — 조회 기간 기준)
+    stats: periodStats,
+
+    // date filter
+    dateRange,
+    setDatePreset,
+    setCustomRange,
 
     // tabs (서버 stats 기반 카운트)
     activeTab: orderVM.activeTab,

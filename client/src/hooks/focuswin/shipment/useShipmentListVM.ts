@@ -3,6 +3,7 @@
 // #region Imports
 import { useCallback, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { useDateRange } from "@/components/focuswin/common/filters/date-range-filter";
 
 import { trpc } from "@/lib/trpc";
 import { handleApiError } from "@/lib/handleApiError";
@@ -31,8 +32,12 @@ const EMPTY_FORM: ShipmentFormState = {
 // #endregion
 
 export function useShipmentListVM() {
+  // #region Date range filter
+  const { range: dateRange, setPreset: setDatePreset, setCustomRange } = useDateRange("30d");
+  // #endregion
+
   // #region Base VM (list/paging/stats)
-  const shipmentVM = useShipmentVM();
+  const shipmentVM = useShipmentVM(dateRange);
   const actions = useShipmentActions();
   // #endregion
 
@@ -56,11 +61,17 @@ export function useShipmentListVM() {
   }, [shipmentVM.stats]);
   // #endregion
 
-  // #region Derived: financial stats (서버 기반 — 전체 DB 기준)
-  const stats = {
-    paid: shipmentVM.stats.totalPaid,
-    pending: shipmentVM.stats.totalPending,
-  };
+  // #region Derived: financial stats (조회 기간 기준, 로드된 항목 기반)
+  const stats = useMemo(() => {
+    let paid = 0;
+    let pending = 0;
+    for (const s of shipmentVM.items) {
+      const price = Number(s.ship_pric || 0);
+      if (s.ship_stat === "paid") paid += price;
+      else pending += price;
+    }
+    return { paid, pending };
+  }, [shipmentVM.items]);
   // #endregion
 
   // #region Form state
@@ -238,8 +249,13 @@ export function useShipmentListVM() {
     setActiveTab: shipmentVM.setActiveTab,
     tabs,
 
-    // financial stats (서버 기반)
+    // financial stats (조회 기간 기준)
     stats,
+
+    // date filter
+    dateRange,
+    setDatePreset,
+    setCustomRange,
 
     // pagination
     hasMore: shipmentVM.hasMore,

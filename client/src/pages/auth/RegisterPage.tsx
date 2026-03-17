@@ -12,7 +12,9 @@ export default function RegisterPage() {
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
 
-  const redirectTo = new URLSearchParams(window.location.search).get("redirect") ?? "/";
+  // ?redirect= 파라미터 읽기 — 상대 경로만 허용 (Open Redirect 방지)
+  const rawRedirect = new URLSearchParams(window.location.search).get("redirect") ?? "/";
+  const redirectTo = rawRedirect.startsWith("/") && !rawRedirect.startsWith("//") ? rawRedirect : "/";
 
   useEffect(() => {
     if (redirectTo !== "/") {

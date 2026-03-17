@@ -38,7 +38,6 @@ export const clientRouter = router({
   // #region list
   list: protectedProcedure
     .input(ClientListInput)
-    .output(ClientListOutput)
     .query(({ ctx, input }) => clientService.listClients(svcCtxFromTrpc(ctx), input)),
   // #endregion
 
@@ -54,7 +53,6 @@ export const clientRouter = router({
   // #region findOrCreate
   findOrCreate: protectedProcedure
     .input(ClientFindNameInput)
-    .output(ClientItemOutput.nullable())
     .mutation(({ ctx, input }) =>
       clientService.findOrCreateClient(svcCtxFromTrpc(ctx), { clie_name: input.name })
     ),
@@ -63,7 +61,6 @@ export const clientRouter = router({
   // #region get
   get: protectedProcedure
     .input(ClientIdInput)
-    .output(ClientItemOutput.nullable())
     .query(({ ctx, input }) =>
       clientService.getClient(svcCtxFromTrpc(ctx), input.clie_idno)
     ),

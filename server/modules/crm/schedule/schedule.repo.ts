@@ -263,6 +263,26 @@ export const scheduleRepo = {
   },
   // #endregion
 
+  // #region calendarList — 월 전체 조회 (페이지네이션 없음)
+  async calendarList(
+    { db }: RepoDeps,
+    params: { comp_idno: number; from: Date; to: Date }
+  ): Promise<ScheduleRow[]> {
+    return db
+      .select()
+      .from(CRM_SCHEDULE)
+      .where(
+        and(
+          eq(CRM_SCHEDULE.comp_idno, params.comp_idno),
+          eq(CRM_SCHEDULE.enab_yesn, true),
+          gte(CRM_SCHEDULE.sche_date, params.from),
+          lt(CRM_SCHEDULE.sche_date, params.to)
+        )
+      )
+      .orderBy(asc(CRM_SCHEDULE.sche_date));
+  },
+  // #endregion
+
   // #region disable (soft)
   async disable({ db }: RepoDeps, params: { comp_idno: number; sche_idno: number; data: ScheduleUpdate }) {
     await db

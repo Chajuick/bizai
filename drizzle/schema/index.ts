@@ -51,4 +51,5 @@ export * from "./crm/sale.audio-job.schema";
 export * from "./crm/schedule.schema";
 export * from "./crm/order.schema";
 export * from "./crm/shipment.schema";
+export * from "./crm/expense.schema";
 // #endregion

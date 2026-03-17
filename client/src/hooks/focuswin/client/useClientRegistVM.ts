@@ -16,6 +16,7 @@ import type { PageStatus } from "@/components/focuswin/common/page/scaffold/page
 const emptyClient = (): ClientDraft => ({
   clie_name: "",
   bizn_numb: "",
+  clie_type: "sales",
   indu_type: "",
   clie_addr: "",
   clie_memo: "",

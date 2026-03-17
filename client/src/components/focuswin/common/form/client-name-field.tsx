@@ -263,7 +263,7 @@ export default function ClientNameField({
 
       await utils.crm.client.list.invalidate();
 
-      onChange(value, (result as any).clie_idno);
+      onChange(value, result.clie_idno);
       toast.success(`'${value}' 거래처가 추가되었습니다.`);
     } catch (e) {
       handleApiError(e);
@@ -282,7 +282,7 @@ export default function ClientNameField({
 
       await utils.crm.client.list.invalidate();
 
-      onChange(trimmedValue, (result as any).clie_idno);
+      onChange(trimmedValue, result.clie_idno);
       setSuggestion(null);
       setOpen(false);
 

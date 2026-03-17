@@ -51,12 +51,18 @@ export function useMicrophonePermission() {
 
   useEffect(() => {
     if (!("permissions" in navigator)) return;
+    let permStatus: PermissionStatus | null = null;
+    const handler = () => { if (permStatus) setState(permStatus.state as PermissionState); };
+
     navigator.permissions.query({ name: "microphone" as PermissionName }).then((status) => {
+      permStatus = status;
       setState(status.state as PermissionState);
-      status.onchange = () => setState(status.state as PermissionState);
+      status.addEventListener("change", handler);
     }).catch(() => {
       // 브라우저 미지원 — 쿼리 불가, idle 유지
     });
+
+    return () => { permStatus?.removeEventListener("change", handler); };
   }, []);
 
   return { state };

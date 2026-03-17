@@ -40,9 +40,13 @@ export const ClientFindNameInput = z.object({
   name: z.string().min(1),
 });
 
+export const ClientTypeEnum = z.enum(["sales", "purchase", "both"]);
+export type ClientType = z.infer<typeof ClientTypeEnum>;
+
 export const ClientCreateInput = z.object({
   clie_name: z.string().min(1),
   bizn_numb: z.string().regex(/^\d{10}$/, "사업자번호는 숫자 10자리여야 합니다.").optional(),
+  clie_type: ClientTypeEnum.default("sales").optional(),
   indu_type: z.string().optional(),
   cont_name: z.string().optional(),
   cont_tele: z.string().optional(),
@@ -56,6 +60,7 @@ export const ClientUpdateInput = z.object({
 
   clie_name: z.string().min(1).optional(),
   bizn_numb: z.string().regex(/^\d{10}$/, "사업자번호는 숫자 10자리여야 합니다.").nullable().optional(),
+  clie_type: ClientTypeEnum.optional(),
   indu_type: z.string().nullable().optional(),
   cont_name: z.string().nullable().optional(),
   cont_tele: z.string().nullable().optional(),
@@ -130,6 +135,7 @@ export const ClientItemOutput = z.object({
   clie_idno: z.number().int().positive(),
   clie_name: z.string(),
   bizn_numb: z.string().nullable().optional(),
+  clie_type: ClientTypeEnum.default("sales"),
 
   indu_type: z.string().nullable().optional(),
   cont_name: z.string().nullable().optional(),

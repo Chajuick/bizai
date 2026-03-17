@@ -17,6 +17,7 @@ import { createContext } from "./trpc/context";
 import { registerOAuthRoutes } from "./oauth";
 import { serveStatic, setupVite } from "./vite";
 import { runBillingSweepJobs, runStaleJobRecovery, runOrphanFileCleanup, runAiJobWorker } from "../jobs/billing.jobs";
+import { listAvailableModels } from "./vision";
 // #endregion
 
 // #region Boot
@@ -24,6 +25,7 @@ async function main() {
     // #region App
     const app = express();
     app.disable("x-powered-by");
+    app.set("trust proxy", 1); // 리버스 프록시(Nginx/Cloudflare) 뒤에서 req.ip 정상 인식 + Rate Limiter 올바른 IP 키 사용
 
     // #region Security Headers (Helmet)
     // 개발 환경: Vite HMR websocket/inline script 충돌 방지로 CSP 비활성화
@@ -137,6 +139,10 @@ async function main() {
     server.listen(port, () => {
         logger.info({ port }, "server listening");
     });
+    // #endregion
+
+    // #region Vision 디버그 — 서버 시작 시 Gemini 사용 가능 모델 로그
+    listAvailableModels().catch(() => {/* 실패해도 부팅 중단 안 함 */});
     // #endregion
 
     // #region Background Jobs

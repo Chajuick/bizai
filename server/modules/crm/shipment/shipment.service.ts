@@ -80,6 +80,8 @@ export const shipmentService = {
         orde_idno: input?.orde_idno,
         ship_stat: input?.ship_stat,
         search: input?.search,
+        from: input?.from ? new Date(input.from) : undefined,
+        to:   input?.to   ? new Date(input.to)   : undefined,
 
         limit: page.limit,
         offset: page.offset,

@@ -4,6 +4,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import type { OrderRow, OrderStatus } from "@/types/order";
+import type { DateRange } from "@/components/focuswin/common/filters/date-range-filter";
 // #endregion
 
 // #region Constants
@@ -12,7 +13,7 @@ const PAGE_LIMIT = 20;
 
 export type OrderTabKey = OrderStatus | "all";
 
-export function useOrderVM() {
+export function useOrderVM(dateRange?: DateRange) {
   // #region State
   const [activeTab, setActiveTabState] = useState<OrderTabKey>("all");
   const [offset, setOffset] = useState(0);
@@ -28,6 +29,8 @@ export function useOrderVM() {
     {
       status: activeTab !== "all" ? activeTab : undefined,
       page: { limit: PAGE_LIMIT, offset },
+      from: dateRange?.from.toISOString(),
+      to:   dateRange?.to.toISOString(),
     },
     { placeholderData: (prev) => prev, staleTime: 10_000 }
   );
@@ -35,6 +38,13 @@ export function useOrderVM() {
   const statsQuery = trpc.crm.order.stats.useQuery(undefined, {
     staleTime: 30_000,
   });
+  // #endregion
+
+  // #region Reset on date range change
+  useEffect(() => {
+    setAccRows([]);
+    setOffset(0);
+  }, [dateRange?.from.getTime(), dateRange?.to.getTime()]);
   // #endregion
 
   // #region Merge pages (append)

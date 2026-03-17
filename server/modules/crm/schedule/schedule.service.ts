@@ -7,7 +7,7 @@ import { getDb } from "../../../core/db";
 import { normalizePage } from "../shared/pagination";
 import { withCreateAudit, withUpdateAudit } from "../shared/audit";
 
-import type { ScheduleCreatePayload, ScheduleSort, ScheduleTabKey, ScheduleUpdatePayload, ScheduleListInputType } from "./schedule.dto";
+import type { ScheduleCalendarListInput, ScheduleCreatePayload, ScheduleSort, ScheduleTabKey, ScheduleUpdatePayload, ScheduleListInputType } from "./schedule.dto";
 import { scheduleRepo, type ScheduleUpdate, type TabFilter } from "./schedule.repo";
 import { parseDateOrThrow, parseDateOrNull } from "../shared/date";
 import { toDecimalStr, toDecimalStrOrNull } from "../shared/decimal";
@@ -210,6 +210,39 @@ export const scheduleService = {
     await scheduleRepo.update({ db }, { comp_idno: ctx.comp_idno, sche_idno, data: audited });
 
     return { success: true as const };
+  },
+  // #endregion
+
+  // #region calendarListSchedules
+  async calendarListSchedules(ctx: ServiceCtx, input: ScheduleCalendarListInput) {
+    const db = getDb();
+
+    const { year, month } = input;
+
+    // KST 월 시작/종료를 UTC로 변환
+    // KST = UTC+9이므로 KST 1일 00:00 = UTC 전날 15:00
+    const monthStartKst = Date.UTC(year, month - 1, 1) - 9 * 60 * 60 * 1000;
+    const monthEndKst = Date.UTC(year, month, 1) - 9 * 60 * 60 * 1000;
+
+    const rows = await scheduleRepo.calendarList(
+      { db },
+      {
+        comp_idno: ctx.comp_idno,
+        from: new Date(monthStartKst),
+        to: new Date(monthEndKst),
+      }
+    );
+
+    const nowMs = Date.now();
+    const now = new Date(nowMs);
+    const kstMidnight = computeKstTodayMidnightDate(nowMs);
+    const imminentEnd = new Date(nowMs + 48 * 60 * 60 * 1000);
+
+    return rows.map((row) => ({
+      ...row,
+      overdue: row.sche_stat === "scheduled" && row.sche_date < kstMidnight,
+      imminent: row.sche_stat === "scheduled" && row.sche_date >= now && row.sche_date < imminentEnd,
+    }));
   },
   // #endregion
 

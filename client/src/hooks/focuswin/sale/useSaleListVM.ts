@@ -1,21 +1,13 @@
 import { useMemo, useState } from "react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
+import { useDateRange } from "@/components/focuswin/common/filters/date-range-filter";
 
 import type { SalesFilter } from "@/types/sale";
 import type { TabPill } from "@/components/focuswin/common/ui/tab-pills";
 import type { PageStatus } from "@/components/focuswin/common/page/scaffold/page-scaffold";
 
 // #region Utils
-
-function startOfWeekMonday(d: Date) {
-  const date = new Date(d);
-  const day = date.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  date.setDate(date.getDate() + diff);
-  date.setHours(0, 0, 0, 0);
-  return date;
-}
 
 function getSearchFromLocation(location: string) {
   const qs = location.split("?")[1] ?? "";
@@ -39,6 +31,10 @@ export function useSaleListVM() {
 
   // #endregion
 
+  // #region Date range filter
+  const { range: dateRange, setPreset: setDatePreset, setCustomRange } = useDateRange("30d");
+  // #endregion
+
   // #region Data fetching
 
   const { data, isLoading } = trpc.crm.sale.list.useQuery({
@@ -50,9 +46,6 @@ export function useSaleListVM() {
   // #endregion
 
   // #region Derived data
-
-  // NOTE: "이번주" 기준을 마운트 시점으로 고정 (추후 수정 검토)
-  const weekStart = useMemo(() => startOfWeekMonday(new Date()), []);
 
   type LogItem = (typeof logs)[number];
   type SaleRow = LogItem & { visitedAtDate: Date };
@@ -66,32 +59,43 @@ export function useSaleListVM() {
     [logs],
   );
 
+  // 날짜 범위 + 탭 필터 적용
+  const dateFiltered = useMemo(
+    () => normalized.filter((l) => l.visitedAtDate >= dateRange.from && l.visitedAtDate <= dateRange.to),
+    [normalized, dateRange],
+  );
+
   const predicates = useMemo(() => {
     const all = (_l: SaleRow) => true;
-    const thisWeek = (l: SaleRow) => l.visitedAtDate >= weekStart;
+    const thisWeek = (l: SaleRow) => {
+      const weekStart = new Date();
+      const day = weekStart.getDay();
+      weekStart.setDate(weekStart.getDate() - (day === 0 ? 6 : day - 1));
+      weekStart.setHours(0, 0, 0, 0);
+      return l.visitedAtDate >= weekStart;
+    };
     const ai = (l: SaleRow) => !!l.aiex_done;
-
     return { all, thisWeek, ai } satisfies Record<SalesFilter, (l: SaleRow) => boolean>;
-  }, [weekStart]);
+  }, []);
 
   const filteredLogs = useMemo(() => {
     const predicate = predicates[filter];
-    return normalized.filter(predicate);
-  }, [normalized, filter, predicates]);
+    return dateFiltered.filter(predicate);
+  }, [dateFiltered, filter, predicates]);
 
   const counts = useMemo(() => {
     let all = 0;
     let thisWeek = 0;
     let ai = 0;
 
-    for (const l of normalized) {
+    for (const l of dateFiltered) {
       all++;
       if (predicates.thisWeek(l)) thisWeek++;
       if (predicates.ai(l)) ai++;
     }
 
     return { all, thisWeek, ai };
-  }, [normalized, predicates]);
+  }, [dateFiltered, predicates]);
 
   const tabs: TabPill<SalesFilter>[] = useMemo(
     () => [
@@ -101,6 +105,19 @@ export function useSaleListVM() {
     ],
     [counts.all, counts.thisWeek, counts.ai],
   );
+
+  // Summary stats (날짜 범위 기준)
+  const summary = useMemo(() => {
+    let totalCount = 0;
+    let aiCount = 0;
+
+    for (const l of dateFiltered) {
+      totalCount++;
+      if (l.aiex_done) aiCount++;
+    }
+
+    return { totalCount, aiCount };
+  }, [dateFiltered]);
 
   // #endregion
 
@@ -156,17 +173,19 @@ export function useSaleListVM() {
     filter,
     setFilter,
 
+    // date filter
+    dateRange,
+    setDatePreset,
+    setCustomRange,
+
+    // summary stats (날짜 범위 기준)
+    summary,
+
     // data
-    /**
-     * 필터링된 아이템 목록.
-     * PaginatedList 공용 인터페이스와 맞추기 위해 `items` 로 노출.
-     * 현재는 전체 로드 후 클라이언트 필터링. 추후 서버 페이지네이션으로 교체 가능.
-     */
     items: filteredLogs,
     tabs,
 
     // ─── 통일 페이지네이션 인터페이스 ───────────────────────────
-    // 현재: 전체 로드 (no pagination). 서버 pagination 추가 시 여기만 교체.
     hasMore: false as boolean,
     isLoadingMore: false as boolean,
     loadMore: () => {},

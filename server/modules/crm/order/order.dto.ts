@@ -21,6 +21,10 @@ export const OrderListInput = z
     status: z.enum(ORDER_STATUSES).optional(),
     clie_idno: z.number().int().positive().optional(),
 
+    // 날짜 범위 필터 (ISO string, 포함)
+    from: z.string().optional(),
+    to: z.string().optional(),
+
     page: PaginationInput.optional(),
     sort: OrderSortInput.optional(),
 

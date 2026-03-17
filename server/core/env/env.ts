@@ -104,6 +104,10 @@ export const ENV = {
   sttApiKey: optional("STT_API_KEY"),
   sttModel: optional("STT_MODEL", "whisper-large-v3-turbo"),
 
+  // --- vision AI (Google Gemini — 영수증 이미지 분석)
+  geminiApiKey: optional("GEMINI_API_KEY"),
+  geminiModel: optional("GEMINI_MODEL", "gemini-2.5-flash"),
+
   // --- security
   allowedAudioHosts: optional("ALLOWED_AUDIO_HOSTS"),
   allowedAudioHostsList: csv("ALLOWED_AUDIO_HOSTS"),

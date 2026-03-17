@@ -19,6 +19,10 @@ export const ShipmentListInput = z
     ship_stat: z.enum(["pending", "delivered", "invoiced", "paid"]).optional(),
     search: z.string().optional(), // clie_name like
 
+    // 날짜 범위 필터 (ISO string, 포함)
+    from: z.string().optional(),
+    to: z.string().optional(),
+
     page: PaginationInput.optional(),
     sort: ShipmentSortInput.optional(),
 

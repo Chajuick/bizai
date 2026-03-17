@@ -15,8 +15,9 @@ export default function LoginPage() {
   const [, setLocation] = useLocation();
   const utils = trpc.useUtils();
 
-  // ?redirect= 파라미터 읽기 (없으면 "/")
-  const redirectTo = new URLSearchParams(window.location.search).get("redirect") ?? "/";
+  // ?redirect= 파라미터 읽기 — 상대 경로만 허용 (Open Redirect 방지)
+  const rawRedirect = new URLSearchParams(window.location.search).get("redirect") ?? "/";
+  const redirectTo = rawRedirect.startsWith("/") && !rawRedirect.startsWith("//") ? rawRedirect : "/";
 
   // OAuth/폼 로그인 모두를 위해 redirect 경로 보관
   // - redirect.ts가 "/" 및 "/auth/*" 저장을 막고,

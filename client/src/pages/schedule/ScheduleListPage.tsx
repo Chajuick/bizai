@@ -15,6 +15,7 @@ import NotificationPermissionBanner, {
 import ScheduleListHeadContent from "@/components/focuswin/page/schedule/list/Header";
 import ScheduleListEmptyCard from "@/components/focuswin/page/schedule/list/Empty";
 import ScheduleListContent from "@/components/focuswin/page/schedule/list/Content";
+import CalendarView from "@/components/focuswin/page/schedule/calendar/CalendarView";
 
 export default function ScheduleList() {
   const vm = useScheduleListVM();
@@ -44,7 +45,7 @@ export default function ScheduleList() {
         kicker="SCHEDULE"
         title="일정"
         description="후속 미팅과 할 일을 상태별로 관리하세요."
-        status={vm.status}
+        status={vm.view === "calendar" ? "ready" : vm.status}
         notice={composedNotice}
         headerChildren={<ScheduleListHeadContent vm={vm} />}
         empty={<ScheduleListEmptyCard vm={vm} />}
@@ -60,7 +61,20 @@ export default function ScheduleList() {
           onClick: vm.openCreate,
         }}
       >
-        <ScheduleListContent vm={vm} />
+        {vm.view === "calendar" ? (
+          <CalendarView
+            year={vm.calendarYear}
+            month={vm.calendarMonth}
+            items={vm.calendarItems}
+            isLoading={vm.isCalendarLoading}
+            onPrev={vm.prevMonth}
+            onNext={vm.nextMonth}
+            onDateClick={vm.openCreateForDate}
+            onItemClick={vm.handleEdit}
+          />
+        ) : (
+          <ScheduleListContent vm={vm} />
+        )}
       </PageScaffold>
     </>
   );

@@ -2,10 +2,13 @@
 
 // #region Imports
 import { useCallback, useMemo, useState } from "react";
+import { useLocation, useSearch } from "wouter";
 import { toast } from "sonner";
 import { handleApiError } from "@/lib/handleApiError";
+import { useDateRange } from "@/components/focuswin/common/filters/date-range-filter";
 
 import { toLocalDatetimeInputValue, toLocalDateInputValue } from "@/lib/utils";
+import { trpc } from "@/lib/trpc";
 
 import { useScheduleVM } from "./useScheduleVM";
 import type { TabKey } from "./useScheduleVM";
@@ -38,10 +41,65 @@ const EMPTY_ORDER_FORM: OrderQuickFormState = {
 // #endregion
 
 export function useScheduleListVM() {
+  // #region View toggle (list / calendar) — URL param ?view=calendar
+  const [, setLocation] = useLocation();
+  const search = useSearch();
+
+  const view: "list" | "calendar" = new URLSearchParams(search).get("view") === "calendar" ? "calendar" : "list";
+
+  const setView = useCallback((v: "list" | "calendar") => {
+    const params = new URLSearchParams(search);
+    if (v === "calendar") params.set("view", "calendar");
+    else params.delete("view");
+    const qs = params.toString();
+    setLocation(qs ? `/sche-list?${qs}` : "/sche-list");
+  }, [search, setLocation]);
+  // #endregion
+
+  // #region Calendar month state
+  const today = new Date();
+  const [calendarYear, setCalendarYear] = useState(today.getFullYear());
+  const [calendarMonth, setCalendarMonth] = useState(today.getMonth() + 1); // 1-based
+
+  const prevMonth = useCallback(() => {
+    setCalendarMonth((m) => {
+      if (m === 1) { setCalendarYear((y) => y - 1); return 12; }
+      return m - 1;
+    });
+  }, []);
+
+  const nextMonth = useCallback(() => {
+    setCalendarMonth((m) => {
+      if (m === 12) { setCalendarYear((y) => y + 1); return 1; }
+      return m + 1;
+    });
+  }, []);
+  // #endregion
+
+  // #region Calendar query
+  const calendarQuery = trpc.crm.schedule.calendarList.useQuery(
+    { year: calendarYear, month: calendarMonth },
+    { enabled: view === "calendar", staleTime: 10_000 }
+  );
+  // #endregion
+
+  // #region Date range filter
+  const { range: dateRange, setPreset: setDatePreset, setCustomRange } = useDateRange("30d");
+  // #endregion
+
   // #region Base VM (list/tabs/paging)
   const { activeTab, setActiveTab, isLoading, isLoadingMore, list, displayList, counts, overdueInList, imminentInList, hasMore, loadMore, refresh } = useScheduleVM();
 
-  const hasData = displayList.length > 0;
+  // 날짜 범위로 클라이언트 필터링
+  const filteredDisplayList = useMemo(
+    () => displayList.filter((s) => {
+      const d = new Date(s.sche_date);
+      return d >= dateRange.from && d <= dateRange.to;
+    }),
+    [displayList, dateRange],
+  );
+
+  const hasData = filteredDisplayList.length > 0;
 
   // 페이지 공통 status 규칙
   const status: PageStatus = isLoading ? "loading" : hasData ? "ready" : "empty";
@@ -82,6 +140,15 @@ export function useScheduleListVM() {
     resetForm();
     setShowForm(true);
   }, [resetForm]);
+
+  // 캘린더에서 날짜 클릭 → 해당 날짜 09:00 KST로 생성 모달 오픈
+  const openCreateForDate = useCallback((dateStr: string) => {
+    // dateStr: "2026-03-15" (KST 날짜)
+    const dt = new Date(`${dateStr}T09:00:00+09:00`);
+    resetForm();
+    setForm((f) => ({ ...f, sche_date: toLocalDatetimeInputValue(dt) }));
+    setShowForm(true);
+  }, [resetForm, setForm]);
 
   const handleFormOpenChange = useCallback(
     (open: boolean) => {
@@ -324,11 +391,20 @@ export function useScheduleListVM() {
     // Page-level
     status,
 
+    // view toggle
+    view,
+    setView,
+
+    // date filter
+    dateRange,
+    setDatePreset,
+    setCustomRange,
+
     // list / tab
     activeTab,
     setActiveTab,
     isLoading,
-    displayList,
+    displayList: filteredDisplayList,
     hasData,
     statusTabs,
     overdueInList,
@@ -339,8 +415,17 @@ export function useScheduleListVM() {
     loadMore,
     isLoadingMore,
 
+    // calendar
+    calendarYear,
+    calendarMonth,
+    prevMonth,
+    nextMonth,
+    calendarItems: (calendarQuery.data ?? []) as EnhancedSchedule[],
+    isCalendarLoading: calendarQuery.isLoading,
+
     // schedule form triggers
     openCreate,
+    openCreateForDate,
     handleFormOpenChange,
 
     // card actions

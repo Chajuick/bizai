@@ -1,7 +1,7 @@
 // server/modules/crm/order/order.repo.ts
 
 // #region Imports
-import { and, asc, desc, eq, like } from "drizzle-orm";
+import { and, asc, desc, eq, gte, like, lte } from "drizzle-orm";
 
 import { CRM_ORDER } from "../../../../drizzle/schema";
 import { escapeLike } from "../shared/like";
@@ -54,6 +54,8 @@ function buildWhere(params: {
   search?: string;
   clie_idno?: number;
   onlyEnabled?: boolean;
+  from?: Date;
+  to?: Date;
 }) {
   const conditions = [eq(CRM_ORDER.comp_idno, params.comp_idno)];
 
@@ -71,6 +73,14 @@ function buildWhere(params: {
 
   if (params.search) {
     conditions.push(like(CRM_ORDER.clie_name, `%${escapeLike(params.search)}%`));
+  }
+
+  if (params.from) {
+    conditions.push(gte(CRM_ORDER.crea_date, params.from));
+  }
+
+  if (params.to) {
+    conditions.push(lte(CRM_ORDER.crea_date, params.to));
   }
 
   return and(...conditions);
@@ -92,6 +102,8 @@ export const orderRepo = {
 
       sort?: { field: SortField; dir: SortDir };
       onlyEnabled?: boolean;
+      from?: Date;
+      to?: Date;
     }
   ): Promise<OrderRow[]> {
     const where = buildWhere(params);
