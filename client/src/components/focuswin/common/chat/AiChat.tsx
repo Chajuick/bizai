@@ -60,7 +60,7 @@ export default function AiChat() {
       {!vm.open && (
         <button
           onClick={() => vm.setOpen(true)}
-          className="fixed bottom-[calc(80px+env(safe-area-inset-bottom))] right-4 lg:bottom-6 lg:right-6 z-50
+          className="fixed bottom-[calc(80px+env(safe-area-inset-bottom))] left-4 lg:bottom-6 lg:left-auto lg:right-6 z-50
             w-12 h-12 rounded-2xl flex items-center justify-center
             text-white transition hover:scale-105 active:scale-95"
           style={{ background: "rgb(37,99,235)", boxShadow: "0 8px 24px rgba(37,99,235,0.35)" }}
