@@ -114,7 +114,7 @@ export default function ExpenseEditFormCard({
                 className={cn(
                   "px-3 py-1 rounded-full text-xs font-semibold border transition-colors",
                   form.recr_type === o.value
-                    ? "bg-orange-500 text-white border-orange-500"
+                    ? "bg-blue-500 text-white border-blue-500"
                     : "bg-white text-slate-600 border-slate-200 hover:border-slate-300",
                 )}
               >

@@ -18,7 +18,7 @@ export function useExpenseDetailVM() {
   const expenseId = Number(id);
   const isValidId = Number.isFinite(expenseId) && expenseId > 0;
 
-  const goList = useCallback(() => navigate("/expe-list"), [navigate]);
+  const goList = useCallback(() => window.history.back(), []);
 
   // #region Query
   const expenseGet = trpc.crm.expense.get.useQuery(

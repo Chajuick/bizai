@@ -61,7 +61,7 @@ function ExpenseCard({ item, vm }: { item: ExpenseItem; vm: VM }) {
 
   return (
     <div
-      className="rounded-3xl border border-slate-100 bg-white p-4 transition-shadow hover:shadow-sm cursor-pointer"
+      className="rounded-3xl border border-slate-100 bg-white p-4 cursor-pointer transition-all hover:border-slate-200 hover:-translate-y-[1px] hover:[box-shadow:0_8px_24px_rgba(15,23,42,0.10)]"
       style={{ boxShadow: "0 4px 16px rgba(15,23,42,0.04)" }}
       onClick={() => vm.openDetail(item.expe_idno)}
     >
@@ -69,10 +69,10 @@ function ExpenseCard({ item, vm }: { item: ExpenseItem; vm: VM }) {
         {/* Icon */}
         <div className={cn(
           "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0",
-          item.recr_type !== "none" ? "bg-orange-50" : "bg-slate-50",
+          item.recr_type !== "none" ? "bg-blue-50" : "bg-slate-50",
         )}>
           {item.recr_type !== "none"
-            ? <RefreshCw size={16} className="text-orange-500" />
+            ? <RefreshCw size={16} className="text-blue-500" />
             : <Receipt size={16} className="text-slate-500" />
           }
         </div>
@@ -108,7 +108,7 @@ function ExpenseCard({ item, vm }: { item: ExpenseItem; vm: VM }) {
               {typeBadge.label}
             </span>
             {recurLabel && (
-              <span className="inline-flex items-center rounded-full border border-orange-200 bg-orange-50 px-2 py-0.5 text-[10px] font-semibold text-orange-600">
+              <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[10px] font-semibold text-blue-600">
                 <RefreshCw size={8} className="mr-1" />{recurLabel}
               </span>
             )}

@@ -8,8 +8,7 @@ import type { PageStatus } from "@/components/focuswin/common/page/scaffold/page
 import type { TabPill } from "@/components/focuswin/common/ui/tab-pills";
 
 // #region Types
-export type ExpenseTypeFilter = "all" | "receipt" | "invoice" | "contract" | "other";
-export type PayFilter = "all" | "once" | "recur" | "card" | "cash" | "transfer";
+export type PayFilter = "all" | "card" | "cash" | "transfer";
 // #endregion
 
 // #region Utils
@@ -26,8 +25,7 @@ export function useExpenseListVM() {
   // #endregion
 
   // #region Filters
-  const { range: dateRange, setPreset: setDatePreset, setCustomRange } = useDateRange("30d");
-  const [typeFilter, setTypeFilter] = useState<ExpenseTypeFilter>("all");
+  const { range: dateRange, setPreset: setDatePreset, setCustomRange } = useDateRange("30d", "expense-list");
   const [payFilter, setPayFilter] = useState<PayFilter>("all");
   // #endregion
 
@@ -47,19 +45,14 @@ export function useExpenseListVM() {
       // 날짜 범위
       if (date < dateRange.from || date > dateRange.to) return false;
 
-      // 증빙 유형 필터
-      if (typeFilter !== "all" && item.expe_type !== typeFilter) return false;
-
-      // 결제/반복 필터
-      if (payFilter === "once"     && item.recr_type !== "none") return false;
-      if (payFilter === "recur"    && item.recr_type === "none") return false;
+      // 결제 수단 필터
       if (payFilter === "card"     && item.paym_meth !== "card") return false;
       if (payFilter === "cash"     && item.paym_meth !== "cash") return false;
       if (payFilter === "transfer" && item.paym_meth !== "transfer") return false;
 
       return true;
     });
-  }, [rawItems, dateRange, typeFilter, payFilter]);
+  }, [rawItems, dateRange, payFilter]);
   // #endregion
 
   // #region Summary stats (조회 기간 기준)
@@ -81,35 +74,21 @@ export function useExpenseListVM() {
   }, [items]);
   // #endregion
 
-  // #region Tab pills — 증빙 유형
-  const typeCounts = useMemo(() => {
-    const counts = { all: 0, receipt: 0, invoice: 0, contract: 0, other: 0 };
-    for (const item of rawItems.filter((item) => {
+  // #region Tab pills — 결제 수단 (날짜 범위 기준 건수)
+  const payTabs: TabPill<PayFilter>[] = useMemo(() => {
+    const dateFiltered = rawItems.filter((item) => {
       const date = new Date(item.expe_date);
       return date >= dateRange.from && date <= dateRange.to;
-    })) {
-      counts.all++;
-      if (item.expe_type in counts) counts[item.expe_type as keyof typeof counts]++;
-    }
-    return counts;
+    });
+    const count = (meth?: string) =>
+      meth ? dateFiltered.filter((i) => i.paym_meth === meth).length : dateFiltered.length;
+    return [
+      { key: "all",      label: "전체", count: count() },
+      { key: "card",     label: "카드", count: count("card") },
+      { key: "cash",     label: "현금", count: count("cash") },
+      { key: "transfer", label: "이체", count: count("transfer") },
+    ];
   }, [rawItems, dateRange]);
-
-  const typeTabs: TabPill<ExpenseTypeFilter>[] = useMemo(() => [
-    { key: "all",      label: "전체",   count: typeCounts.all },
-    { key: "receipt",  label: "영수증", count: typeCounts.receipt },
-    { key: "invoice",  label: "명세서", count: typeCounts.invoice },
-    { key: "contract", label: "계약서", count: typeCounts.contract },
-    { key: "other",    label: "기타",   count: typeCounts.other },
-  ], [typeCounts]);
-
-  const payTabs: TabPill<PayFilter>[] = [
-    { key: "all",      label: "전체" },
-    { key: "once",     label: "일회성" },
-    { key: "recur",    label: "반복" },
-    { key: "card",     label: "카드" },
-    { key: "cash",     label: "현금" },
-    { key: "transfer", label: "이체" },
-  ];
   // #endregion
 
   // #region Status
@@ -145,9 +124,6 @@ export function useExpenseListVM() {
     setCustomRange,
 
     // segment filters
-    typeFilter,
-    setTypeFilter,
-    typeTabs,
     payFilter,
     setPayFilter,
     payTabs,

@@ -16,53 +16,33 @@ export default function ExpenseListHeader({ vm }: { vm: VM }) {
       <StatCards
         cards={[
           {
-            kicker: "TOTAL",
+            kicker: `${vm.dateRange.label} 합계`,
             value: formatKRW(vm.summary.totalAmnt),
-            label: `${vm.summary.totalCount}건 · ${vm.dateRange.label}`,
+            label: "",
           },
           {
-            kicker: "CARD",
+            kicker: "카드 결제",
             value: formatKRW(vm.summary.cardAmnt),
-            label: "카드 결제",
+            label: "",
           },
           {
-            kicker: "RECUR",
+            kicker: "반복 지출",
             value: `${vm.summary.recurCount}건`,
-            label: "반복 지출",
+            label: "",
           },
         ]}
       />
 
       {/* Date + Search row */}
       <div className="flex items-center gap-2 flex-wrap">
-        <DateRangeFilter
-          range={vm.dateRange}
-          onChange={vm.setDatePreset}
-          onCustomRange={vm.setCustomRange}
-        />
+        <DateRangeFilter range={vm.dateRange} onChange={vm.setDatePreset} onCustomRange={vm.setCustomRange} />
         <div className="flex-1 min-w-[160px]">
-          <SearchInput
-            value={vm.search}
-            onChange={vm.handleSearch}
-            onClear={vm.handleClear}
-            placeholder="지출명, 거래처, 메모 검색"
-          />
+          <SearchInput value={vm.search} onChange={vm.handleSearch} onClear={vm.handleClear} placeholder="지출명, 거래처, 메모 검색" />
         </div>
       </div>
 
-      {/* Type segment filter */}
-      <TabPills
-        tabs={vm.typeTabs}
-        value={vm.typeFilter}
-        onChange={vm.setTypeFilter}
-      />
-
-      {/* Pay/recur segment filter */}
-      <TabPills
-        tabs={vm.payTabs}
-        value={vm.payFilter}
-        onChange={vm.setPayFilter}
-      />
+      {/* 결제 수단 필터 */}
+      <TabPills tabs={vm.payTabs} value={vm.payFilter} onChange={vm.setPayFilter} />
     </div>
   );
 }

@@ -13,6 +13,7 @@ export default function ExpenseListPage() {
 
   return (
     <PageScaffold
+      size="lg"
       kicker="EXPENSE"
       title="지출"
       description="매입 비용과 운영 지출을 관리하세요."
@@ -25,6 +26,7 @@ export default function ExpenseListPage() {
         icon: <Plus size={16} />,
         href: "/expe-list/new",
       }}
+      hidePrimaryActionOnMobile
       fab={{
         label: "지출 추가",
         icon: <Plus size={24} />,
