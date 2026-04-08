@@ -21,6 +21,7 @@ export type ScheduleTabKey = (typeof SCHEDULE_TAB_KEYS)[number];
 // #region Inputs
 export const ScheduleListInput = z
   .object({
+    clie_idno: z.number().int().positive().optional(),
     tab: z.enum(SCHEDULE_TAB_KEYS).optional(),
 
     page: PaginationInput.optional(),

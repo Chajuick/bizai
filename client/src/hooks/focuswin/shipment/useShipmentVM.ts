@@ -4,7 +4,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { trpc } from "@/lib/trpc";
 import type { ShipmentRow, ShipmentStatus } from "@/types/shipment";
-import type { DateRange } from "@/components/focuswin/common/filters/date-range-filter";
 // #endregion
 
 // #region Constants
@@ -13,7 +12,7 @@ const PAGE_LIMIT = 20;
 
 export type ShipmentTabKey = ShipmentStatus | "all";
 
-export function useShipmentVM(dateRange?: DateRange) {
+export function useShipmentVM() {
   // #region State
   const [activeTab, setActiveTabState] = useState<ShipmentTabKey>("all");
   const [offset, setOffset] = useState(0);
@@ -29,8 +28,6 @@ export function useShipmentVM(dateRange?: DateRange) {
     {
       ship_stat: activeTab !== "all" ? activeTab : undefined,
       page: { limit: PAGE_LIMIT, offset },
-      from: dateRange?.from.toISOString(),
-      to:   dateRange?.to.toISOString(),
     },
     { placeholderData: (prev) => prev, staleTime: 10_000 }
   );
@@ -38,13 +35,6 @@ export function useShipmentVM(dateRange?: DateRange) {
   const statsQuery = trpc.crm.shipment.stats.useQuery(undefined, {
     staleTime: 30_000,
   });
-  // #endregion
-
-  // #region Reset on date range change
-  useEffect(() => {
-    setAccRows([]);
-    setOffset(0);
-  }, [dateRange?.from.getTime(), dateRange?.to.getTime()]);
   // #endregion
 
   // #region Merge pages (append)
@@ -67,7 +57,6 @@ export function useShipmentVM(dateRange?: DateRange) {
 
   // #region Tab change (paging 리셋 포함)
   const setActiveTab = useCallback((tab: ShipmentTabKey) => {
-    setAccRows([]);
     setOffset(0);
     setActiveTabState(tab);
   }, []);
@@ -106,6 +95,7 @@ export function useShipmentVM(dateRange?: DateRange) {
     invoiced: 0,
     paid: 0,
     totalPaid: 0,
+    totalInvoiced: 0,
     totalPending: 0,
   };
   // #endregion

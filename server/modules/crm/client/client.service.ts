@@ -90,6 +90,7 @@ export const clientService = {
       {
         comp_idno: ctx.comp_idno,
         search: input?.search,
+        clie_type: input?.clie_type,
         limit: page.limit,
         offset: page.offset,
         sort,
@@ -103,6 +104,20 @@ export const clientService = {
       items: hasMore ? rows.slice(0, page.limit) : rows,
       page: { ...page, hasMore },
     };
+  },
+  // #endregion
+
+  // #region toggleFavorite
+  async toggleFavorite(ctx: ServiceCtx, input: { clie_idno: number }) {
+    const db = getDb();
+    return clientRepo.toggleFavorite({ db }, { comp_idno: ctx.comp_idno, clie_idno: input.clie_idno });
+  },
+  // #endregion
+
+  // #region getTypeCounts
+  async getTypeCounts(ctx: ServiceCtx, input?: { search?: string }) {
+    const db = getDb();
+    return clientRepo.countByType({ db }, { comp_idno: ctx.comp_idno, search: input?.search });
   },
   // #endregion
 

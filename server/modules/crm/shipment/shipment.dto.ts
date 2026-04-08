@@ -15,6 +15,7 @@ type ShipmentSortField = z.infer<typeof ShipmentSortInput>["field"];
 // #region Inputs
 export const ShipmentListInput = z
   .object({
+    clie_idno: z.number().int().positive().optional(),
     orde_idno: z.number().int().positive().optional(),
     ship_stat: z.enum(["pending", "delivered", "invoiced", "paid"]).optional(),
     search: z.string().optional(), // clie_name like
@@ -117,6 +118,7 @@ export const ShipmentStatsOutput = z.object({
   invoiced: z.number().int(),
   paid: z.number().int(),
   totalPaid: z.number(),
+  totalInvoiced: z.number(),
   totalPending: z.number(),
 });
 export type ShipmentStatsOutput = z.infer<typeof ShipmentStatsOutput>;

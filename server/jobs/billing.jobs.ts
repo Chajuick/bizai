@@ -23,7 +23,7 @@ let workerRunning = false;
 const MAX_JOBS_PER_CYCLE = 10;
 
 /** 기본 worker 실행 주기 */
-const WORKER_INTERVAL = 5000;
+const WORKER_INTERVAL = 1000;
 
 /** DB 장애 시 최대 backoff */
 const MAX_BACKOFF = 60000;

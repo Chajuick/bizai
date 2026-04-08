@@ -12,6 +12,7 @@ export const CRM_ORDER = table(
     owne_idno: int("owne_idno").notNull(),                           // 담당자 user_idno
     clie_idno: int("clie_idno"),                                     // 거래처 ID(옵션)
     sale_idno: int("sale_idno"),                                     // 영업일지 ID(옵션)
+    sche_idno: int("sche_idno"),                                     // 생성 출처 일정 ID(옵션)
 
     clie_name: varchar("clie_name", { length: 200 }).notNull(),      // 거래처명(스냅샷/자유입력) *필수
     prod_serv: varchar("prod_serv", { length: 300 }).notNull(),      // 제품/서비스명

@@ -24,6 +24,7 @@ import {
   ClientSaveWithContactsInput,
   ClientSyncContactInput,
   ClientSyncContactsInput,
+  ClientToggleFavoriteInput,
   ClientUpdateInput,
   ClientUploadInput,
   ClientUploadOutput,
@@ -39,6 +40,18 @@ export const clientRouter = router({
   list: protectedProcedure
     .input(ClientListInput)
     .query(({ ctx, input }) => clientService.listClients(svcCtxFromTrpc(ctx), input)),
+  // #endregion
+
+  // #region toggleFavorite
+  toggleFavorite: protectedProcedure
+    .input(ClientToggleFavoriteInput)
+    .mutation(({ ctx, input }) => clientService.toggleFavorite(svcCtxFromTrpc(ctx), input)),
+  // #endregion
+
+  // #region typeCounts
+  typeCounts: protectedProcedure
+    .input(z.object({ search: z.string().optional() }).optional())
+    .query(({ ctx, input }) => clientService.getTypeCounts(svcCtxFromTrpc(ctx), input)),
   // #endregion
 
   // #region findBestMatch

@@ -20,6 +20,7 @@ export const OrderListInput = z
 
     status: z.enum(ORDER_STATUSES).optional(),
     clie_idno: z.number().int().positive().optional(),
+    sche_idno: z.number().int().positive().optional(),
 
     // 날짜 범위 필터 (ISO string, 포함)
     from: z.string().optional(),
@@ -40,6 +41,7 @@ export const OrderIdInput = z.object({
 export const OrderCreateInput = z.object({
   clie_idno: z.number().int().positive().optional(),
   sale_idno: z.number().int().positive().optional(),
+  sche_idno: z.number().int().positive().optional(),
 
   clie_name: z.string().min(1),
   prod_serv: z.string().min(1),
@@ -58,6 +60,7 @@ export const OrderUpdateInput = z.object({
 
   clie_idno: z.number().int().positive().nullable().optional(),
   sale_idno: z.number().int().positive().nullable().optional(),
+  sche_idno: z.number().int().positive().nullable().optional(),
 
   clie_name: z.string().min(1).optional(),
   prod_serv: z.string().min(1).optional(),
@@ -85,6 +88,7 @@ export const OrderItemOutput = z.object({
 
   clie_idno: z.number().int().nullable().optional(),
   sale_idno: z.number().int().nullable().optional(),
+  sche_idno: z.number().int().nullable().optional(),
 
   clie_name: z.string(),
   prod_serv: z.string(),

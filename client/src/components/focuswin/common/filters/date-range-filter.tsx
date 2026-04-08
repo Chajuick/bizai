@@ -58,33 +58,63 @@ export const DEFAULT_DATE_RANGE: DateRange = buildDateRange("30d");
 // #endregion
 
 // #region Hook
-export function useDateRange(initial: Exclude<DatePreset, "custom"> = "30d") {
-  const [preset, setPresetState] = useState<DatePreset>(initial);
-  const [customFrom, setCustomFrom] = useState<string>("");
-  const [customTo, setCustomTo] = useState<string>("");
+const STORAGE_PREFIX = "fw_daterange_";
+
+function readStorage(key: string): { preset: DatePreset; from?: string; to?: string } | null {
+  try {
+    const raw = localStorage.getItem(STORAGE_PREFIX + key);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function writeStorage(key: string, preset: DatePreset, from?: string, to?: string) {
+  try {
+    localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify({ preset, from, to }));
+  } catch {
+    // localStorage 사용 불가 환경 무시
+  }
+}
+
+export function useDateRange(
+  initial: Exclude<DatePreset, "custom"> = "30d",
+  storageKey?: string,
+) {
+  const [preset, setPresetState] = useState<DatePreset>(() => {
+    if (!storageKey) return initial;
+    return readStorage(storageKey)?.preset ?? initial;
+  });
+  const [customFrom, setCustomFrom] = useState<string>(() => {
+    if (!storageKey) return "";
+    return readStorage(storageKey)?.from ?? "";
+  });
+  const [customTo, setCustomTo] = useState<string>(() => {
+    if (!storageKey) return "";
+    return readStorage(storageKey)?.to ?? "";
+  });
 
   const range = useMemo((): DateRange => {
     if (preset === "custom" && customFrom && customTo) {
-      // date-only strings → local midnight / end of day
       const from = new Date(customFrom + "T00:00:00");
       const to   = new Date(customTo   + "T23:59:59");
-      return {
-        from,
-        to,
-        preset: "custom",
-        label: `${customFrom} ~ ${customTo}`,
-      };
+      return { from, to, preset: "custom", label: `${customFrom} ~ ${customTo}` };
     }
     if (preset === "custom") return buildDateRange("30d");
     return buildDateRange(preset);
   }, [preset, customFrom, customTo]);
 
-  const setPreset = (p: DatePreset) => setPresetState(p);
+  const setPreset = (p: DatePreset) => {
+    setPresetState(p);
+    if (storageKey) writeStorage(storageKey, p);
+  };
 
   const setCustomRange = (from: string, to: string) => {
     setCustomFrom(from);
     setCustomTo(to);
     setPresetState("custom");
+    if (storageKey) writeStorage(storageKey, "custom", from, to);
   };
 
   return { range, preset, setPreset, setCustomRange };

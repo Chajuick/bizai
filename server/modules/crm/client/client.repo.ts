@@ -24,23 +24,26 @@ type ClientSortDir = "asc" | "desc";
 
 // #region Utils
 function orderByFor(sort?: { field: ClientSortField; dir: ClientSortDir }) {
-  if (!sort) return [desc(CRM_CLIENT.modi_date), desc(CRM_CLIENT.crea_date)] as const;
+  // 즐겨찾기 항상 최상단
+  const favrFirst = desc(CRM_CLIENT.favr_yesn);
+
+  if (!sort) return [favrFirst, desc(CRM_CLIENT.modi_date), desc(CRM_CLIENT.crea_date)] as const;
 
   const dirFn = sort.dir === "asc" ? asc : desc;
 
   switch (sort.field) {
     case "modi_date":
-      return [dirFn(CRM_CLIENT.modi_date)] as const;
+      return [favrFirst, dirFn(CRM_CLIENT.modi_date)] as const;
     case "crea_date":
-      return [dirFn(CRM_CLIENT.crea_date)] as const;
+      return [favrFirst, dirFn(CRM_CLIENT.crea_date)] as const;
     case "clie_name":
-      return [dirFn(CRM_CLIENT.clie_name)] as const;
+      return [favrFirst, dirFn(CRM_CLIENT.clie_name)] as const;
     default:
-      return [desc(CRM_CLIENT.modi_date), desc(CRM_CLIENT.crea_date)] as const;
+      return [favrFirst, desc(CRM_CLIENT.modi_date), desc(CRM_CLIENT.crea_date)] as const;
   }
 }
 
-function buildWhere(params: { comp_idno: number; search?: string; onlyEnabled?: boolean }) {
+function buildWhere(params: { comp_idno: number; search?: string; clie_type?: string; onlyEnabled?: boolean }) {
   const conditions = [eq(CRM_CLIENT.comp_idno, params.comp_idno)];
 
   //  soft disable 정책: 기본 활성만
@@ -50,6 +53,10 @@ function buildWhere(params: { comp_idno: number; search?: string; onlyEnabled?: 
 
   if (params.search) {
     conditions.push(like(CRM_CLIENT.clie_name, `%${escapeLike(params.search)}%`));
+  }
+
+  if (params.clie_type) {
+    conditions.push(eq(CRM_CLIENT.clie_type, params.clie_type));
   }
 
   return and(...conditions);
@@ -63,6 +70,7 @@ export const clientRepo = {
     params: {
       comp_idno: number;
       search?: string;
+      clie_type?: string;
       limit: number;
       offset: number;
       sort?: { field: ClientSortField; dir: ClientSortDir };
@@ -72,6 +80,7 @@ export const clientRepo = {
     const where = buildWhere({
       comp_idno: params.comp_idno,
       search: params.search,
+      clie_type: params.clie_type,
       onlyEnabled: params.onlyEnabled,
     });
 
@@ -84,6 +93,49 @@ export const clientRepo = {
       .orderBy(...orderBy)
       .limit(params.limit + 1)
       .offset(params.offset);
+  },
+  // #endregion
+
+  // #region toggleFavorite
+  async toggleFavorite(
+    { db }: RepoDeps,
+    params: { comp_idno: number; clie_idno: number }
+  ): Promise<{ favr_yesn: boolean }> {
+    const client = await clientRepo.getById({ db }, { comp_idno: params.comp_idno, clie_idno: params.clie_idno });
+    if (!client) throw new Error("거래처를 찾을 수 없습니다.");
+
+    const next = !client.favr_yesn;
+    await db
+      .update(CRM_CLIENT)
+      .set({ favr_yesn: next })
+      .where(and(eq(CRM_CLIENT.comp_idno, params.comp_idno), eq(CRM_CLIENT.clie_idno, params.clie_idno)));
+
+    return { favr_yesn: next };
+  },
+  // #endregion
+
+  // #region countByType
+  async countByType(
+    { db }: RepoDeps,
+    params: { comp_idno: number; search?: string }
+  ): Promise<{ all: number; sales: number; purchase: number; both: number }> {
+    const baseWhere = buildWhere({ comp_idno: params.comp_idno, search: params.search, onlyEnabled: true });
+
+    const rows = await db
+      .select({ clie_type: CRM_CLIENT.clie_type, cnt: count() })
+      .from(CRM_CLIENT)
+      .where(baseWhere)
+      .groupBy(CRM_CLIENT.clie_type);
+
+    let sales = 0, purchase = 0, both = 0;
+    for (const r of rows) {
+      const n = Number(r.cnt);
+      if (r.clie_type === "sales")    sales    = n;
+      if (r.clie_type === "purchase") purchase = n;
+      if (r.clie_type === "both")     both     = n;
+    }
+
+    return { all: sales + purchase + both, sales, purchase, both };
   },
   // #endregion
 

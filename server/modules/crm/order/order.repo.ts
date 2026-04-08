@@ -53,6 +53,7 @@ function buildWhere(params: {
   status?: "proposal" | "negotiation" | "confirmed" | "canceled";
   search?: string;
   clie_idno?: number;
+  sche_idno?: number;
   onlyEnabled?: boolean;
   from?: Date;
   to?: Date;
@@ -69,6 +70,10 @@ function buildWhere(params: {
 
   if (params.clie_idno) {
     conditions.push(eq(CRM_ORDER.clie_idno, params.clie_idno));
+  }
+
+  if (params.sche_idno) {
+    conditions.push(eq(CRM_ORDER.sche_idno, params.sche_idno));
   }
 
   if (params.search) {
@@ -96,6 +101,7 @@ export const orderRepo = {
       status?: "proposal" | "negotiation" | "confirmed" | "canceled";
       search?: string;
       clie_idno?: number;
+      sche_idno?: number;
 
       limit: number;
       offset: number;

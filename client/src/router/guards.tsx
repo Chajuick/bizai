@@ -7,8 +7,11 @@ import SaleListPage from "@/pages/sale/SaleListPage";
 import SaleDetailPage from "@/pages/sale/SaleDetailPage";
 import SaleRegistPage from "@/pages/sale/SaleRegistPage";
 import ScheduleListPage from "@/pages/schedule/ScheduleListPage";
+import ScheduleDetailPage from "@/pages/schedule/ScheduleDetailPage";
 import OrderListPage from "@/pages/order/OrderListPage";
+import OrderDetailPage from "@/pages/order/OrderDetailPage";
 import ShipmentList from "@/pages/shipment/ShipmentList";
+import ShipmentDetailPage from "@/pages/shipment/ShipmentDetailPage";
 import ExpenseListPage from "@/pages/expense/ExpenseListPage";
 import ExpenseCreatePage from "@/pages/expense/ExpenseCreatePage";
 import ExpenseDetailPage from "@/pages/expense/ExpenseDetailPage";
@@ -34,8 +37,11 @@ export function AppGuard() {
         <Route path="/sale-list/regi" component={SaleRegistPage} />
         <Route path="/sale-list/:id" component={SaleDetailPage} />
         <Route path="/sche-list" component={ScheduleListPage} />
+        <Route path="/sche-list/:id" component={ScheduleDetailPage} />
         <Route path="/orde-list" component={OrderListPage} />
+        <Route path="/orde-list/:id" component={OrderDetailPage} />
         <Route path="/ship-list" component={ShipmentList} />
+        <Route path="/ship-list/:id" component={ShipmentDetailPage} />
         <Route path="/expe-list" component={ExpenseListPage} />
         <Route path="/expe-list/new" component={ExpenseCreatePage} />
         <Route path="/expe-list/:id" component={ExpenseDetailPage} />

@@ -1,6 +1,7 @@
 // src/pages/focuswin/ScheduleList.tsx
 
 import { Plus } from "lucide-react";
+import { useLocation } from "wouter";
 
 import { useScheduleListVM } from "@/hooks/focuswin/schedule/useScheduleListVM";
 
@@ -19,6 +20,7 @@ import CalendarView from "@/components/focuswin/page/schedule/calendar/CalendarV
 
 export default function ScheduleList() {
   const vm = useScheduleListVM();
+  const [, navigate] = useLocation();
 
   const listNotice =
     vm.overdueInList > 0 || vm.imminentInList > 0 ? (
@@ -42,6 +44,7 @@ export default function ScheduleList() {
       <ScheduleModals {...vm.modalProps} />
 
       <PageScaffold
+        size="lg"
         kicker="SCHEDULE"
         title="일정"
         description="후속 미팅과 할 일을 상태별로 관리하세요."
@@ -55,6 +58,7 @@ export default function ScheduleList() {
           icon: <Plus size={16} />,
           onClick: vm.openCreate,
         }}
+        hidePrimaryActionOnMobile
         fab={{
           label: "일정 추가",
           icon: <Plus size={24} />,
@@ -70,7 +74,7 @@ export default function ScheduleList() {
             onPrev={vm.prevMonth}
             onNext={vm.nextMonth}
             onDateClick={vm.openCreateForDate}
-            onItemClick={vm.handleEdit}
+            onItemClick={(item) => navigate(`/sche-list/${item.sche_idno}`)}
           />
         ) : (
           <ScheduleListContent vm={vm} />

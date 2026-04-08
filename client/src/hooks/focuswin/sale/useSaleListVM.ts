@@ -32,7 +32,7 @@ export function useSaleListVM() {
   // #endregion
 
   // #region Date range filter
-  const { range: dateRange, setPreset: setDatePreset, setCustomRange } = useDateRange("30d");
+  const { range: dateRange, setPreset: setDatePreset, setCustomRange } = useDateRange("30d", "sale-list");
   // #endregion
 
   // #region Data fetching

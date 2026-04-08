@@ -2,10 +2,10 @@
 
 // #region Imports
 import { useCallback, useMemo, useState } from "react";
-import { useLocation, useSearch } from "wouter";
+import { useLocation, useSearch, useRoute } from "wouter";
 import { toast } from "sonner";
 import { handleApiError } from "@/lib/handleApiError";
-import { useDateRange } from "@/components/focuswin/common/filters/date-range-filter";
+
 
 import { toLocalDatetimeInputValue, toLocalDateInputValue } from "@/lib/utils";
 import { trpc } from "@/lib/trpc";
@@ -43,17 +43,17 @@ const EMPTY_ORDER_FORM: OrderQuickFormState = {
 export function useScheduleListVM() {
   // #region View toggle (list / calendar) — URL param ?view=calendar
   const [, setLocation] = useLocation();
-  const search = useSearch();
+  const urlSearch = useSearch();
 
-  const view: "list" | "calendar" = new URLSearchParams(search).get("view") === "calendar" ? "calendar" : "list";
+  const view: "list" | "calendar" = new URLSearchParams(urlSearch).get("view") === "calendar" ? "calendar" : "list";
 
   const setView = useCallback((v: "list" | "calendar") => {
-    const params = new URLSearchParams(search);
+    const params = new URLSearchParams(urlSearch);
     if (v === "calendar") params.set("view", "calendar");
     else params.delete("view");
     const qs = params.toString();
     setLocation(qs ? `/sche-list?${qs}` : "/sche-list");
-  }, [search, setLocation]);
+  }, [urlSearch, setLocation]);
   // #endregion
 
   // #region Calendar month state
@@ -83,21 +83,26 @@ export function useScheduleListVM() {
   );
   // #endregion
 
-  // #region Date range filter
-  const { range: dateRange, setPreset: setDatePreset, setCustomRange } = useDateRange("30d");
-  // #endregion
-
   // #region Base VM (list/tabs/paging)
   const { activeTab, setActiveTab, isLoading, isLoadingMore, list, displayList, counts, overdueInList, imminentInList, hasMore, loadMore, refresh } = useScheduleVM();
 
-  // 날짜 범위로 클라이언트 필터링
-  const filteredDisplayList = useMemo(
-    () => displayList.filter((s) => {
-      const d = new Date(s.sche_date);
-      return d >= dateRange.from && d <= dateRange.to;
-    }),
-    [displayList, dateRange],
-  );
+  // #region Search
+  const [search, setSearch] = useState("");
+
+  const handleSearch = useCallback((value: string) => setSearch(value), []);
+  const handleClear = useCallback(() => setSearch(""), []);
+  // #endregion
+
+  // 검색어 클라이언트 필터링
+  const filteredDisplayList = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return displayList;
+    return displayList.filter((s) =>
+      s.sche_name.toLowerCase().includes(q) ||
+      (s.clie_name ?? "").toLowerCase().includes(q) ||
+      (s.sche_desc ?? "").toLowerCase().includes(q)
+    );
+  }, [displayList, search]);
 
   const hasData = filteredDisplayList.length > 0;
 
@@ -236,17 +241,8 @@ export function useScheduleListVM() {
   );
 
   const handleEdit = useCallback((p: EnhancedSchedule) => {
-    setEditingId(p.sche_idno);
-    setForm({
-      clie_name: p.clie_name || "",
-      clie_idno: p.clie_idno ?? undefined,
-      sche_name: p.sche_name,
-      sche_desc: p.sche_desc || "",
-      sche_date: toLocalDatetimeInputValue(new Date(p.sche_date)),
-      stat_code: p.sche_stat === "overdue" ? "scheduled" : p.sche_stat,
-    });
-    setShowForm(true);
-  }, []);
+    setLocation(`/sche-list/${p.sche_idno}?edit=1`);
+  }, [setLocation]);
 
   const handleUpdate = useCallback(
     async (e: React.FormEvent) => {
@@ -395,10 +391,10 @@ export function useScheduleListVM() {
     view,
     setView,
 
-    // date filter
-    dateRange,
-    setDatePreset,
-    setCustomRange,
+    // search
+    search,
+    handleSearch,
+    handleClear,
 
     // list / tab
     activeTab,

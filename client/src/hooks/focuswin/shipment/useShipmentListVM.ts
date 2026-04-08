@@ -32,12 +32,18 @@ const EMPTY_FORM: ShipmentFormState = {
 // #endregion
 
 export function useShipmentListVM() {
-  // #region Date range filter
-  const { range: dateRange, setPreset: setDatePreset, setCustomRange } = useDateRange("30d");
+  // #region Date range filter (UI only — list shows all records)
+  const { range: dateRange, setPreset: setDatePreset, setCustomRange } = useDateRange("30d", "shipment-list");
   // #endregion
 
   // #region Base VM (list/paging/stats)
-  const shipmentVM = useShipmentVM(dateRange);
+  const shipmentVM = useShipmentVM();
+
+  // #region Search
+  const [search, setSearch] = useState("");
+  const handleSearch = useCallback((v: string) => setSearch(v), []);
+  const handleClear = useCallback(() => setSearch(""), []);
+  // #endregion
   const actions = useShipmentActions();
   // #endregion
 
@@ -46,8 +52,19 @@ export function useShipmentListVM() {
   const orders = useMemo(() => ordersData?.items ?? [], [ordersData]);
   // #endregion
 
+  // #region Search filter (client-side)
+  const filteredItems = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return shipmentVM.items;
+    return shipmentVM.items.filter((s) =>
+      (s.clie_name ?? "").toLowerCase().includes(q) ||
+      (s.ship_memo ?? "").toLowerCase().includes(q)
+    );
+  }, [shipmentVM.items, search]);
+  // #endregion
+
   // #region Derived: page status
-  const hasData = shipmentVM.items.length > 0;
+  const hasData = filteredItems.length > 0;
   const status: PageStatus = shipmentVM.isLoading ? "loading" : hasData ? "ready" : "empty";
   // #endregion
 
@@ -61,17 +78,17 @@ export function useShipmentListVM() {
   }, [shipmentVM.stats]);
   // #endregion
 
-  // #region Derived: financial stats (조회 기간 기준, 로드된 항목 기반)
+  // #region Derived: financial stats (로드된 항목 기반)
   const stats = useMemo(() => {
     let paid = 0;
     let pending = 0;
-    for (const s of shipmentVM.items) {
+    for (const s of filteredItems) {
       const price = Number(s.ship_pric || 0);
       if (s.ship_stat === "paid") paid += price;
       else pending += price;
     }
     return { paid, pending };
-  }, [shipmentVM.items]);
+  }, [filteredItems]);
   // #endregion
 
   // #region Form state
@@ -133,8 +150,12 @@ export function useShipmentListVM() {
     async (e: React.FormEvent) => {
       e.preventDefault();
 
-      if (!form.clie_name || !form.ship_pric) {
-        toast.error("필수 항목을 입력해주세요.");
+      if (!form.orde_idno) {
+        toast.error("연결할 수주를 선택해주세요.");
+        return;
+      }
+      if (!form.ship_pric) {
+        toast.error("매출 금액을 입력해주세요.");
         return;
       }
 
@@ -242,7 +263,7 @@ export function useShipmentListVM() {
     hasData,
 
     // data
-    shipments: shipmentVM.items,
+    shipments: filteredItems,
 
     // tabs (서버 stats 기반 카운트)
     activeTab: shipmentVM.activeTab,
@@ -251,11 +272,18 @@ export function useShipmentListVM() {
 
     // financial stats (조회 기간 기준)
     stats,
+    // 서버 전체 stats (금액 집계용)
+    serverStats: shipmentVM.stats,
 
     // date filter
     dateRange,
     setDatePreset,
     setCustomRange,
+
+    // search
+    search,
+    handleSearch,
+    handleClear,
 
     // pagination
     hasMore: shipmentVM.hasMore,

@@ -2,6 +2,7 @@
 
 // #region Imports
 import { useCallback, useMemo, useState } from "react";
+import { useLocation, useSearch } from "wouter";
 import { toast } from "sonner";
 import { handleApiError } from "@/lib/handleApiError";
 import { useDateRange } from "@/components/focuswin/common/filters/date-range-filter";
@@ -52,21 +53,66 @@ const EMPTY_DELIVERY_FORM: OrderShipmentFormState = {
 // #endregion
 
 export function useOrderListVM() {
-  // #region Date range filter
-  const { range: dateRange, setPreset: setDatePreset, setCustomRange } = useDateRange("30d");
+  const [, setLocation] = useLocation();
+  const navigate = (path: string) => setLocation(path);
+  const urlSearch = useSearch();
+
+  // #region View toggle (list / kanban)
+  const view: "list" | "kanban" = new URLSearchParams(urlSearch).get("view") === "kanban" ? "kanban" : "list";
+  const setView = useCallback((v: "list" | "kanban") => {
+    const params = new URLSearchParams(urlSearch);
+    if (v === "kanban") params.set("view", "kanban");
+    else params.delete("view");
+    const qs = params.toString();
+    setLocation(qs ? `/orde-list?${qs}` : "/orde-list");
+  }, [urlSearch, setLocation]);
+  // #endregion
+
+  // #region Date range filter (UI only — list shows all records)
+  const { range: dateRange, setPreset: setDatePreset, setCustomRange } = useDateRange("30d", "order-list");
   // #endregion
 
   // #region Base VM (list/paging/stats)
-  const orderVM = useOrderVM(dateRange);
+  const orderVM = useOrderVM();
+  // #endregion
+
+  // #region Search
+  const [search, setSearch] = useState("");
+  const handleSearch = useCallback((v: string) => setSearch(v), []);
+  const handleClear = useCallback(() => setSearch(""), []);
   // #endregion
 
   // #region Actions (mutations + refresh)
   const actions = useOrderActions();
   // #endregion
 
+  // #region Search filter (client-side)
+  const filteredItems = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return orderVM.items;
+    return orderVM.items.filter((o) =>
+      (o.clie_name ?? "").toLowerCase().includes(q) ||
+      o.prod_serv.toLowerCase().includes(q) ||
+      (o.orde_memo ?? "").toLowerCase().includes(q)
+    );
+  }, [orderVM.items, search]);
+  // #endregion
+
   // #region Derived: page status
-  const hasData = orderVM.items.length > 0;
-  const status: PageStatus = orderVM.isLoading ? "loading" : hasData ? "ready" : "empty";
+  const hasData = filteredItems.length > 0;
+  const status: PageStatus = orderVM.isLoading ? "loading" : (view === "kanban" ? "ready" : hasData ? "ready" : "empty");
+  // #endregion
+
+  // #region Derived: kanban groups
+  const kanbanGroups = useMemo(() => {
+    const active = filteredItems.filter((o) => o.orde_stat !== "canceled");
+    const byStatus = (s: OrderStatus) => active.filter((o) => o.orde_stat === s);
+    return [
+      { key: "proposal"    as const, label: "제안",  items: byStatus("proposal"),    color: "#64748b" },
+      { key: "negotiation" as const, label: "협상",  items: byStatus("negotiation"), color: "#f59e0b" },
+      { key: "confirmed"   as const, label: "확정",  items: byStatus("confirmed"),   color: "#10b981" },
+    ];
+  }, [filteredItems]);
   // #endregion
 
   // #region Derived: tabs (서버 stats 기반 — 전체 DB 카운트)
@@ -197,18 +243,7 @@ export function useOrderListVM() {
   );
 
   const handleEdit = useCallback((order: OrderRow) => {
-    setEditingId(order.orde_idno);
-    setForm({
-      clie_name: order.clie_name,
-      clie_idno: order.clie_idno ?? undefined,
-      prod_serv: order.prod_serv,
-      orde_pric: String(order.orde_pric ?? ""),
-      orde_stat: order.orde_stat,
-      ctrt_date: order.ctrt_date ? new Date(order.ctrt_date).toISOString().split("T")[0] : "",
-      expd_date: order.expd_date ? new Date(order.expd_date).toISOString().split("T")[0] : "",
-      orde_memo: order.orde_memo || "",
-    });
-    setShowForm(true);
+    navigate(`/orde-list/${order.orde_idno}?edit=1`);
   }, []);
 
   const handleUpdate = useCallback(
@@ -346,17 +381,17 @@ export function useOrderListVM() {
   };
   // #endregion
 
-  // #region Period stats (조회 기간 기준, 로드된 항목 기반)
+  // #region Period stats (로드된 항목 기반)
   const periodStats = useMemo(() => {
     let total = 0;
     let confirmed = 0;
-    for (const o of orderVM.items) {
+    for (const o of filteredItems) {
       const price = Number(o.orde_pric || 0);
       if (o.orde_stat !== "canceled") total += price;
       if (o.orde_stat === "confirmed") confirmed += price;
     }
     return { total, confirmed };
-  }, [orderVM.items]);
+  }, [filteredItems]);
   // #endregion
 
   // #region Public API
@@ -367,7 +402,12 @@ export function useOrderListVM() {
     hasData,
 
     // data
-    orders: orderVM.items,
+    // view toggle
+    view,
+    setView,
+
+    orders: filteredItems,
+    kanbanGroups,
 
     // financial stats (Header용 — 조회 기간 기준)
     stats: periodStats,
@@ -376,6 +416,11 @@ export function useOrderListVM() {
     dateRange,
     setDatePreset,
     setCustomRange,
+
+    // search
+    search,
+    handleSearch,
+    handleClear,
 
     // tabs (서버 stats 기반 카운트)
     activeTab: orderVM.activeTab,

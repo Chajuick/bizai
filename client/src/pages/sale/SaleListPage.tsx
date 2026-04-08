@@ -12,6 +12,7 @@ export default function SaleListPage() {
 
   return (
     <PageScaffold
+      size="lg"
       kicker="SALES LOGS"
       title="영업일지"
       description="기록을 모아두면, 찾고 정리하기가 쉬워져요."
@@ -20,6 +21,7 @@ export default function SaleListPage() {
         href: "/sale-list/regi",
         icon: <Plus size={16} />,
       }}
+      hidePrimaryActionOnMobile
       status={vm.status}
       headerChildren={<SaleListHeader vm={vm} />}
       empty={<SaleListEmpty vm={vm} />}

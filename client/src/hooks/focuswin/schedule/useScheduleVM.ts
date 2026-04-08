@@ -74,7 +74,6 @@ export function useScheduleVM() {
 
   // #region Tab change (paging 리셋 포함)
   const setActiveTab = useCallback((tab: ScheduleTabKey) => {
-    setAccRows([]);
     setOffset(0);
     setActiveTabState(tab);
   }, []);

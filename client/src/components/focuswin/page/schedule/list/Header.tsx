@@ -2,8 +2,8 @@
 
 import { LayoutList, CalendarDays as CalendarIcon } from "lucide-react";
 import TabPills from "@/components/focuswin/common/ui/tab-pills";
-import DateRangeFilter from "@/components/focuswin/common/filters/date-range-filter";
 import StatCards from "@/components/focuswin/common/cards/stat-cards";
+import SearchInput from "@/components/focuswin/common/form/search-input";
 import { useScheduleListVM } from "@/hooks/focuswin/schedule/useScheduleListVM";
 import { cn } from "@/lib/utils";
 
@@ -11,26 +11,25 @@ type Props = { vm: ReturnType<typeof useScheduleListVM> };
 
 export default function ScheduleListHeader({ vm }: Props) {
   return (
-    <div className="space-y-3">
-      {/* Summary Cards */}
+    <div className="space-y-2">
       <StatCards
         cards={[
-          { kicker: "TODAY",   label: "오늘 일정",  value: String(vm.statusTabs.find(t => t.key === "scheduled")?.count ?? 0) },
-          { kicker: "IMMINENT", label: "임박",      value: String(vm.statusTabs.find(t => t.key === "imminent")?.count ?? 0) },
-          { kicker: "OVERDUE",  label: "지연",      value: String(vm.statusTabs.find(t => t.key === "overdue")?.count ?? 0) },
+          { kicker: "전체 일정", label: "", value: String(vm.statusTabs.find(t => t.key === "all")?.count ?? 0) },
+          { kicker: "임박",     label: "", value: String(vm.statusTabs.find(t => t.key === "imminent")?.count ?? 0) },
+          { kicker: "지연",     label: "", value: String(vm.statusTabs.find(t => t.key === "overdue")?.count ?? 0) },
         ]}
       />
 
-      {/* Date + View toggle row */}
       <div className="flex items-center gap-2 flex-wrap">
-        <DateRangeFilter
-          range={vm.dateRange}
-          onChange={vm.setDatePreset}
-          onCustomRange={vm.setCustomRange}
-        />
-
-        {/* 뷰 토글 */}
-        <div className="ml-auto flex shrink-0 rounded-lg border border-border/60 bg-muted/30 p-0.5">
+        <div className="flex-1 min-w-[140px]">
+          <SearchInput
+            value={vm.search}
+            onChange={vm.handleSearch}
+            onClear={vm.handleClear}
+            placeholder="거래처, 일정명으로 검색…"
+          />
+        </div>
+        <div className="flex shrink-0 rounded-lg border border-border/60 bg-muted/30 p-0.5">
           <button
             type="button"
             onClick={() => vm.setView("list")}
@@ -60,7 +59,6 @@ export default function ScheduleListHeader({ vm }: Props) {
         </div>
       </div>
 
-      {/* Status filter tabs */}
       <TabPills tabs={vm.statusTabs} value={vm.activeTab} onChange={vm.setActiveTab} />
     </div>
   );

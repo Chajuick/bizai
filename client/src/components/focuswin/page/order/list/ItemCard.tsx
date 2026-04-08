@@ -1,4 +1,5 @@
 import { Edit2, MoreHorizontal, PackagePlus, ShoppingCart, Trash2, Users, BadgeCheck, Ban } from "lucide-react";
+import { useLocation } from "wouter";
 import StatusBadge from "@/components/focuswin/common/badges/status-badge";
 import { WorkItemCard } from "@/components/focuswin/common/cards/work-item-card";
 import { StepProgress } from "@/components/focuswin/common/progress/step-progress";
@@ -47,6 +48,7 @@ export default function OrderListItemCard({
   statusChanging: boolean;
   onOpenDelivery: () => void;
 }) {
+  const [, navigate] = useLocation();
   const isCanceled = order.orde_stat === "canceled";
   const stage = isCanceled ? "proposal" : (order.orde_stat as OrderStage);
   const next = isCanceled ? null : nextStage(stage);
@@ -60,7 +62,7 @@ export default function OrderListItemCard({
   };
 
   return (
-    <WorkItemCard interactive>
+    <WorkItemCard interactive onClick={() => navigate(`/orde-list/${order.orde_idno}`)} preventInteractiveClick={false}>
       <WorkItemCard.Icon variant={iconVariant}>
         <ShoppingCart size={16} />
       </WorkItemCard.Icon>

@@ -133,7 +133,7 @@ function SelectContent({
         className={cn(
           [
             // #region Surface
-            "z-50 overflow-hidden",
+            "z-[200] overflow-hidden",
             "min-w-[8rem] max-h-(--radix-select-content-available-height)",
             "rounded-2xl border border-border/70",
             "bg-popover text-popover-foreground",

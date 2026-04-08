@@ -77,6 +77,7 @@ export const shipmentService = {
       { db },
       {
         comp_idno: ctx.comp_idno,
+        clie_idno: input?.clie_idno,
         orde_idno: input?.orde_idno,
         ship_stat: input?.ship_stat,
         search: input?.search,
@@ -105,6 +106,7 @@ export const shipmentService = {
 
     const counts = { all: 0, pending: 0, delivered: 0, invoiced: 0, paid: 0 };
     let totalPaid = 0;
+    let totalInvoiced = 0;
     let totalPending = 0;
 
     for (const row of rows) {
@@ -116,11 +118,12 @@ export const shipmentService = {
         case "paid":      counts.paid++;      break;
       }
       const price = Number(row.ship_pric || 0);
-      if (row.ship_stat === "paid") totalPaid += price;
-      else totalPending += price;
+      if (row.ship_stat === "paid")     totalPaid     += price;
+      else if (row.ship_stat === "invoiced") totalInvoiced += price;
+      else                              totalPending  += price;
     }
 
-    return { ...counts, totalPaid, totalPending };
+    return { ...counts, totalPaid, totalInvoiced, totalPending };
   },
   // #endregion
 

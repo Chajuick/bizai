@@ -63,7 +63,11 @@ export function useScheduleActions() {
   }) => {
     const { order, scheduleId } = args;
 
-    const orderRes = await createOrder.mutateAsync(order);
+    // scheduleId가 있으면 수주에 sche_idno 저장 → 납품-수주-일정-영업 체인 추적 가능
+    const orderRes = await createOrder.mutateAsync({
+      ...order,
+      sche_idno: scheduleId ?? undefined,
+    });
 
     if (scheduleId) {
       await complete.mutateAsync({ sche_idno: scheduleId });

@@ -134,6 +134,7 @@ export default function PageHeader({
   description,
   onBack,
   primaryAction,
+  hidePrimaryActionOnMobile = false,
   actions = [],
   children,
 }: {
@@ -142,10 +143,14 @@ export default function PageHeader({
   description?: React.ReactNode;
   onBack?: () => void;
   primaryAction?: HeaderAction;
+  hidePrimaryActionOnMobile?: boolean;
   actions?: HeaderAction[];
   children?: React.ReactNode;
 }) {
   const allActions = [...actions.map(a => ({ ...a, variant: a.variant ?? ("ghost" as const) })), ...(primaryAction ? [primaryAction] : [])];
+  const mobileActions = hidePrimaryActionOnMobile
+    ? actions.map(a => ({ ...a, variant: a.variant ?? ("ghost" as const) }))
+    : allActions;
 
   return (
     <div
@@ -170,15 +175,21 @@ export default function PageHeader({
           <div className="min-w-0 flex-1 pr-1">
             <p className="text-[11px] font-extrabold tracking-[0.18em] text-slate-400 uppercase">{kicker}</p>
 
-            <h1 className="mt-0.5 text-[22px] leading-tight font-black text-slate-900 break-keep">{title}</h1>
-
-            {description ? <p className="mt-2 text-sm leading-6 text-slate-500 break-keep">{description}</p> : null}
+            <div className="mt-0.5 flex items-center gap-2 min-w-0">
+              <h1 className="text-[20px] leading-tight font-black text-slate-900 break-keep shrink-0">{title}</h1>
+              {description ? (
+                <>
+                  <div className="w-px h-4 bg-slate-200 shrink-0" />
+                  <p className="text-xs leading-snug text-slate-400 break-keep line-clamp-2 min-w-0">{description}</p>
+                </>
+              ) : null}
+            </div>
           </div>
         </div>
 
-        {allActions.length > 0 ? (
+        {mobileActions.length > 0 ? (
           <div className="mt-4 grid grid-cols-2 gap-2">
-            {allActions.map(a => (
+            {mobileActions.map(a => (
               <ActionButton key={a.key ?? a.label} action={a} mobileFull />
             ))}
           </div>
@@ -203,9 +214,15 @@ export default function PageHeader({
               <div className="min-w-0 flex-1">
                 <p className="text-[11px] font-extrabold tracking-[0.18em] text-slate-400 uppercase">{kicker}</p>
 
-                <h1 className="text-base sm:text-lg font-black text-slate-900 min-w-0">{title}</h1>
-
-                {description ? <p className="mt-1 text-sm text-slate-500">{description}</p> : null}
+                <div className="mt-0.5 flex items-center gap-2.5 min-w-0">
+                  <h1 className="text-base sm:text-lg font-black text-slate-900 shrink-0">{title}</h1>
+                  {description ? (
+                    <>
+                      <div className="w-px h-4 bg-slate-200 shrink-0" />
+                      <p className="text-sm text-slate-400 leading-snug min-w-0">{description}</p>
+                    </>
+                  ) : null}
+                </div>
               </div>
             </div>
           </div>

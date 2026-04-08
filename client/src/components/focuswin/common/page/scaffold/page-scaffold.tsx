@@ -33,7 +33,9 @@ export type PageScaffoldProps = {
   onBack?: () => void;
   actions?: HeaderAction[];
   primaryAction?: HeaderAction;
+  hidePrimaryActionOnMobile?: boolean;
   headerChildren?: React.ReactNode;
+  size?: "sm" | "md" | "lg" | "full";
 
   notice?: React.ReactNode;
   footer?: React.ReactNode;
@@ -60,6 +62,7 @@ export default function PageScaffold({
   onBack,
   actions,
   primaryAction,
+  hidePrimaryActionOnMobile = false,
   headerChildren,
   notice,
   footer,
@@ -70,15 +73,16 @@ export default function PageScaffold({
   fab,
   contentClassName = "mt-4",
   invalidState,
+  size = "md",
 }: PageScaffoldProps) {
   const showHeader = !invalidState?.replacePage;
 
   return (
-    <PageShell outerClassName="h-full min-h-0" className="h-full min-h-0 flex flex-col overflow-hidden">
+    <PageShell size={size} outerClassName="h-full min-h-0" className="h-full min-h-0 flex flex-col overflow-hidden">
       {/* Header는 고정 */}
       {showHeader ? (
         <div className="shrink-0">
-          <PageHeader kicker={kicker} title={title} description={description} onBack={onBack} actions={actions} primaryAction={primaryAction}>
+          <PageHeader kicker={kicker} title={title} description={description} onBack={onBack} actions={actions} primaryAction={primaryAction} hidePrimaryActionOnMobile={hidePrimaryActionOnMobile}>
             {headerChildren}
           </PageHeader>
 

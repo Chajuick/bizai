@@ -19,6 +19,7 @@ export const shipmentRepo = {
     { db }: RepoDeps,
     params: {
       comp_idno: number;
+      clie_idno?: number;
       orde_idno?: number;
       ship_stat?: "pending" | "delivered" | "invoiced" | "paid";
       search?: string;
@@ -34,6 +35,7 @@ export const shipmentRepo = {
     const where = and(
       eq(CRM_SHIPMENT.comp_idno, params.comp_idno),
       eq(CRM_SHIPMENT.enab_yesn, true),
+      params.clie_idno ? eq(CRM_SHIPMENT.clie_idno, params.clie_idno) : undefined,
       params.orde_idno ? eq(CRM_SHIPMENT.orde_idno, params.orde_idno) : undefined,
       params.ship_stat ? eq(CRM_SHIPMENT.ship_stat, params.ship_stat) : undefined,
       params.search ? like(CRM_SHIPMENT.clie_name, `%${escapeLike(params.search)}%`) : undefined,

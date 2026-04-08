@@ -4,7 +4,6 @@ import * as React from "react";
 import FormDialog from "@/components/focuswin/common/overlays/form-dialog";
 
 import {
-  TextField,
   TextAreaField,
   MoneyField,
   SelectField,
@@ -35,13 +34,7 @@ export default function ShipmentListFormModal({
   const orderOptions =
     orders?.map((o) => ({
       value: String(o.orde_idno),
-      label: (
-        <span className="flex min-w-0 items-center gap-2">
-          <span className="truncate">{o.clie_name}</span>
-          <span className="shrink-0 text-slate-400">-</span>
-          <span className="truncate text-slate-600">{o.prod_serv}</span>
-        </span>
-      ),
+      label: `${o.clie_name} — ${o.prod_serv}`,
     })) ?? [];
 
   return (
@@ -55,39 +48,41 @@ export default function ShipmentListFormModal({
       onSubmit={onSubmit}
     >
       <div className="space-y-4">
-        {/* 연결 수주(선택) */}
-        {!!orders?.length ? (
+        {/* 연결 수주 (필수) */}
+        {orders && orders.length > 0 ? (
           <SelectField
             label="연결 수주"
+            required
             value={form.orde_idno ? String(form.orde_idno) : ""}
             onChange={(v) => {
               const order = orders.find((o) => String(o.orde_idno) === v);
-
               setForm((f) => ({
                 ...f,
                 orde_idno: v,
-                clie_name: order?.clie_name || f.clie_name,
+                clie_name: order?.clie_name ?? "",
                 ship_pric: order ? String(order.orde_pric) : f.ship_pric,
               }));
             }}
-            placeholder="선택 안함"
+            placeholder="수주를 선택하세요"
             options={orderOptions}
             triggerClassName="w-full border-slate-200 px-3"
           />
-        ) : null}
+        ) : (
+          <div className="space-y-1">
+            <p className="text-xs font-semibold text-slate-500">연결 수주 <span className="text-red-500">*</span></p>
+            <p className="text-sm text-slate-400 bg-slate-50 rounded-xl px-3 py-2.5">
+              확정된 수주가 없습니다. 수주를 먼저 등록해주세요.
+            </p>
+          </div>
+        )}
 
-        {/* 거래처 */}
-        <TextField
-          label="거래처"
-          required
-          value={form.clie_name}
-          onChange={(v) => setForm((f) => ({ ...f, clie_name: v }))}
-          inputProps={{
-            required: true,
-            placeholder: "(주)OOO",
-            maxLength: 200,
-          }}
-        />
+        {/* 거래처 (수주에서 자동 입력, 수정 불가) */}
+        <div className="space-y-1">
+          <p className="text-xs font-semibold text-slate-500">거래처</p>
+          <p className={`text-sm rounded-xl px-3 py-2.5 ${form.clie_name ? "bg-slate-50 text-slate-700 font-medium" : "bg-slate-50 text-slate-400"}`}>
+            {form.clie_name || "수주 선택 후 자동 입력"}
+          </p>
+        </div>
 
         {/* 매출 금액 */}
         <MoneyField
@@ -102,7 +97,7 @@ export default function ShipmentListFormModal({
           }
           inputProps={{
             required: true,
-            placeholder: "5000000",
+            placeholder: "5,000,000",
             maxLength: 13,
           }}
         />

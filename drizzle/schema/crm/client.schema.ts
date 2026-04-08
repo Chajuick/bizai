@@ -23,6 +23,7 @@ export const CRM_CLIENT = table(
     clie_addr: text("clie_addr"),                               // 주소
     clie_memo: text("clie_memo"),                               // 메모
 
+    favr_yesn: boolean("favr_yesn").default(false).notNull(),   // 즐겨찾기 여부
     enab_yesn: boolean("enab_yesn").default(true).notNull(),    // 활성 여부
 
     ...auditCols(),                                             // crea_*/modi_* 감사

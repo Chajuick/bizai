@@ -31,7 +31,7 @@ export default function PageShell({
     >
       <div
         className={cn(
-          "bg-white p-4 lg:p-6",
+          "bg-white px-2 lg:px-6 py-0 lg:py-4",
           "rounded-none shadow-none",
           "lg:rounded-2xl lg:shadow-[0_6px_24px_rgba(0,0,0,0.04)]",
           "h-full min-h-0",

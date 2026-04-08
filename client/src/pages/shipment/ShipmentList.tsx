@@ -22,6 +22,7 @@ export default function ShipmentListPage() {
       <ShipmentModals {...vm.modalProps} />
 
       <PageScaffold
+        size="lg"
         kicker="SHIPMENTS"
         title="납품/매출"
         description="납품 상태를 한 번에 관리해요."
@@ -34,6 +35,7 @@ export default function ShipmentListPage() {
           icon: <Plus size={16} />,
           onClick: vm.primaryAction.onClick,
         }}
+        hidePrimaryActionOnMobile
         fab={{
           label: "납품 등록",
           icon: <Plus size={24} />,

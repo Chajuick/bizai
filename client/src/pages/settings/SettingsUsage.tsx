@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import PageShell from "@/components/focuswin/common/page/scaffold/page-shell";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
+import { TOKENS_PER_ANALYSIS } from "@shared/const";
 
 // #region Helpers
 function formatTokens(n: number): string {
@@ -17,8 +18,6 @@ function toKRDate(d: Date | string | number): string {
   return dt.toLocaleDateString("ko-KR");
 }
 
-// 임시 환산(너 Billing이랑 맞추려면 TOKENS_PER_ANALYSIS를 공통 상수로 빼는 게 베스트)
-const TOKENS_PER_ANALYSIS = 5_000;
 function approxAnalyses(tokens: number): number {
   if (!tokens || tokens <= 0) return 0;
   return Math.max(0, Math.floor(tokens / TOKENS_PER_ANALYSIS));

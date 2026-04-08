@@ -173,7 +173,7 @@ export default function CreateOrderModal({
             }))
           }
           inputProps={{
-            placeholder: "5000000",
+            placeholder: "5,000,000",
             maxLength: 13,
             required: true,
           }}

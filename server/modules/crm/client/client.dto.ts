@@ -13,6 +13,10 @@ type ClientSortField = z.infer<typeof ClientSortInput>["field"];
 // #endregion
 
 // #region Inputs
+
+export const ClientTypeEnum = z.enum(["sales", "purchase", "both"]);
+export type ClientType = z.infer<typeof ClientTypeEnum>;
+
 /**
  * ClientListInput (standard)
  * - page + sort 표준 적용
@@ -21,6 +25,7 @@ type ClientSortField = z.infer<typeof ClientSortInput>["field"];
 export const ClientListInput = z
   .object({
     search: z.string().optional(),
+    clie_type: ClientTypeEnum.optional(),
 
     page: PaginationInput.optional(),
     sort: ClientSortInput.optional(),
@@ -39,9 +44,6 @@ export const ClientIdInput = z.object({
 export const ClientFindNameInput = z.object({
   name: z.string().min(1),
 });
-
-export const ClientTypeEnum = z.enum(["sales", "purchase", "both"]);
-export type ClientType = z.infer<typeof ClientTypeEnum>;
 
 export const ClientCreateInput = z.object({
   clie_name: z.string().min(1),
@@ -72,6 +74,10 @@ export const ClientUpdateInput = z.object({
 });
 
 export const ClientDeleteInput = z.object({
+  clie_idno: z.number().int().positive(),
+});
+
+export const ClientToggleFavoriteInput = z.object({
   clie_idno: z.number().int().positive(),
 });
 
@@ -144,6 +150,7 @@ export const ClientItemOutput = z.object({
   clie_addr: z.string().nullable().optional(),
   clie_memo: z.string().nullable().optional(),
 
+  favr_yesn: z.boolean().default(false),
   enab_yesn: z.boolean().optional(),
 
   crea_date: IsoDateTime.optional(),

@@ -28,10 +28,10 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 import { useWorkspaceSwitcher } from "@/hooks/focuswin/company/useWorkspaceSwitcher";
 import { handleApiError } from "@/lib/handleApiError";
+import { TOKENS_PER_ANALYSIS } from "@shared/const";
 // #endregion
 
 // #region Plan Meta + AI Baseline
-const TOKENS_PER_ANALYSIS = 5_000;
 
 const PLAN_META: Record<
   string,

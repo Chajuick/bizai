@@ -14,24 +14,14 @@ type Props = {
 export default function SaleListHeader({ vm, className }: Props) {
   return (
     <div className={className}>
-      {/* Summary Cards */}
       <StatCards
         cards={[
-          {
-            kicker: "TOTAL",
-            value: String(vm.summary.totalCount),
-            label: `활동 · ${vm.dateRange.label}`,
-          },
-          {
-            kicker: "AI",
-            value: String(vm.summary.aiCount),
-            label: "AI 분석 완료",
-          },
+          { kicker: `${vm.dateRange.label} 활동`, value: String(vm.summary.totalCount), label: "" },
+          { kicker: "AI 분석 완료",              value: String(vm.summary.aiCount),    label: "" },
         ]}
       />
 
-      {/* Date + Search row */}
-      <div className="mt-3 flex items-center gap-2 flex-wrap">
+      <div className="mt-2 flex items-center gap-2 flex-wrap">
         <DateRangeFilter
           range={vm.dateRange}
           onChange={vm.setDatePreset}
@@ -48,7 +38,7 @@ export default function SaleListHeader({ vm, className }: Props) {
         </div>
       </div>
 
-      <div className="mt-3">
+      <div className="mt-2">
         <TabPills tabs={vm.tabs} value={vm.filter} onChange={vm.setFilter} />
       </div>
     </div>

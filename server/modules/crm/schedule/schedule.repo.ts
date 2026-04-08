@@ -123,13 +123,17 @@ export const scheduleRepo = {
     { db }: RepoDeps,
     params: {
       comp_idno: number;
+      clie_idno?: number;
       tab: TabFilter;
       limit: number;
       offset: number;
       sort?: { field: SortField; dir: SortDir };
     }
   ): Promise<ScheduleRow[]> {
-    const where = buildTabWhere(params.comp_idno, params.tab);
+    const tabWhere = buildTabWhere(params.comp_idno, params.tab);
+    const where = params.clie_idno
+      ? and(tabWhere, eq(CRM_SCHEDULE.clie_idno, params.clie_idno))
+      : tabWhere;
     const orderBy = buildTabOrderBy(params.tab, params.sort);
 
     return db

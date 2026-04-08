@@ -39,6 +39,7 @@ export const orderService = {
         status: input?.status,
         search: input?.search,
         clie_idno: input?.clie_idno,
+        sche_idno: input?.sche_idno,
         limit: page.limit,
         offset: page.offset,
         sort,
@@ -102,6 +103,7 @@ export const orderService = {
 
       clie_idno: input.clie_idno,
       sale_idno: input.sale_idno,
+      sche_idno: input.sche_idno,
 
       clie_name: input.clie_name,
       prod_serv: input.prod_serv,
@@ -129,6 +131,7 @@ export const orderService = {
 
     if (patch.clie_idno !== undefined) data.clie_idno = patch.clie_idno as any;
     if (patch.sale_idno !== undefined) data.sale_idno = patch.sale_idno as any;
+    if (patch.sche_idno !== undefined) data.sche_idno = patch.sche_idno as any;
 
     if (patch.clie_name !== undefined) data.clie_name = patch.clie_name;
     if (patch.prod_serv !== undefined) data.prod_serv = patch.prod_serv;

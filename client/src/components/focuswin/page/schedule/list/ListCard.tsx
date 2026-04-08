@@ -1,5 +1,6 @@
 import * as React from "react";
 import { Calendar, CheckCircle, Clock, Edit2, MoreHorizontal, ShoppingCart, Trash2, XCircle } from "lucide-react";
+import { useLocation } from "wouter";
 import type { EnhancedSchedule } from "@/types/schedule";
 
 import { WorkItemCard } from "@/components/focuswin/common/cards/work-item-card";
@@ -27,6 +28,7 @@ export default function ScheduleListCard({
   onDeleteRequest: (p: EnhancedSchedule) => void;
   onCompleteRequest: (p: EnhancedSchedule) => void;
 }) {
+  const [, navigate] = useLocation();
   const isScheduled = p.sche_stat === "scheduled";
 
   const scheduleStatus: "default" | "imminent" | "overdue" = p.overdue ? "overdue" : p.imminent ? "imminent" : "default";
@@ -45,7 +47,7 @@ export default function ScheduleListCard({
       : "";
 
   return (
-    <WorkItemCard interactive className={cn("pr-3", hoverClass)}>
+    <WorkItemCard interactive onClick={() => navigate(`/sche-list/${p.sche_idno}`)} preventInteractiveClick={false} className={cn("pr-3", hoverClass)}>
       {/* LEFT ICON */}
       <WorkItemCard.Icon variant={iconVariant}>
         <Calendar size={18} />

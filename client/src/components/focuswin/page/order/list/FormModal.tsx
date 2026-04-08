@@ -83,7 +83,7 @@ export default function OrderListFormDModal({
           }
           inputProps={{
             required: true,
-            placeholder: "5000000",
+            placeholder: "5,000,000",
             maxLength: 13,
           }}
         />

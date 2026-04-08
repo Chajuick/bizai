@@ -50,6 +50,7 @@ export const scheduleService = {
       { db },
       {
         comp_idno: ctx.comp_idno,
+        clie_idno: input?.clie_idno,
         tab,
         limit: page.limit,
         offset: page.offset,

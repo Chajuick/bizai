@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useLocation } from "wouter";
 import { TrendingUp, MoreHorizontal, Pencil, Trash2, Package, FileText, BadgeCheck } from "lucide-react";
 
 import StatusBadge from "@/components/focuswin/common/badges/status-badge";
@@ -76,6 +77,7 @@ export default function ShipmentListItemCard({
   onStatusUpdate: (id: number, status: ShipmentStatus) => void;
   statusUpdatePending: boolean;
 }) {
+  const [, navigate] = useLocation();
   const stage = d.ship_stat as Stage;
   const next = nextStage(stage);
   const nextAction = getNextAction(stage);
@@ -83,6 +85,7 @@ export default function ShipmentListItemCard({
   const Icon = iconConfig.icon;
 
   return (
+    <div onClick={() => navigate(`/ship-list/${d.ship_idno}`)} className="cursor-pointer">
     <WorkItemCard interactive>
       <WorkItemCard.Icon variant={iconConfig.variant}>
         <Icon size={16} />
@@ -160,5 +163,6 @@ export default function ShipmentListItemCard({
         </WorkItemCard.Body>
       </div>
     </WorkItemCard>
+    </div>
   );
 }
