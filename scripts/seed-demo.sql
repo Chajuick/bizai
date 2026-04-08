@@ -40,13 +40,13 @@ VALUES ('한국산업기계(주)', '1008145231', 0, 1, 0, '2024-09-02 09:00:00')
 SET @ko1 = LAST_INSERT_ID();
 
 INSERT INTO COAPP_CORE_USER (open_idno, user_name, mail_idno, pass_hash, logi_mthd, user_auth, crea_date)
-VALUES ('local:ceo@ind.co.kr',   '강민준', 'ceo@ind.co.kr',   '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-09-02 09:00:00');
+VALUES ('local:ceo@ind.co.kr',   '강민준', 'ceo@ind.co.kr',   '$2b$10$I46TB4EhdCy.iw6JREGXLOsICv4cJem4e.TiYLSmgX4gLsz8rA.P6', 'email', 'user', '2024-09-02 09:00:00');
 SET @ku1 = LAST_INSERT_ID();
 INSERT INTO COAPP_CORE_USER (open_idno, user_name, mail_idno, pass_hash, logi_mthd, user_auth, crea_date)
-VALUES ('local:sales@ind.co.kr', '이준혁', 'sales@ind.co.kr', '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-09-02 09:10:00');
+VALUES ('local:sales@ind.co.kr', '이준혁', 'sales@ind.co.kr', '$2b$10$I46TB4EhdCy.iw6JREGXLOsICv4cJem4e.TiYLSmgX4gLsz8rA.P6', 'email', 'user', '2024-09-02 09:10:00');
 SET @ku2 = LAST_INSERT_ID();
 INSERT INTO COAPP_CORE_USER (open_idno, user_name, mail_idno, pass_hash, logi_mthd, user_auth, crea_date)
-VALUES ('local:acct@ind.co.kr',  '박소연', 'acct@ind.co.kr',  '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-09-02 09:20:00');
+VALUES ('local:acct@ind.co.kr',  '박소연', 'acct@ind.co.kr',  '$2b$10$I46TB4EhdCy.iw6JREGXLOsICv4cJem4e.TiYLSmgX4gLsz8rA.P6', 'email', 'user', '2024-09-02 09:20:00');
 SET @ku3 = LAST_INSERT_ID();
 
 INSERT INTO COAPP_CORE_COMPANY_USER (comp_idno, user_idno, comp_role, memb_stat, crea_idno) VALUES
@@ -301,16 +301,16 @@ VALUES ('넥스트솔루션(주)', '2018034512', 0, 1, 0, '2024-09-01 09:00:00')
 SET @ko2 = LAST_INSERT_ID();
 
 INSERT INTO COAPP_CORE_USER (open_idno, user_name, mail_idno, pass_hash, logi_mthd, user_auth, crea_date)
-VALUES ('local:ceo@sol.co.kr',   '윤태현', 'ceo@sol.co.kr',   '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-09-01 09:00:00');
+VALUES ('local:ceo@sol.co.kr',   '윤태현', 'ceo@sol.co.kr',   '$2b$10$I46TB4EhdCy.iw6JREGXLOsICv4cJem4e.TiYLSmgX4gLsz8rA.P6', 'email', 'user', '2024-09-01 09:00:00');
 SET @ku4 = LAST_INSERT_ID();
 INSERT INTO COAPP_CORE_USER (open_idno, user_name, mail_idno, pass_hash, logi_mthd, user_auth, crea_date)
-VALUES ('local:lead@sol.co.kr',  '김성준', 'lead@sol.co.kr',  '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-09-01 09:10:00');
+VALUES ('local:lead@sol.co.kr',  '김성준', 'lead@sol.co.kr',  '$2b$10$I46TB4EhdCy.iw6JREGXLOsICv4cJem4e.TiYLSmgX4gLsz8rA.P6', 'email', 'user', '2024-09-01 09:10:00');
 SET @ku5 = LAST_INSERT_ID();
 INSERT INTO COAPP_CORE_USER (open_idno, user_name, mail_idno, pass_hash, logi_mthd, user_auth, crea_date)
-VALUES ('local:sales@sol.co.kr', '최지훈', 'sales@sol.co.kr', '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-09-01 09:20:00');
+VALUES ('local:sales@sol.co.kr', '최지훈', 'sales@sol.co.kr', '$2b$10$I46TB4EhdCy.iw6JREGXLOsICv4cJem4e.TiYLSmgX4gLsz8rA.P6', 'email', 'user', '2024-09-01 09:20:00');
 SET @ku6 = LAST_INSERT_ID();
 INSERT INTO COAPP_CORE_USER (open_idno, user_name, mail_idno, pass_hash, logi_mthd, user_auth, crea_date)
-VALUES ('local:acct@sol.co.kr',  '정미라', 'acct@sol.co.kr',  '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-09-01 09:30:00');
+VALUES ('local:acct@sol.co.kr',  '정미라', 'acct@sol.co.kr',  '$2b$10$I46TB4EhdCy.iw6JREGXLOsICv4cJem4e.TiYLSmgX4gLsz8rA.P6', 'email', 'user', '2024-09-01 09:30:00');
 SET @ku7 = LAST_INSERT_ID();
 
 INSERT INTO COAPP_CORE_COMPANY_USER (comp_idno, user_idno, comp_role, memb_stat, crea_idno) VALUES
@@ -566,10 +566,10 @@ VALUES ('더스페이스디자인', '1308092341', 0, 1, 0, '2024-10-01 09:00:00'
 SET @ko3 = LAST_INSERT_ID();
 
 INSERT INTO COAPP_CORE_USER (open_idno, user_name, mail_idno, pass_hash, logi_mthd, user_auth, crea_date)
-VALUES ('local:ceo@space.co.kr',  '장현우', 'ceo@space.co.kr',  '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-10-01 09:00:00');
+VALUES ('local:ceo@space.co.kr',  '장현우', 'ceo@space.co.kr',  '$2b$10$I46TB4EhdCy.iw6JREGXLOsICv4cJem4e.TiYLSmgX4gLsz8rA.P6', 'email', 'user', '2024-10-01 09:00:00');
 SET @ku8 = LAST_INSERT_ID();
 INSERT INTO COAPP_CORE_USER (open_idno, user_name, mail_idno, pass_hash, logi_mthd, user_auth, crea_date)
-VALUES ('local:acct@space.co.kr', '오가영', 'acct@space.co.kr', '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-10-01 09:10:00');
+VALUES ('local:acct@space.co.kr', '오가영', 'acct@space.co.kr', '$2b$10$I46TB4EhdCy.iw6JREGXLOsICv4cJem4e.TiYLSmgX4gLsz8rA.P6', 'email', 'user', '2024-10-01 09:10:00');
 SET @ku9 = LAST_INSERT_ID();
 
 INSERT INTO COAPP_CORE_COMPANY_USER (comp_idno, user_idno, comp_role, memb_stat, crea_idno) VALUES
@@ -791,7 +791,7 @@ VALUES ('청원식자재유통(주)', '1158047823', 0, 1, 0, '2024-10-15 09:00:0
 SET @ko4 = LAST_INSERT_ID();
 
 INSERT INTO COAPP_CORE_USER (open_idno, user_name, mail_idno, pass_hash, logi_mthd, user_auth, crea_date)
-VALUES ('local:ceo@food.co.kr', '신동철', 'ceo@food.co.kr', '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-10-15 09:00:00');
+VALUES ('local:ceo@food.co.kr', '신동철', 'ceo@food.co.kr', '$2b$10$I46TB4EhdCy.iw6JREGXLOsICv4cJem4e.TiYLSmgX4gLsz8rA.P6', 'email', 'user', '2024-10-15 09:00:00');
 SET @ku10 = LAST_INSERT_ID();
 
 INSERT INTO COAPP_CORE_COMPANY_USER (comp_idno, user_idno, comp_role, memb_stat, crea_idno) VALUES
@@ -959,10 +959,10 @@ VALUES ('에코클린서비스', '2078134592', 0, 1, 0, '2024-11-01 09:00:00');
 SET @ko5 = LAST_INSERT_ID();
 
 INSERT INTO COAPP_CORE_USER (open_idno, user_name, mail_idno, pass_hash, logi_mthd, user_auth, crea_date)
-VALUES ('local:ceo@eco.co.kr', '배정호', 'ceo@eco.co.kr', '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-11-01 09:00:00');
+VALUES ('local:ceo@eco.co.kr', '배정호', 'ceo@eco.co.kr', '$2b$10$I46TB4EhdCy.iw6JREGXLOsICv4cJem4e.TiYLSmgX4gLsz8rA.P6', 'email', 'user', '2024-11-01 09:00:00');
 SET @ku11 = LAST_INSERT_ID();
 INSERT INTO COAPP_CORE_USER (open_idno, user_name, mail_idno, pass_hash, logi_mthd, user_auth, crea_date)
-VALUES ('local:mgr@eco.co.kr', '황수현', 'mgr@eco.co.kr', '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-11-01 09:10:00');
+VALUES ('local:mgr@eco.co.kr', '황수현', 'mgr@eco.co.kr', '$2b$10$I46TB4EhdCy.iw6JREGXLOsICv4cJem4e.TiYLSmgX4gLsz8rA.P6', 'email', 'user', '2024-11-01 09:10:00');
 SET @ku12 = LAST_INSERT_ID();
 
 INSERT INTO COAPP_CORE_COMPANY_USER (comp_idno, user_idno, comp_role, memb_stat, crea_idno) VALUES
@@ -1113,10 +1113,10 @@ VALUES ('유니폼플러스', '1118045672', 0, 1, 0, '2024-10-20 09:00:00');
 SET @ko6 = LAST_INSERT_ID();
 
 INSERT INTO COAPP_CORE_USER (open_idno, user_name, mail_idno, pass_hash, logi_mthd, user_auth, crea_date)
-VALUES ('local:ceo@uni.co.kr',   '류혜진', 'ceo@uni.co.kr',   '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-10-20 09:00:00');
+VALUES ('local:ceo@uni.co.kr',   '류혜진', 'ceo@uni.co.kr',   '$2b$10$I46TB4EhdCy.iw6JREGXLOsICv4cJem4e.TiYLSmgX4gLsz8rA.P6', 'email', 'user', '2024-10-20 09:00:00');
 SET @ku13 = LAST_INSERT_ID();
 INSERT INTO COAPP_CORE_USER (open_idno, user_name, mail_idno, pass_hash, logi_mthd, user_auth, crea_date)
-VALUES ('local:sales@uni.co.kr', '조현민', 'sales@uni.co.kr', '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-10-20 09:10:00');
+VALUES ('local:sales@uni.co.kr', '조현민', 'sales@uni.co.kr', '$2b$10$I46TB4EhdCy.iw6JREGXLOsICv4cJem4e.TiYLSmgX4gLsz8rA.P6', 'email', 'user', '2024-10-20 09:10:00');
 SET @ku14 = LAST_INSERT_ID();
 
 INSERT INTO COAPP_CORE_COMPANY_USER (comp_idno, user_idno, comp_role, memb_stat, crea_idno) VALUES
