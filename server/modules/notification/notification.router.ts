@@ -5,7 +5,7 @@ import { protectedProcedure, router } from "../../core/trpc";
 import { getDb } from "../../core/db";
 import { CORE_PUSH_SUBSCRIPTION } from "../../../drizzle/schema";
 import { eq, and } from "drizzle-orm";
-import { VAPID_PUBLIC_KEY } from "../../core/push";
+import { VAPID_PUBLIC_KEY, sendPush } from "../../core/push";
 
 const SubscribeInput = z.object({
   endpoint: z.string().min(1),
@@ -77,5 +77,29 @@ export const notificationRouter = router({
       )
       .limit(1);
     return { subscribed: rows.length > 0 };
+  }),
+
+  /** 테스트 알림 발송 */
+  sendTest: protectedProcedure.mutation(async ({ ctx }) => {
+    const db = getDb();
+    const subs = await db
+      .select({ endpoint: CORE_PUSH_SUBSCRIPTION.endpoint, p256dh: CORE_PUSH_SUBSCRIPTION.p256dh, auth_key: CORE_PUSH_SUBSCRIPTION.auth_key })
+      .from(CORE_PUSH_SUBSCRIPTION)
+      .where(
+        and(
+          eq(CORE_PUSH_SUBSCRIPTION.comp_idno, ctx.comp_idno),
+          eq(CORE_PUSH_SUBSCRIPTION.user_idno, ctx.user.user_idno)
+        )
+      );
+
+    if (subs.length === 0) return { ok: false, reason: "구독 없음" };
+
+    for (const sub of subs) {
+      await sendPush(
+        { endpoint: sub.endpoint, p256dh: sub.p256dh, auth: sub.auth_key },
+        { title: "🔔 테스트 알림", body: "알림이 정상적으로 작동합니다!", url: "/settings" }
+      );
+    }
+    return { ok: true };
   }),
 });

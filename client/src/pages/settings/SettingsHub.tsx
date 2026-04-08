@@ -86,6 +86,7 @@ export default function SettingsHub() {
 
   const subscribeMut   = trpc.notification.subscribe.useMutation({ onSuccess: () => { void refetchNotif(); } });
   const unsubscribeMut = trpc.notification.unsubscribe.useMutation({ onSuccess: () => { void refetchNotif(); } });
+  const sendTestMut    = trpc.notification.sendTest.useMutation();
   // #endregion
 
 
@@ -268,21 +269,32 @@ export default function SettingsHub() {
               </p>
             </div>
 
-            <button
-              onClick={() => { void handleNotifToggle(); }}
-              disabled={subscribeMut.isPending || unsubscribeMut.isPending || !vapid?.publicKey}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
-                isSubscribed
-                  ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
-            >
-              {isSubscribed ? (
-                <><Bell size={13} /> 켜짐</>
-              ) : (
-                <><BellOff size={13} /> 꺼짐</>
+            <div className="flex items-center gap-2">
+              {isSubscribed && (
+                <button
+                  onClick={() => { sendTestMut.mutate(); }}
+                  disabled={sendTestMut.isPending}
+                  className="px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition"
+                >
+                  {sendTestMut.isPending ? "..." : "테스트"}
+                </button>
               )}
-            </button>
+              <button
+                onClick={() => { void handleNotifToggle(); }}
+                disabled={subscribeMut.isPending || unsubscribeMut.isPending || !vapid?.publicKey}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
+                  isSubscribed
+                    ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                    : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                }`}
+              >
+                {isSubscribed ? (
+                  <><Bell size={13} /> 켜짐</>
+                ) : (
+                  <><BellOff size={13} /> 꺼짐</>
+                )}
+              </button>
+            </div>
           </div>
         )}
       </div>
