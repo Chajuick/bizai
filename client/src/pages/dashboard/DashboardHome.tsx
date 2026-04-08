@@ -1,11 +1,11 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { useScheduleAlerts } from "@/hooks/focuswin/schedule/useScheduleAlerts";
 import { Link } from "wouter";
 import { formatKRW } from "@/lib/format";
-import { BookOpen, Calendar, ShoppingCart, TrendingUp, AlertTriangle, Plus, ArrowRight } from "lucide-react";
+import { Calendar, ShoppingCart, TrendingUp, AlertTriangle, Plus, ArrowRight, LayoutDashboard } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { cn } from "@/lib/utils";
+import DashboardCalendar from "@/components/focuswin/page/dashboard/DashboardCalendar";
 function ClickableCard({ children, className = "", href, ariaLabel }: { children: React.ReactNode; className?: string; href?: string; ariaLabel?: string }) {
   const base =
     "bp-card p-4 transition cursor-pointer hover:border-blue-500/30 hover:bg-slate-50 " +
@@ -75,7 +75,10 @@ function EmptyState({ title, desc, ctaLabel, ctaHref }: { title: string; desc: s
   );
 }
 
+type DashView = "stats" | "calendar";
+
 export default function DashboardHome() {
+  const [view, setView] = useState<DashView>("stats");
   const { data: stats, isLoading } = trpc.crm.dashboard.stats.useQuery();
   const { data: trend } = trpc.crm.dashboard.revenueTrend.useQuery();
 
@@ -92,38 +95,58 @@ export default function DashboardHome() {
     const last = trend[trend.length - 1]?.revenue ?? 0;
     const prev = trend[trend.length - 2]?.revenue ?? 0;
 
-    if (prev <= 0 && last > 0) return `최근 한 달 납품 매출이 새로 잡혔어요.`;
+    if (prev <= 0 && last > 0) return `최근 한 달 매출이 새로 잡혔어요.`;
     if (prev <= 0 && last <= 0) return null;
 
     const diff = last - prev;
     const pct = (diff / prev) * 100;
     const sign = diff >= 0 ? "+" : "";
-    return `납품 지난달 대비 ${sign}${pct.toFixed(0)}% (${sign}${formatKRW(diff)})`;
+    return `매출 지난달 대비 ${sign}${pct.toFixed(0)}% (${sign}${formatKRW(diff)})`;
   }, [trend]);
 
   return (
-    <div className={cn("max-w-5xl mx-auto", "bg-white p-4 lg:p-6 lg:my-2", "rounded-none shadow-none", "lg:rounded-2xl lg:shadow-[0_6px_24px_rgba(0,0,0,0.04)]", "max-h-screen overflow-y-auto [scrollbar-gutter:stable_both-edges]")}>
+    <div className={cn("max-w-5xl mx-auto", "bg-white p-4 pb-6 lg:pb-6 lg:p-6 lg:my-2", "rounded-none shadow-none", "lg:rounded-2xl lg:shadow-[0_6px_24px_rgba(0,0,0,0.04)]", "h-full overflow-y-auto [scrollbar-gutter:stable_both-edges]")}>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
           <p className="bp-section-header mb-1">DASHBOARD</p>
-          <h1 className="text-xl font-black text-[color:var(--blueprint-text)]">{monthLabel} 영업 현황</h1>
+          <h1 className="text-xl font-black text-[color:var(--blueprint-text)]">
+            {view === "calendar" ? "전사 캘린더" : `${monthLabel} 영업 현황`}
+          </h1>
         </div>
 
-        <Link
-          href="/sale-list/regi"
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-bold text-white transition active:scale-[0.99]"
-          style={{
-            background: "var(--blueprint-accent)",
-            boxShadow: "0 10px 26px rgba(37,99,235,0.22)",
-          }}
-        >
-          <Plus size={16} />
-          일지 작성
-        </Link>
+        {/* 뷰 토글 */}
+        <div className="flex items-center gap-1 p-1 rounded-2xl bg-slate-100">
+          <button
+            type="button"
+            onClick={() => setView("stats")}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all",
+              view === "stats" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+            )}
+          >
+            <LayoutDashboard size={13} />
+            현황
+          </button>
+          <button
+            type="button"
+            onClick={() => setView("calendar")}
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all",
+              view === "calendar" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+            )}
+          >
+            <Calendar size={13} />
+            캘린더
+          </button>
+        </div>
       </div>
 
-      {isLoading ? (
+      {/* 캘린더 뷰 */}
+      {view === "calendar" && <DashboardCalendar />}
+
+      {/* 현황 뷰 */}
+      {view === "stats" && (isLoading ? (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
           {[...Array(4)].map((_, i) => (
             <div key={i} className="bp-card p-4 animate-pulse h-24" />
@@ -132,8 +155,7 @@ export default function DashboardHome() {
       ) : (
         <>
           {/* KPI Grid */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-            <KPICard icon={BookOpen} label="이번달 일지" value={stats?.logsThisMonth ?? 0} sub={`${monthLabel} 작성`} color="#2563eb" href="/sale-list" />
+          <div className={`grid grid-cols-2 gap-3 mb-6 ${(stats?.totalInvoiced ?? 0) > 0 ? "lg:grid-cols-4" : "lg:grid-cols-3"}`}>
             <KPICard
               icon={Calendar}
               label="예정 일정"
@@ -149,7 +171,10 @@ export default function DashboardHome() {
               href="/sche-list"
             />
             <KPICard icon={ShoppingCart} label="진행 수주" value={stats?.activeOrdersCount ?? 0} sub={formatKRW(stats?.activeOrdersTotal ?? 0)} color="#f59e0b" href="/orde-list" />
-            <KPICard icon={TrendingUp} label={`${monthLabel} 매출`} value={formatKRW(stats?.monthlyRevenue ?? 0)} sub="수금 완료" color="#10b981" href="ship-list" />
+            <KPICard icon={TrendingUp} label={`${monthLabel} 매출`} value={formatKRW(stats?.monthlyRevenue ?? 0)} sub="수금 완료" color="#10b981" href="/ship-list" />
+            {(stats?.totalInvoiced ?? 0) > 0 && (
+              <KPICard icon={TrendingUp} label="청구 미수금" value={formatKRW(stats?.totalInvoiced ?? 0)} sub="수금 대기 중" color="#f97316" href="/ship-list?tab=invoiced" />
+            )}
           </div>
 
           {/* Overdue Alert */}
@@ -207,13 +232,13 @@ export default function DashboardHome() {
             <ResponsiveContainer width="100%" height={180}>
               <AreaChart data={trend ?? []} margin={{ top: 4, right: 4, left: 4, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="orderGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.22} />
-                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
-                  </linearGradient>
-                  <linearGradient id="deliveryGrad" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id="revenueGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#10b981" stopOpacity={0.22} />
                     <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="purchaseGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.18} />
+                    <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
                   </linearGradient>
                 </defs>
                 <XAxis dataKey="month" tick={{ fontSize: 10, fill: "#94a3b8" }} axisLine={false} tickLine={false} />
@@ -226,11 +251,11 @@ export default function DashboardHome() {
                     fontSize: "12px",
                     boxShadow: "0 12px 30px rgba(15,23,42,0.08)",
                   }}
-                  formatter={(v: number, name: string) => [formatKRW(v), name === "order" ? "수주" : "납품"]}
+                  formatter={(v: number, name: string) => [formatKRW(v), name === "revenue" ? "매출" : "지출"]}
                 />
-                <Legend iconType="circle" iconSize={8} formatter={(name: string) => <span style={{ fontSize: 11, color: "#64748b" }}>{name === "order" ? "수주" : "납품"}</span>} />
-                <Area type="monotone" dataKey="order" stroke="#f59e0b" strokeWidth={2} fill="url(#orderGrad)" dot={false} activeDot={{ r: 4 }} />
-                <Area type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2} fill="url(#deliveryGrad)" dot={false} activeDot={{ r: 4 }} />
+                <Legend iconType="circle" iconSize={8} formatter={(name: string) => <span style={{ fontSize: 11, color: "#64748b" }}>{name === "revenue" ? "매출" : "지출"}</span>} />
+                <Area type="monotone" dataKey="revenue" stroke="#10b981" strokeWidth={2} fill="url(#revenueGrad)" dot={false} activeDot={{ r: 4 }} />
+                <Area type="monotone" dataKey="purchase" stroke="#f43f5e" strokeWidth={2} fill="url(#purchaseGrad)" dot={false} activeDot={{ r: 4 }} />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -283,45 +308,43 @@ export default function DashboardHome() {
               {(stats?.upcomingSchedules?.length ?? 0) === 0 ? (
                 <EmptyState title="예정된 일정이 없어요" desc="다음 미팅을 등록해두면 놓치지 않아요." ctaLabel="일정 등록" ctaHref="/sche-list/new" />
               ) : (
-                <div className="space-y-2">
+                <div className="divide-y divide-slate-100">
                   {stats?.upcomingSchedules?.map(p => {
                     const ms = new Date(p.sche_date).getTime();
                     const nowMs = Date.now();
                     const isImminent = ms > nowMs && ms - nowMs <= 12 * 60 * 60 * 1000;
                     return (
-                      <div
-                        key={p.sche_idno}
-                        className="flex items-start gap-3 p-3 rounded-2xl border transition"
-                        style={isImminent ? { background: "rgba(249,115,22,0.06)", borderColor: "rgba(249,115,22,0.20)" } : { background: "rgba(248,250,252,1)", borderColor: "rgba(226,232,240,1)" }}
-                      >
-                        <Calendar size={16} className="mt-0.5 shrink-0" style={{ color: isImminent ? "rgb(234,88,12)" : "rgb(14,165,233)" }} />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5 flex-wrap">
-                            <p className="text-sm font-semibold text-[color:var(--blueprint-text)] truncate">{p.sche_name}</p>
-                            {isImminent && (
-                              <span
-                                className="text-[10px] px-1.5 py-0.5 rounded font-bold border font-mono"
-                                style={{
-                                  background: "rgba(249,115,22,0.10)",
-                                  color: "rgb(234,88,12)",
-                                  borderColor: "rgba(249,115,22,0.22)",
-                                }}
-                              >
-                                임박
-                              </span>
-                            )}
+                      <Link key={p.sche_idno} href="/sche-list">
+                        <div className="flex items-start gap-3 py-3 hover:bg-slate-50 -mx-1 px-1 rounded-xl transition-colors cursor-pointer">
+                          <Calendar size={15} className="mt-0.5 shrink-0" style={{ color: isImminent ? "rgb(234,88,12)" : "rgb(14,165,233)" }} />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <p className="text-sm font-semibold text-[color:var(--blueprint-text)] truncate">{p.sche_name}</p>
+                              {isImminent && (
+                                <span
+                                  className="text-[10px] px-1.5 py-0.5 rounded font-bold border font-mono"
+                                  style={{
+                                    background: "rgba(249,115,22,0.10)",
+                                    color: "rgb(234,88,12)",
+                                    borderColor: "rgba(249,115,22,0.22)",
+                                  }}
+                                >
+                                  임박
+                                </span>
+                              )}
+                            </div>
+                            {p.clie_name && <p className="text-xs text-[color:var(--blueprint-text-dim)]">{p.clie_name}</p>}
                           </div>
-                          {p.clie_name && <p className="text-xs text-[color:var(--blueprint-text-dim)]">{p.clie_name}</p>}
+                          <p className="text-xs shrink-0 font-semibold" style={{ color: isImminent ? "rgb(234,88,12)" : "rgb(100,116,139)" }}>
+                            {new Date(p.sche_date).toLocaleString("ko-KR", {
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </p>
                         </div>
-                        <p className="text-xs shrink-0 font-semibold" style={{ color: isImminent ? "rgb(234,88,12)" : "rgb(100,116,139)" }}>
-                          {new Date(p.sche_date).toLocaleString("ko-KR", {
-                            month: "short",
-                            day: "numeric",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </p>
-                      </div>
+                      </Link>
                     );
                   })}
                 </div>
@@ -329,12 +352,7 @@ export default function DashboardHome() {
             </div>
           </div>
         </>
-      )}
-
-      {/* FAB */}
-      <Link href="/sale-list/regi" className="fab lg:hidden" aria-label="일지 작성">
-        <Plus size={24} color="white" />
-      </Link>
+      ))}
     </div>
   );
 }

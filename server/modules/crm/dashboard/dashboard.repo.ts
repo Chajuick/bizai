@@ -8,6 +8,7 @@ import {
   CRM_SCHEDULE,
   CRM_ORDER,
   CRM_SHIPMENT,
+  CRM_EXPENSE,
 } from "../../../../drizzle/schema";
 import type { DbOrTx } from "../../../core/db/tx";
 // #endregion
@@ -67,6 +68,7 @@ export const dashboardRepo = {
       [monthlyRevenue],
       [overdueSchedules],
       [imminentSchedules],
+      [invoicedShipments],
     ] = await Promise.all([
       db
         .select({ count: sql<number>`COUNT(*)` })
@@ -143,6 +145,19 @@ export const dashboardRepo = {
             lte(CRM_SCHEDULE.sche_date, twelveHoursLater)
           )
         ),
+      // 청구 미수금: invoiced 상태 납품 합계
+      db
+        .select({
+          total: sql<string>`COALESCE(SUM(${CRM_SHIPMENT.ship_pric}), 0)`,
+        })
+        .from(CRM_SHIPMENT)
+        .where(
+          and(
+            eq(CRM_SHIPMENT.comp_idno, params.comp_idno),
+            eq(CRM_SHIPMENT.enab_yesn, true),
+            eq(CRM_SHIPMENT.ship_stat, "invoiced")
+          )
+        ),
     ]);
 
     return {
@@ -153,6 +168,7 @@ export const dashboardRepo = {
       activeOrdersTotal: Number(activeOrders?.total ?? 0),
 
       monthlyRevenue: Number(monthlyRevenue?.total ?? 0),
+      totalInvoiced: Number(invoicedShipments?.total ?? 0),
 
       overdueCount: Number(overdueSchedules?.count ?? 0),
       imminentCount: Number(imminentSchedules?.count ?? 0),
@@ -189,29 +205,81 @@ export const dashboardRepo = {
   },
   // #endregion
 
+  // #region calendarEvents
+  async calendarEvents(
+    { db }: RepoDeps,
+    params: { comp_idno: number; from: Date; to: Date }
+  ) {
+    const { comp_idno, from, to } = params;
+
+    const [sales, schedules, orders, shipments, expenses] = await Promise.all([
+      db.select({
+        sale_idno: CRM_SALE.sale_idno,
+        vist_date: CRM_SALE.vist_date,
+        clie_name: CRM_SALE.clie_name,
+        aiex_summ: CRM_SALE.aiex_summ,
+        orig_memo: CRM_SALE.orig_memo,
+      }).from(CRM_SALE).where(
+        and(eq(CRM_SALE.comp_idno, comp_idno), eq(CRM_SALE.enab_yesn, true),
+          gte(CRM_SALE.vist_date, from), lt(CRM_SALE.vist_date, to))
+      ),
+      db.select({
+        sche_idno: CRM_SCHEDULE.sche_idno,
+        sche_date: CRM_SCHEDULE.sche_date,
+        sche_name: CRM_SCHEDULE.sche_name,
+        sche_stat: CRM_SCHEDULE.sche_stat,
+        clie_name: CRM_SCHEDULE.clie_name,
+        sche_pric: CRM_SCHEDULE.sche_pric,
+      }).from(CRM_SCHEDULE).where(
+        and(eq(CRM_SCHEDULE.comp_idno, comp_idno), eq(CRM_SCHEDULE.enab_yesn, true),
+          gte(CRM_SCHEDULE.sche_date, from), lt(CRM_SCHEDULE.sche_date, to))
+      ),
+      db.select({
+        orde_idno: CRM_ORDER.orde_idno,
+        ctrt_date: CRM_ORDER.ctrt_date,
+        crea_date: CRM_ORDER.crea_date,
+        prod_serv: CRM_ORDER.prod_serv,
+        orde_stat: CRM_ORDER.orde_stat,
+        orde_pric: CRM_ORDER.orde_pric,
+        clie_name: CRM_ORDER.clie_name,
+      }).from(CRM_ORDER).where(
+        and(eq(CRM_ORDER.comp_idno, comp_idno), eq(CRM_ORDER.enab_yesn, true),
+          sql`${CRM_ORDER.orde_stat} != 'canceled'`,
+          gte(sql`COALESCE(${CRM_ORDER.ctrt_date}, ${CRM_ORDER.crea_date})`, from),
+          lt(sql`COALESCE(${CRM_ORDER.ctrt_date}, ${CRM_ORDER.crea_date})`, to))
+      ),
+      db.select({
+        ship_idno: CRM_SHIPMENT.ship_idno,
+        ship_date: CRM_SHIPMENT.ship_date,
+        crea_date: CRM_SHIPMENT.crea_date,
+        ship_stat: CRM_SHIPMENT.ship_stat,
+        ship_pric: CRM_SHIPMENT.ship_pric,
+        clie_name: CRM_SHIPMENT.clie_name,
+      }).from(CRM_SHIPMENT).where(
+        and(eq(CRM_SHIPMENT.comp_idno, comp_idno), eq(CRM_SHIPMENT.enab_yesn, true),
+          gte(sql`COALESCE(${CRM_SHIPMENT.ship_date}, ${CRM_SHIPMENT.crea_date})`, from),
+          lt(sql`COALESCE(${CRM_SHIPMENT.ship_date}, ${CRM_SHIPMENT.crea_date})`, to))
+      ),
+      db.select({
+        expe_idno: CRM_EXPENSE.expe_idno,
+        expe_date: CRM_EXPENSE.expe_date,
+        expe_name: CRM_EXPENSE.expe_name,
+        expe_amnt: CRM_EXPENSE.expe_amnt,
+        clie_name: CRM_EXPENSE.clie_name,
+      }).from(CRM_EXPENSE).where(
+        and(eq(CRM_EXPENSE.comp_idno, comp_idno), eq(CRM_EXPENSE.enab_yesn, true),
+          gte(CRM_EXPENSE.expe_date, from), lt(CRM_EXPENSE.expe_date, to))
+      ),
+    ]);
+
+    return { sales, schedules, orders, shipments, expenses };
+  },
+  // #endregion
+
   // #region revenueTrend
   async revenueTrend({ db }: RepoDeps, params: { comp_idno: number; from: Date }) {
-    // 수주(ix_ord_comp_crea 사용)와 매출(ix_ship_comp_stat_paid 사용)은 독립 쿼리 → 병렬 실행
-    const [orderRows, revenueRows] = await Promise.all([
-      // 수주: 취소 제외, crea_date 기준 월 집계
-      db
-        .select({
-          ym: sql<string>`DATE_FORMAT(${CRM_ORDER.crea_date}, '%Y-%m')`,
-          total: sql<string>`COALESCE(SUM(${CRM_ORDER.orde_pric}), 0)`,
-        })
-        .from(CRM_ORDER)
-        .where(
-          and(
-            eq(CRM_ORDER.comp_idno, params.comp_idno),
-            eq(CRM_ORDER.enab_yesn, true),
-            gte(CRM_ORDER.crea_date, params.from),
-            sql`${CRM_ORDER.orde_stat} != 'canceled'`
-          )
-        )
-        .groupBy(sql`DATE_FORMAT(${CRM_ORDER.crea_date}, '%Y-%m')`)
-        .orderBy(sql`DATE_FORMAT(${CRM_ORDER.crea_date}, '%Y-%m')`),
-
-      // 매출: paid_date 기준 월 집계
+    const [revenueRows, purchaseRows] = await Promise.all([
+      // 매출: 수금 완료(paid) 기준, paid_date 월 집계
       db
         .select({
           ym: sql<string>`DATE_FORMAT(${CRM_SHIPMENT.paid_date}, '%Y-%m')`,
@@ -228,9 +296,26 @@ export const dashboardRepo = {
         )
         .groupBy(sql`DATE_FORMAT(${CRM_SHIPMENT.paid_date}, '%Y-%m')`)
         .orderBy(sql`DATE_FORMAT(${CRM_SHIPMENT.paid_date}, '%Y-%m')`),
+
+      // 매입: 지출 합계, expe_date 월 집계
+      db
+        .select({
+          ym: sql<string>`DATE_FORMAT(${CRM_EXPENSE.expe_date}, '%Y-%m')`,
+          total: sql<string>`COALESCE(SUM(${CRM_EXPENSE.expe_amnt}), 0)`,
+        })
+        .from(CRM_EXPENSE)
+        .where(
+          and(
+            eq(CRM_EXPENSE.comp_idno, params.comp_idno),
+            eq(CRM_EXPENSE.enab_yesn, true),
+            gte(CRM_EXPENSE.expe_date, params.from)
+          )
+        )
+        .groupBy(sql`DATE_FORMAT(${CRM_EXPENSE.expe_date}, '%Y-%m')`)
+        .orderBy(sql`DATE_FORMAT(${CRM_EXPENSE.expe_date}, '%Y-%m')`),
     ]);
 
-    return { orderRows, revenueRows };
+    return { revenueRows, purchaseRows };
   },
   // #endregion
 } as const;

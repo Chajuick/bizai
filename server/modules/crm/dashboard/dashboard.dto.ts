@@ -15,6 +15,7 @@ export const DashboardStatsOutput = z.object({
   activeOrdersTotal: z.number().nonnegative(),
 
   monthlyRevenue: z.number().nonnegative(),
+  totalInvoiced: z.number().nonnegative(),
 
   overdueCount: z.number().int().nonnegative(),
   imminentCount: z.number().int().nonnegative(),
@@ -39,11 +40,32 @@ export const DashboardStatsOutput = z.object({
 export type DashboardStatsOutput = z.infer<typeof DashboardStatsOutput>;
 
 export const RevenueTrendItemOutput = z.object({
-  month: z.string(), // "MM월"
-  order: z.number().nonnegative(), // 수주 합계(확정/진행 포함, 취소 제외)
-  revenue: z.number().nonnegative(), // 수금 합계(paid_date 기준)
+  month: z.string(),    // "MM월"
+  revenue: z.number().nonnegative(), // 매출: 수금 완료(paid_date 기준)
+  purchase: z.number().nonnegative(), // 매입: 지출 합계(expe_date 기준)
 });
 
 export const RevenueTrendOutput = z.array(RevenueTrendItemOutput);
 export type RevenueTrendOutput = z.infer<typeof RevenueTrendOutput>;
+
+// #region CalendarEvents
+export const CalendarInput = z.object({
+  year:  z.number().int().min(2020).max(2100),
+  month: z.number().int().min(1).max(12),
+});
+
+export const CalendarEventOutput = z.object({
+  type:      z.enum(["sale", "schedule", "order", "shipment", "expense"]),
+  id:        z.number().int(),
+  date:      IsoDateTime,
+  title:     z.string(),
+  amount:    z.number().optional(),
+  stat:      z.string().nullable().optional(),
+  clie_name: z.string().nullable().optional(),
+});
+
+export const CalendarEventsOutput = z.array(CalendarEventOutput);
+export type CalendarEvent = z.infer<typeof CalendarEventOutput>;
+// #endregion
+
 // #endregion

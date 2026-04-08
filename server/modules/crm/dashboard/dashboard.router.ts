@@ -4,7 +4,7 @@
 import { protectedProcedure, router } from "../../../core/trpc";
 import { svcCtxFromTrpc } from "../../../core/svcCtx";
 
-import { DashboardStatsOutput, RevenueTrendOutput } from "./dashboard.dto";
+import { DashboardStatsOutput, RevenueTrendOutput, CalendarInput, CalendarEventsOutput } from "./dashboard.dto";
 import { dashboardService } from "./dashboard.service";
 // #endregion
 
@@ -20,6 +20,13 @@ export const dashboardRouter = router({
   revenueTrend: protectedProcedure
     .output(RevenueTrendOutput)
     .query(({ ctx }) => dashboardService.getRevenueTrend(svcCtxFromTrpc(ctx))),
+  // #endregion
+
+  // #region calendarEvents
+  calendarEvents: protectedProcedure
+    .input(CalendarInput)
+    .output(CalendarEventsOutput)
+    .query(({ ctx, input }) => dashboardService.getCalendarEvents(svcCtxFromTrpc(ctx), input)),
   // #endregion
 });
 // #endregion
