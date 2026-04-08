@@ -14,7 +14,7 @@ import type { ConfirmState } from "@/components/focuswin/common/overlays/confirm
 import type { ClientDraft, ContactDraft } from "@/types/client";
 import type { RouterOutputs } from "@/types";
 
-import { BookMarked, Check, List, Loader2, Pencil, Trash2, XCircle, UserPlus } from "lucide-react";
+import { BookMarked, Check, List, Loader2, Pencil, Star, Trash2, XCircle, UserPlus } from "lucide-react";
 // #endregion
 
 // #region Types
@@ -64,7 +64,7 @@ export function useClientDetailVM() {
   const clientId = Number(id);
   const isValidId = Number.isFinite(clientId) && clientId > 0;
 
-  const goList = useCallback(() => navigate("/clie-list"), [navigate]);
+  const goList = useCallback(() => window.history.back(), []);
 
   // #endregion
 
@@ -91,12 +91,25 @@ export function useClientDetailVM() {
   );
 
   const schedulesQuery = trpc.crm.schedule.list.useQuery(
-    undefined,
+    { clie_idno: clientId },
+    { enabled: isValidId, staleTime: 30_000 }
+  );
+
+  const shipmentsQuery = trpc.crm.shipment.list.useQuery(
+    { clie_idno: clientId },
+    { enabled: isValidId, staleTime: 30_000 }
+  );
+
+  const expensesQuery = trpc.crm.expense.list.useQuery(
+    { clie_idno: clientId },
     { enabled: isValidId, staleTime: 30_000 }
   );
 
   const saveWithContacts = trpc.crm.client.saveWithContacts.useMutation();
   const deleteClient = trpc.crm.client.delete.useMutation();
+  const toggleFavoriteMutation = trpc.crm.client.toggleFavorite.useMutation({
+    onSuccess: () => utils.crm.client.get.invalidate({ clie_idno: clientId }),
+  });
 
   // #endregion
 
@@ -358,6 +371,12 @@ export function useClientDetailVM() {
       ]
     : [
         {
+          label: client?.favr_yesn ? "즐겨찾기 해제" : "즐겨찾기",
+          icon: <Star size={16} fill={client?.favr_yesn ? "currentColor" : "none"} className={client?.favr_yesn ? "text-amber-400" : ""} />,
+          onClick: () => clientId && toggleFavoriteMutation.mutate({ clie_idno: clientId }),
+          variant: "ghost" as const,
+        },
+        {
           label: "수정",
           icon: <Pencil size={16} />,
           onClick: startEdit,
@@ -399,8 +418,12 @@ export function useClientDetailVM() {
     logsLoading: logsQuery.isLoading,
     orders: ordersQuery.data?.items ?? [],
     ordersLoading: ordersQuery.isLoading,
-    schedules: (schedulesQuery.data?.items ?? []).filter((s) => s.clie_idno === clientId),
+    schedules: schedulesQuery.data?.items ?? [],
     schedulesLoading: schedulesQuery.isLoading,
+    shipments: shipmentsQuery.data?.items ?? [],
+    shipmentsLoading: shipmentsQuery.isLoading,
+    expenses: expensesQuery.data?.items ?? [],
+    expensesLoading: expensesQuery.isLoading,
     totalOrderAmount,
 
     // editing

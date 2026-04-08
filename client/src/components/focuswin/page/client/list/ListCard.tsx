@@ -1,8 +1,9 @@
 // client/src/components/focuswin/clients/ListCard.tsx
 
 // #region Imports
-import { ChevronRight, MapPin } from "lucide-react";
+import { ChevronRight, MapPin, Star } from "lucide-react";
 import { WorkItemCard } from "@/components/focuswin/common/cards/work-item-card";
+import { cn } from "@/lib/utils";
 import type { ClientRow } from "@/types/client";
 // #endregion
 
@@ -16,10 +17,11 @@ function getInitial(name: string) {
 // #region Types
 type Props = {
   client: ClientRow;
+  onToggleFavorite: (clie_idno: number) => void;
 };
 // #endregion
 
-export default function ClientsListCard({ client }: Props) {
+export default function ClientsListCard({ client, onToggleFavorite }: Props) {
   return (
     <WorkItemCard interactive className="group">
       {/* #region Left Icon (Initial Avatar) */}
@@ -48,11 +50,27 @@ export default function ClientsListCard({ client }: Props) {
             ) : null
           }
           actions={
-            // #region Right Action (Chevron)
-            <div className="flex items-center">
+            <div className="flex items-center gap-1">
+              {/* 즐겨찾기 버튼 */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onToggleFavorite(client.clie_idno);
+                }}
+                className={cn(
+                  "flex h-6 w-6 items-center justify-center rounded-full border transition-colors",
+                  client.favr_yesn
+                    ? "border-amber-300 bg-amber-50 text-amber-400"
+                    : "border-slate-200 bg-white text-slate-300 opacity-0 group-hover:opacity-100"
+                )}
+                aria-label={client.favr_yesn ? "즐겨찾기 해제" : "즐겨찾기 추가"}
+              >
+                <Star size={12} fill={client.favr_yesn ? "currentColor" : "none"} />
+              </button>
               <ChevronRight size={18} className="text-slate-300 transition group-hover:text-slate-500" aria-hidden />
             </div>
-            // #endregion
           }
         />
         {/* #endregion */}

@@ -41,10 +41,12 @@ export default function ClientListPage() {
       />
 
       <PageScaffold
+        size="lg"
         kicker="CLIENTS"
         title="거래처"
         description="거래처/담당자 정보를 빠르게 찾고 관리해요."
         primaryAction={{ label: "거래처 추가", icon: <Plus size={16} />, onClick: vm.goRegist }}
+        hidePrimaryActionOnMobile
         actions={[
           {
             label: "엑셀 업로드",

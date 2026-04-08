@@ -10,9 +10,11 @@ export default function ClientListContent({ vm }: Props) {
     <PaginatedList
       items={vm.items}
       renderItem={(client) => (
-        <Link key={client.clie_idno} href={`/clie-list/${client.clie_idno}`} className="block">
-          <ClientsListCard client={client} />
-        </Link>
+        <div key={client.clie_idno} className="relative">
+          <Link href={`/clie-list/${client.clie_idno}`} className="block">
+            <ClientsListCard client={client} onToggleFavorite={vm.toggleFavorite} />
+          </Link>
+        </div>
       )}
       hasMore={vm.hasMore}
       isLoadingMore={vm.isLoadingMore}

@@ -15,10 +15,12 @@ import type { RouterOutputs } from "@/types/router";
 // #region Types
 type UploadResult = RouterOutputs["crm"]["client"]["upload"];
 type ClientItem = RouterOutputs["crm"]["client"]["list"]["items"][number];
+type ClientTypeFilter = "all" | "sales" | "purchase" | "both";
 // #endregion
 
 // #region Constants
 const PAGE_LIMIT = 20;
+
 // #endregion
 
 // #region Utils
@@ -47,14 +49,47 @@ export function useClientListVM() {
 
   // #endregion
 
+  // #region Type filter state
+
+  const [typeFilter, setTypeFilterRaw] = useState<ClientTypeFilter>("all");
+
+  const setTypeFilter = useCallback((key: string) => {
+    setOffset(0);
+    setTypeFilterRaw(key as ClientTypeFilter);
+  }, []);
+
+  // #endregion
+
   // #region Data fetching
 
+  const typeCountsQuery = trpc.crm.client.typeCounts.useQuery(
+    { search: search || undefined },
+    { staleTime: 10_000 }
+  );
+
+  const typeTabs = useMemo(() => {
+    const c = typeCountsQuery.data;
+    return [
+      { key: "all",      label: "전체",   count: c?.all      ?? 0 },
+      { key: "sales",    label: "매출처", count: c?.sales    ?? 0 },
+      { key: "purchase", label: "매입처", count: c?.purchase ?? 0 },
+      { key: "both",     label: "겸용",   count: c?.both     ?? 0 },
+    ];
+  }, [typeCountsQuery.data]);
+
   const listQuery = trpc.crm.client.list.useQuery(
-    { search: search || undefined, page: { limit: PAGE_LIMIT, offset } },
+    {
+      search: search || undefined,
+      clie_type: typeFilter !== "all" ? typeFilter : undefined,
+      page: { limit: PAGE_LIMIT, offset },
+    },
     { placeholderData: (prev) => prev, staleTime: 10_000 }
   );
 
   const uploadMutation = trpc.crm.client.upload.useMutation();
+  const toggleFavoriteMutation = trpc.crm.client.toggleFavorite.useMutation({
+    onSuccess: () => utils.crm.client.list.invalidate(),
+  });
   const utils = trpc.useUtils();
 
   // #endregion
@@ -206,6 +241,8 @@ export function useClientListVM() {
   return {
     // state
     search,
+    typeFilter,
+    typeTabs,
 
     // data
     items: accRows,
@@ -232,6 +269,8 @@ export function useClientListVM() {
     handleSearch,
     handleClear,
     refresh,
+    setTypeFilter,
+    toggleFavorite: (clie_idno: number) => toggleFavoriteMutation.mutate({ clie_idno }),
 
     // upload guide modal
     showUploadGuide,
