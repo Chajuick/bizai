@@ -976,7 +976,6 @@ export const saleService = {
         ],
         response_format: { type: "json_object" },
         temperature: 0,
-        top_p: 0.1,
         maxTokens: 2048,
       });
     } catch (err) {
