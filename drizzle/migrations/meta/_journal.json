@@ -15,6 +15,27 @@
       "when": 1773627042548,
       "tag": "0001_daffy_weapon_omega",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1775466482989,
+      "tag": "0002_steep_black_tom",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1775546821079,
+      "tag": "0003_fuzzy_changeling",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1775606363366,
+      "tag": "0004_romantic_lake",
+      "breakpoints": true
     }
   ]
 }

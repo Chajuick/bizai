@@ -4,6 +4,7 @@ import StatusBanner from "@/components/focuswin/common/feedback/status-banner";
 import SaleDetailEditFormCard from "./EditFormCard";
 import SaleDetailMetaCard from "./MetaCard";
 import SaleDetailAISummaryCard from "./AISummaryCard";
+import AIReviewCard from "./AIReviewCard";
 import SaleDetailRawCard from "./RawCard";
 import SaleDetailTranscriptCard from "./TranscriptCard";
 
@@ -56,7 +57,23 @@ export default function SaleDetailContent({ vm }: Props) {
             />
           </Section>
 
-          {vm.log.sale.aiex_summ ? (
+          {vm.needsReview ? (
+            <Section>
+              <AIReviewCard
+                aiSummary={vm.ai.summary}
+                aiActions={vm.aiActions}
+                pricing={vm.ai.pricing}
+                confidence={vm.ai.confidence}
+                checkedKeys={vm.checkedKeys}
+                onToggleKey={vm.onToggleKey}
+                applyPricing={vm.applyPricing}
+                onTogglePricing={vm.onTogglePricing}
+                onApply={vm.applyReview}
+                onSkip={vm.skipReview}
+                isSubmitting={vm.isApplyingReview}
+              />
+            </Section>
+          ) : vm.log.sale.aiex_summ ? (
             <Section>
               <SaleDetailAISummaryCard
                 aiSummary={vm.ai.summary}

@@ -10,6 +10,8 @@ import {
   SaleAnalyzeOutput,
   SaleAnalyzeResultInput,
   SaleAnalyzeResultOutput,
+  SaleApplyReviewInput,
+  SaleApplyReviewOutput,
   SaleCreateInput,
   SaleDeleteInput,
   SaleGetOutput,
@@ -76,6 +78,11 @@ export const saleRouter = router({
     .input(SaleTranscribeResultInput)
     .output(SaleTranscribeResultOutput)
     .query(({ ctx, input }) => saleService.getTranscribeJobResultById(svcCtxFromTrpc(ctx), input.jobs_idno)),
+
+  applyReview: protectedProcedure
+    .input(SaleApplyReviewInput)
+    .output(SaleApplyReviewOutput)
+    .mutation(({ ctx, input }) => saleService.applyReview(svcCtxFromTrpc(ctx), input)),
 
   patchScheduleClient: protectedProcedure
     .input(SalePatchScheduleClientInput)

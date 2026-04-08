@@ -150,10 +150,11 @@ export const JOB_STATUSES = [
 
 // #region Sale AI status
 export const AI_STATUSES = [
-  "pending",    // 분석 대기 (생성 직후 / 재시도 대기)
-  "processing", // 분석 진행 중
-  "completed",  // 분석 완료
-  "failed",     // 분석 실패 (재시도 가능)
+  "pending",      // 분석 대기 (생성 직후 / 재시도 대기)
+  "processing",   // 분석 진행 중
+  "needs_review", // 분석 완료, 사용자 검토 대기
+  "completed",    // 검토 및 적용 완료
+  "failed",       // 분석 실패 (재시도 가능)
 ] as const;
 export type AiStatus = typeof AI_STATUSES[number];
 // #endregion

@@ -287,6 +287,21 @@ export const SaleTranscribeResultOutput = z.object({
 
 // #endregion
 
+// #region ApplyReview
+
+export const SaleApplyReviewInput = z.object({
+  sale_idno: z.number().int().positive(),
+  selected_keys: z.array(z.string()),
+  apply_pricing: z.boolean(),
+});
+
+export const SaleApplyReviewOutput = z.object({
+  success: z.literal(true),
+  created_schedules: z.number().int(),
+});
+
+// #endregion
+
 // #region Types
 
 export type SaleCreatePayload = z.infer<typeof SaleCreateInput>;

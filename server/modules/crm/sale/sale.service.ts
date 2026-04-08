@@ -644,6 +644,66 @@ export const saleService = {
       data: { jobs_stat: "done", sttx_text, sttx_name: "whisper", fini_date: new Date() },
     });
 
+    // Auto-chain: transcribe done → analyze 자동 큐 등록 (non-fatal)
+    // worker 다음 루프 이터레이션에서 즉시 analyze job을 처리하도록 큐에 등록
+    if (job.sale_idno != null) {
+      try {
+        const analyzeComp = comp_idno;
+        const analyzeSale = Number(job.sale_idno);
+        const analyzeFile = Number(file_idno);
+        const analyzeUser = Number(job.crea_idno);
+        const now = new Date();
+
+        // 이미 queued/running 상태면 skip (중복 방지)
+        const existingAnalyze = await saleRepo.getAudioJobByRef(
+          { db },
+          { comp_idno: analyzeComp, sale_idno: analyzeSale, file_idno: analyzeFile, jobs_type: "analyze" }
+        );
+
+        if (!existingAnalyze || (existingAnalyze.jobs_stat !== "queued" && existingAnalyze.jobs_stat !== "running")) {
+          let analyzeJobId: number;
+
+          if (existingAnalyze) {
+            // done/failed → 재초기화
+            analyzeJobId = Number(existingAnalyze.jobs_idno);
+            await saleRepo.updateAudioJob({ db }, {
+              jobs_idno: analyzeJobId,
+              data: { jobs_stat: "queued", fail_mess: null, aiex_summ: null, aiex_text: null, reqe_date: now, fini_date: null },
+            });
+          } else {
+            const created = await saleRepo.createAudioJob({ db }, {
+              comp_idno: analyzeComp, sale_idno: analyzeSale, file_idno: analyzeFile,
+              jobs_type: "analyze", jobs_stat: "queued",
+              fail_mess: null, sttx_text: null, aiex_summ: null, aiex_text: null,
+              sttx_name: null, llmd_name: null,
+              meta_json: { task: "analyze", auto_chained: true },
+              reqe_date: now, fini_date: null,
+              crea_idno: analyzeUser, crea_date: now, modi_idno: analyzeUser, modi_date: now,
+            });
+            analyzeJobId = created.jobs_idno;
+          }
+
+          // 토큰 선차감 — 실패 시 방금 만든 job을 failed로 처리
+          try {
+            await aiService.checkAndDeductQuota(analyzeComp, 1500);
+          } catch (tokenErr) {
+            await saleRepo.markJobFailed({ db }, { jobs_idno: analyzeJobId, fail_mess: "AI 토큰 부족 (auto-chain)" });
+            throw tokenErr;
+          }
+
+          // sale aiex_stat → pending (UI 상태 반영)
+          await saleRepo.update({ db }, {
+            comp_idno: analyzeComp, owne_idno: analyzeUser, sale_idno: analyzeSale,
+            data: { aiex_stat: "pending" as const },
+          });
+
+          logger.info({ jobs_idno, analyzeJobId }, "[transcribe] analyze job auto-queued");
+        }
+      } catch (err) {
+        logger.warn({ err, jobs_idno }, "[transcribe] auto-queue analyze failed (non-fatal)");
+      }
+    }
+
     // 후처리: 실패해도 job은 이미 done — 별도 try-catch로 상태 보호
     try {
       await aiService.recordUsage(db, {
@@ -917,6 +977,7 @@ export const saleService = {
         response_format: { type: "json_object" },
         temperature: 0,
         top_p: 0.1,
+        maxTokens: 2048,
       });
     } catch (err) {
       await aiService.refundQuota(comp_idno, 1500);
@@ -1022,15 +1083,15 @@ export const saleService = {
 
     const primaryContact = ai_contacts[0] ?? null;
 
-    // sale 업데이트
+    // sale 업데이트 — needs_review: 사용자가 직접 검토 후 적용
     await saleRepo.update({ db }, {
       comp_idno, owne_idno, sale_idno,
       data: {
-        aiex_done: true,
+        aiex_done: false,
         aiex_summ: summary,
         aiex_text: parsed as Record<string, unknown>,
-        aiex_stat: "completed" as const,
-        ...(sale_pric !== null && !sale.sale_pric ? { sale_pric: String(sale_pric) } : {}),
+        aiex_stat: "needs_review" as const,
+        // 연락처는 빈 경우에만 자동 채움 (비논쟁적 정보)
         ...(primaryContact?.cont_name && !sale.cont_name ? { cont_name: primaryContact.cont_name } : {}),
         ...(primaryContact?.cont_role && !sale.cont_role ? { cont_role: primaryContact.cont_role } : {}),
         ...(primaryContact?.cont_tele && !sale.cont_tele ? { cont_tele: primaryContact.cont_tele } : {}),
@@ -1046,38 +1107,10 @@ export const saleService = {
       });
     }
 
-    // 일정 자동 생성 (aiex_keys 중복 방지)
-    let schedule_idno: number | null = null;
-    for (const appt of normalizedAppointments) {
-      if (!appt.date) continue;
-      const apptDate = new Date(appt.date);
-      if (Number.isNaN(apptDate.getTime())) continue;
-
-      const actn_ownr = appt.action_owner ?? "self";
-      const aiex_keys = makeAiApptKey({ title: appt.title ?? "", date: appt.date, action_owner: actn_ownr });
-
-      const existsSchedule = await saleRepo.findScheduleByAiKey({ db }, { comp_idno, sale_idno, aiex_keys });
-      if (existsSchedule) continue;
-
-      const schedData = withCreateAudit(workerCtx, {
-        comp_idno, owne_idno, sale_idno,
-        clie_idno: sale.clie_idno ?? null,
-        clie_name: (parsed.client_name ?? sale.clie_name) ?? null,
-        sche_name: sanitizeAiTitle(appt.title ?? "AI 자동 일정"),
-        sche_desc: appt.desc ?? null,
-        sche_pric: sale_pric !== null ? String(sale_pric) : null,
-        sche_date: apptDate,
-        sche_stat: "scheduled" as const,
-        actn_ownr,
-        auto_gene: true,
-        aiex_keys,
-        enab_yesn: true,
-      });
-      const created = await saleRepo.createSchedule({ db }, schedData);
-      if (schedule_idno === null) schedule_idno = created.sche_idno;
-    }
+    // 일정 자동 생성 제거 → applyReview에서 사용자가 선택 후 적용
 
     // 결과 payload → aiex_text에 저장 (analyzeResult 엔드포인트에서 조회)
+    const schedule_idno: number | null = null;
     const resultPayload = {
       summary,
       confidence: ai_confidence,
@@ -1240,6 +1273,82 @@ export const saleService = {
     const db = getDb();
     await saleRepo.patchSchedulesClientBySale({ db }, { comp_idno: ctx.comp_idno, sale_idno, clie_idno, clie_name });
     return { success: true as const };
+  },
+  // #endregion
+
+  // #region applyReview
+  /**
+   * 사용자가 AI 분석 결과를 검토 후 적용
+   * - 선택한 일정만 생성
+   * - 금액 반영 여부 선택
+   * - aiex_stat = "completed", aiex_done = true
+   */
+  async applyReview(
+    ctx: ServiceCtx,
+    input: { sale_idno: number; selected_keys: string[]; apply_pricing: boolean }
+  ) {
+    const db = getDb();
+    const { sale_idno, selected_keys, apply_pricing } = input;
+    const comp_idno = ctx.comp_idno;
+
+    const sale = await saleRepo.getSaleForWorker({ db }, { sale_idno, comp_idno });
+    if (!sale) {
+      throwAppError({ tRPCCode: "NOT_FOUND", appCode: "SALE_NOT_FOUND", message: "영업일지를 찾을 수 없습니다.", displayType: "toast" });
+    }
+    if (sale.aiex_stat !== "needs_review") {
+      throwAppError({ tRPCCode: "BAD_REQUEST", appCode: "INVALID_STATE", message: "검토 대기 상태가 아닙니다.", displayType: "toast" });
+    }
+
+    const owne_idno = Number(sale.owne_idno);
+    const aiex_core = sale.aiex_text ? toAiCore(sale.aiex_text) : null;
+    const appointments = aiex_core?.appointments ?? [];
+
+    // 선택된 일정 생성
+    let created_schedules = 0;
+    const pricingSource = aiex_core?.pricing?.final ?? aiex_core?.pricing?.primary ?? null;
+    const rawAmount = pricingSource?.amount ?? pricingSource?.min ?? null;
+    const sale_pric = typeof rawAmount === "number" && rawAmount > 0 ? Math.round(rawAmount) : null;
+
+    for (const appt of appointments) {
+      if (!selected_keys.includes(appt.key)) continue;
+      if (!appt.date) continue;
+      const apptDate = new Date(appt.date);
+      if (Number.isNaN(apptDate.getTime())) continue;
+
+      const existsSchedule = await saleRepo.findScheduleByAiKey({ db }, { comp_idno, sale_idno, aiex_keys: appt.key });
+      if (existsSchedule) { created_schedules++; continue; }
+
+      const schedData = withCreateAudit(ctx, {
+        comp_idno, owne_idno, sale_idno,
+        clie_idno: sale.clie_idno ?? null,
+        clie_name: sale.clie_name ?? null,
+        sche_name: sanitizeAiTitle(appt.title ?? "AI 자동 일정"),
+        sche_desc: appt.desc ?? null,
+        sche_pric: sale_pric !== null ? String(sale_pric) : null,
+        sche_date: apptDate,
+        sche_stat: "scheduled" as const,
+        actn_ownr: appt.action_owner,
+        auto_gene: true,
+        aiex_keys: appt.key,
+        enab_yesn: true,
+      });
+      await saleRepo.createSchedule({ db }, schedData);
+      created_schedules++;
+    }
+
+    // sale 상태 완료 처리
+    const updateData: Partial<InsertSale> = {
+      aiex_stat: "completed" as const,
+      aiex_done: true,
+      ...(apply_pricing && sale_pric !== null && !sale.sale_pric ? { sale_pric: String(sale_pric) } : {}),
+    };
+
+    await saleRepo.update({ db }, {
+      comp_idno, owne_idno, sale_idno,
+      data: withUpdateAudit(ctx, updateData),
+    });
+
+    return { success: true as const, created_schedules };
   },
   // #endregion
 } as const;
