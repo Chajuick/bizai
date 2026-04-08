@@ -421,8 +421,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <Link key={item.path} href={item.path}>
               <div
                 className={[
-                  "relative flex flex-col items-center gap-1 px-3 py-2 rounded-2xl",
-                  "transition-all duration-200 cursor-pointer min-w-[52px]",
+                  "relative flex flex-col items-center gap-1 px-2 py-2 rounded-2xl",
+                  "transition-all duration-200 cursor-pointer flex-1",
                   active ? "text-blue-700" : "text-slate-500 hover:text-slate-800",
                 ].join(" ")}
                 style={{ transform: active ? "translateY(-1px)" : "translateY(0px)" }}
