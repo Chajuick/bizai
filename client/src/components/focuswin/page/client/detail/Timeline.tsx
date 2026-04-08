@@ -241,7 +241,7 @@ function TimelineRow({ event, isLast }: { event: TimelineEvent; isLast: boolean 
   return (
     <div className={cn("flex items-center gap-3 py-2", !isLast && "border-b border-slate-50")}>
       {/* 날짜 */}
-      <span className="w-16 shrink-0 text-[11px] text-slate-400 text-right">{fmtDate(event.date)}</span>
+      <span className="shrink-0 text-[11px] text-slate-400 text-right">{fmtDate(event.date)}</span>
 
       {/* 도트 + 아이콘 */}
       <div className="relative z-10 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 border-white shadow-sm bg-white">
