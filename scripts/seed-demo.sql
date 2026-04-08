@@ -24,8 +24,8 @@ DELETE FROM COAPP_CRM_EXPENSE       WHERE comp_idno IN (SELECT comp_idno FROM CO
 DELETE FROM COAPP_CRM_CLIENT_CONT   WHERE comp_idno IN (SELECT comp_idno FROM COAPP_CORE_COMPANY WHERE bizn_numb IN ('1008145231','2018034512','1308092341','1158047823','2078134592','1118045672'));
 DELETE FROM COAPP_CRM_CLIENT        WHERE comp_idno IN (SELECT comp_idno FROM COAPP_CORE_COMPANY WHERE bizn_numb IN ('1008145231','2018034512','1308092341','1158047823','2078134592','1118045672'));
 DELETE FROM COAPP_BILLING_SUBSCRIPTION WHERE comp_idno IN (SELECT comp_idno FROM COAPP_CORE_COMPANY WHERE bizn_numb IN ('1008145231','2018034512','1308092341','1158047823','2078134592','1118045672'));
-DELETE FROM COAPP_CORE_COMPANY_USER    WHERE user_idno IN (SELECT user_idno FROM COAPP_CORE_USER WHERE mail_idno IN ('ceo@koreaindustry.co.kr','sales@koreaindustry.co.kr','acct@koreaindustry.co.kr','ceo@nextsol.co.kr','lead@nextsol.co.kr','sales@nextsol.co.kr','acct@nextsol.co.kr','ceo@thespacd.co.kr','acct@thespacd.co.kr','ceo@cheongwonfood.co.kr','ceo@ecoclean.co.kr','mgr@ecoclean.co.kr','ceo@uniformplus.co.kr','sales@uniformplus.co.kr'));
-DELETE FROM COAPP_CORE_USER            WHERE mail_idno IN ('ceo@koreaindustry.co.kr','sales@koreaindustry.co.kr','acct@koreaindustry.co.kr','ceo@nextsol.co.kr','lead@nextsol.co.kr','sales@nextsol.co.kr','acct@nextsol.co.kr','ceo@thespacd.co.kr','acct@thespacd.co.kr','ceo@cheongwonfood.co.kr','ceo@ecoclean.co.kr','mgr@ecoclean.co.kr','ceo@uniformplus.co.kr','sales@uniformplus.co.kr');
+DELETE FROM COAPP_CORE_COMPANY_USER    WHERE user_idno IN (SELECT user_idno FROM COAPP_CORE_USER WHERE mail_idno IN ('ceo@ind.co.kr','sales@ind.co.kr','acct@ind.co.kr','ceo@sol.co.kr','lead@sol.co.kr','sales@sol.co.kr','acct@sol.co.kr','ceo@space.co.kr','acct@space.co.kr','ceo@food.co.kr','ceo@eco.co.kr','mgr@eco.co.kr','ceo@uni.co.kr','sales@uni.co.kr'));
+DELETE FROM COAPP_CORE_USER            WHERE mail_idno IN ('ceo@ind.co.kr','sales@ind.co.kr','acct@ind.co.kr','ceo@sol.co.kr','lead@sol.co.kr','sales@sol.co.kr','acct@sol.co.kr','ceo@space.co.kr','acct@space.co.kr','ceo@food.co.kr','ceo@eco.co.kr','mgr@eco.co.kr','ceo@uni.co.kr','sales@uni.co.kr');
 DELETE FROM COAPP_CORE_COMPANY         WHERE bizn_numb IN ('1008145231','2018034512','1308092341','1158047823','2078134592','1118045672');
 
 -- =================================================================
@@ -40,13 +40,13 @@ VALUES ('한국산업기계(주)', '1008145231', 0, 1, 0, '2024-09-02 09:00:00')
 SET @ko1 = LAST_INSERT_ID();
 
 INSERT INTO COAPP_CORE_USER (open_idno, user_name, mail_idno, pass_hash, logi_mthd, user_auth, crea_date)
-VALUES ('local:ceo@koreaindustry.co.kr',   '강민준', 'ceo@koreaindustry.co.kr',   '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-09-02 09:00:00');
+VALUES ('local:ceo@ind.co.kr',   '강민준', 'ceo@ind.co.kr',   '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-09-02 09:00:00');
 SET @ku1 = LAST_INSERT_ID();
 INSERT INTO COAPP_CORE_USER (open_idno, user_name, mail_idno, pass_hash, logi_mthd, user_auth, crea_date)
-VALUES ('local:sales@koreaindustry.co.kr', '이준혁', 'sales@koreaindustry.co.kr', '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-09-02 09:10:00');
+VALUES ('local:sales@ind.co.kr', '이준혁', 'sales@ind.co.kr', '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-09-02 09:10:00');
 SET @ku2 = LAST_INSERT_ID();
 INSERT INTO COAPP_CORE_USER (open_idno, user_name, mail_idno, pass_hash, logi_mthd, user_auth, crea_date)
-VALUES ('local:acct@koreaindustry.co.kr',  '박소연', 'acct@koreaindustry.co.kr',  '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-09-02 09:20:00');
+VALUES ('local:acct@ind.co.kr',  '박소연', 'acct@ind.co.kr',  '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-09-02 09:20:00');
 SET @ku3 = LAST_INSERT_ID();
 
 INSERT INTO COAPP_CORE_COMPANY_USER (comp_idno, user_idno, comp_role, memb_stat, crea_idno) VALUES
@@ -58,32 +58,32 @@ INSERT INTO COAPP_BILLING_SUBSCRIPTION (comp_idno, plan_idno, subs_stat, star_da
 VALUES (@ko1, 4, 'active', '2024-09-02', '2027-12-31', @ku1);
 
 -- 거래처
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko1, '(주)현대정밀부품',  '1048193201', 'sales', '제조업',   '경기도 화성시 향남읍 발안공단로 89', '주력 거래처. 프레스 금형 부품 정기 공급',            1, 1, @ku2, '2024-09-05 10:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko1, '(주)현대정밀부품',  '1048193201', 'sales', '제조업',   '경기도 화성시 향남읍 발안공단로 89', '주력 거래처. 프레스 금형 부품 정기 공급', 1, @ku2, '2024-09-05 10:00:00');
 SET @k1c1 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko1, '삼성중공업 협력사', '2078045123', 'sales', '중공업',   '경남 거제시 옥포2동 산업단지로 35', '대형 기계 부품 납품. 연 2-3회 대형 수주',           0, 1, @ku2, '2024-09-10 11:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko1, '삼성중공업 협력사', '2078045123', 'sales', '중공업',   '경남 거제시 옥포2동 산업단지로 35', '대형 기계 부품 납품. 연 2-3회 대형 수주', 1, @ku2, '2024-09-10 11:00:00');
 SET @k1c2 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko1, '(주)동양자동화',    '1108023451', 'sales', '자동화설비', '인천시 남동구 논현동 산업단지 201', '자동화 라인 부품 교체 수요 있음',                   0, 1, @ku2, '2024-10-03 09:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko1, '(주)동양자동화',    '1108023451', 'sales', '자동화설비', '인천시 남동구 논현동 산업단지 201', '자동화 라인 부품 교체 수요 있음', 1, @ku2, '2024-10-03 09:00:00');
 SET @k1c3 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko1, '코리아패키징',      '1198123041', 'sales', '포장기계',  '충남 천안시 서북구 성환읍 농공단지 55', NULL, 0, 1, @ku2, '2024-11-12 10:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko1, '코리아패키징',      '1198123041', 'sales', '포장기계',  '충남 천안시 서북구 성환읍 농공단지 55', NULL, 1, @ku2, '2024-11-12 10:00:00');
 SET @k1c4 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko1, '(주)한진물류',      '1048092341', 'sales', '물류/운송', '서울시 중구 청계천로 100 한진빌딩',    '물류 컨베이어 벨트 부품 납품', 0, 1, @ku2, '2025-01-08 09:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko1, '(주)한진물류',      '1048092341', 'sales', '물류/운송', '서울시 중구 청계천로 100 한진빌딩',    '물류 컨베이어 벨트 부품 납품', 1, @ku2, '2025-01-08 09:00:00');
 SET @k1c5 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko1, '성원철강자재',      '1308145231', 'purchase', '철강/자재', '경기도 안산시 단원구 공단로 310', '주요 원자재 공급사. 월 정기 발주', 0, 1, @ku3, '2024-09-03 09:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko1, '성원철강자재',      '1308145231', 'purchase', '철강/자재', '경기도 안산시 단원구 공단로 310', '주요 원자재 공급사. 월 정기 발주', 1, @ku3, '2024-09-03 09:00:00');
 SET @k1c6 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko1, '(주)서울공구',      '1108203451', 'purchase', '공구/소모품', '서울시 영등포구 문래동 공구상가 45', NULL, 0, 1, @ku3, '2024-09-15 10:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko1, '(주)서울공구',      '1108203451', 'purchase', '공구/소모품', '서울시 영등포구 문래동 공구상가 45', NULL, 1, @ku3, '2024-09-15 10:00:00');
 SET @k1c7 = LAST_INSERT_ID();
 
 -- 담당자
@@ -301,16 +301,16 @@ VALUES ('넥스트솔루션(주)', '2018034512', 0, 1, 0, '2024-09-01 09:00:00')
 SET @ko2 = LAST_INSERT_ID();
 
 INSERT INTO COAPP_CORE_USER (open_idno, user_name, mail_idno, pass_hash, logi_mthd, user_auth, crea_date)
-VALUES ('local:ceo@nextsol.co.kr',   '윤태현', 'ceo@nextsol.co.kr',   '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-09-01 09:00:00');
+VALUES ('local:ceo@sol.co.kr',   '윤태현', 'ceo@sol.co.kr',   '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-09-01 09:00:00');
 SET @ku4 = LAST_INSERT_ID();
 INSERT INTO COAPP_CORE_USER (open_idno, user_name, mail_idno, pass_hash, logi_mthd, user_auth, crea_date)
-VALUES ('local:lead@nextsol.co.kr',  '김성준', 'lead@nextsol.co.kr',  '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-09-01 09:10:00');
+VALUES ('local:lead@sol.co.kr',  '김성준', 'lead@sol.co.kr',  '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-09-01 09:10:00');
 SET @ku5 = LAST_INSERT_ID();
 INSERT INTO COAPP_CORE_USER (open_idno, user_name, mail_idno, pass_hash, logi_mthd, user_auth, crea_date)
-VALUES ('local:sales@nextsol.co.kr', '최지훈', 'sales@nextsol.co.kr', '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-09-01 09:20:00');
+VALUES ('local:sales@sol.co.kr', '최지훈', 'sales@sol.co.kr', '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-09-01 09:20:00');
 SET @ku6 = LAST_INSERT_ID();
 INSERT INTO COAPP_CORE_USER (open_idno, user_name, mail_idno, pass_hash, logi_mthd, user_auth, crea_date)
-VALUES ('local:acct@nextsol.co.kr',  '정미라', 'acct@nextsol.co.kr',  '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-09-01 09:30:00');
+VALUES ('local:acct@sol.co.kr',  '정미라', 'acct@sol.co.kr',  '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-09-01 09:30:00');
 SET @ku7 = LAST_INSERT_ID();
 
 INSERT INTO COAPP_CORE_COMPANY_USER (comp_idno, user_idno, comp_role, memb_stat, crea_idno) VALUES
@@ -323,36 +323,36 @@ INSERT INTO COAPP_BILLING_SUBSCRIPTION (comp_idno, plan_idno, subs_stat, star_da
 VALUES (@ko2, 4, 'active', '2024-09-01', '2027-12-31', @ku4);
 
 -- 거래처
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko2, '(주)한국화재보험', '1018023451', 'sales', '금융/보험', '서울시 종로구 종로 1 교보빌딩 15층', '전사 IT인프라 고도화 프로젝트 진행 중', 1, 1, @ku5, '2024-09-05 09:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko2, '(주)한국화재보험', '1018023451', 'sales', '금융/보험', '서울시 종로구 종로 1 교보빌딩 15층', '전사 IT인프라 고도화 프로젝트 진행 중', 1, @ku5, '2024-09-05 09:00:00');
 SET @k2c1 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko2, '세종병원그룹', '2098034512', 'sales', '의료/병원', '경기도 부천시 조마루로 17 세종병원', '의료정보시스템 납품 및 유지보수', 1, 1, @ku6, '2024-09-12 10:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko2, '세종병원그룹', '2098034512', 'sales', '의료/병원', '경기도 부천시 조마루로 17 세종병원', '의료정보시스템 납품 및 유지보수', 1, @ku6, '2024-09-12 10:00:00');
 SET @k2c2 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko2, '서울교통공사', '1038012341', 'sales', '공공기관', '서울시 성동구 왕십리로 245', '전산 인프라 유지보수 연간 계약', 0, 1, @ku6, '2024-10-01 09:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko2, '서울교통공사', '1038012341', 'sales', '공공기관', '서울시 성동구 왕십리로 245', '전산 인프라 유지보수 연간 계약', 1, @ku6, '2024-10-01 09:00:00');
 SET @k2c3 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko2, '신한캐피탈(주)', '1048124512', 'sales', '금융', '서울시 중구 세종대로 136 신한금융빌딩', NULL, 0, 1, @ku6, '2024-11-05 10:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko2, '신한캐피탈(주)', '1048124512', 'sales', '금융', '서울시 중구 세종대로 136 신한금융빌딩', NULL, 1, @ku6, '2024-11-05 10:00:00');
 SET @k2c4 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko2, '(주)한국전자부품', '2018124312', 'sales', '제조업', '경기도 수원시 팔달구 인계로 178', '공장 스마트 모니터링 시스템', 0, 1, @ku6, '2025-01-10 09:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko2, '(주)한국전자부품', '2018124312', 'sales', '제조업', '경기도 수원시 팔달구 인계로 178', '공장 스마트 모니터링 시스템', 1, @ku6, '2025-01-10 09:00:00');
 SET @k2c5 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko2, '인천국제공항공사', '1508023451', 'sales', '공공기관', '인천시 중구 공항로 272 인천국제공항', '보안시스템 소프트웨어 유지보수', 0, 1, @ku6, '2025-02-15 10:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko2, '인천국제공항공사', '1508023451', 'sales', '공공기관', '인천시 중구 공항로 272 인천국제공항', '보안시스템 소프트웨어 유지보수', 1, @ku6, '2025-02-15 10:00:00');
 SET @k2c6 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko2, '마이크로소프트 코리아', '1108045231', 'purchase', '소프트웨어', '서울시 강남구 테헤란로 152 강남파이낸스센터', 'MS 라이선스 공급사', 0, 1, @ku7, '2024-09-03 09:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko2, '마이크로소프트 코리아', '1108045231', 'purchase', '소프트웨어', '서울시 강남구 테헤란로 152 강남파이낸스센터', 'MS 라이선스 공급사', 1, @ku7, '2024-09-03 09:00:00');
 SET @k2c7 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko2, '클라우드허브코리아', '2108034512', 'purchase', 'IT인프라', '서울시 강남구 역삼동 634 클라우드빌딩', 'AWS 리셀러 공급사', 0, 1, @ku7, '2024-09-10 10:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko2, '클라우드허브코리아', '2108034512', 'purchase', 'IT인프라', '서울시 강남구 역삼동 634 클라우드빌딩', 'AWS 리셀러 공급사', 1, @ku7, '2024-09-10 10:00:00');
 SET @k2c8 = LAST_INSERT_ID();
 
 -- 담당자
@@ -566,10 +566,10 @@ VALUES ('더스페이스디자인', '1308092341', 0, 1, 0, '2024-10-01 09:00:00'
 SET @ko3 = LAST_INSERT_ID();
 
 INSERT INTO COAPP_CORE_USER (open_idno, user_name, mail_idno, pass_hash, logi_mthd, user_auth, crea_date)
-VALUES ('local:ceo@thespacd.co.kr',  '장현우', 'ceo@thespacd.co.kr',  '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-10-01 09:00:00');
+VALUES ('local:ceo@space.co.kr',  '장현우', 'ceo@space.co.kr',  '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-10-01 09:00:00');
 SET @ku8 = LAST_INSERT_ID();
 INSERT INTO COAPP_CORE_USER (open_idno, user_name, mail_idno, pass_hash, logi_mthd, user_auth, crea_date)
-VALUES ('local:acct@thespacd.co.kr', '오가영', 'acct@thespacd.co.kr', '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-10-01 09:10:00');
+VALUES ('local:acct@space.co.kr', '오가영', 'acct@space.co.kr', '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-10-01 09:10:00');
 SET @ku9 = LAST_INSERT_ID();
 
 INSERT INTO COAPP_CORE_COMPANY_USER (comp_idno, user_idno, comp_role, memb_stat, crea_idno) VALUES
@@ -580,32 +580,32 @@ INSERT INTO COAPP_BILLING_SUBSCRIPTION (comp_idno, plan_idno, subs_stat, star_da
 VALUES (@ko3, 4, 'active', '2024-10-01', '2027-12-31', @ku8);
 
 -- 거래처
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko3, '(주)GS리테일 시설팀', '1078023451', 'sales', '유통/리테일', '서울시 강남구 논현로 508 GS타워', '편의점·슈퍼 리모델링 프로젝트 다수', 1, 1, @ku8, '2024-10-05 09:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko3, '(주)GS리테일 시설팀', '1078023451', 'sales', '유통/리테일', '서울시 강남구 논현로 508 GS타워', '편의점·슈퍼 리모델링 프로젝트 다수', 1, @ku8, '2024-10-05 09:00:00');
 SET @k3c1 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko3, '제이앤파트너스(주)', '2108012341', 'sales', '오피스', '서울시 강남구 역삼동 813-3 J빌딩', '오피스 인테리어 전문 발주처', 0, 1, @ku8, '2024-10-15 10:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko3, '제이앤파트너스(주)', '2108012341', 'sales', '오피스', '서울시 강남구 역삼동 813-3 J빌딩', '오피스 인테리어 전문 발주처', 1, @ku8, '2024-10-15 10:00:00');
 SET @k3c2 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko3, '모아건설(주)', '1148034512', 'sales', '건설', '경기도 성남시 분당구 황새울로 336', '신규 오피스텔 공용부 인테리어', 0, 1, @ku8, '2024-11-20 09:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko3, '모아건설(주)', '1148034512', 'sales', '건설', '경기도 성남시 분당구 황새울로 336', '신규 오피스텔 공용부 인테리어', 1, @ku8, '2024-11-20 09:00:00');
 SET @k3c3 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko3, '스타벅스 코리아 시설', '2018023451', 'sales', '외식/카페', '서울시 중구 소공로 63 웨스틴조선 B1', '카페 인테리어 리뉴얼', 0, 1, @ku8, '2025-01-12 10:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko3, '스타벅스 코리아 시설', '2018023451', 'sales', '외식/카페', '서울시 중구 소공로 63 웨스틴조선 B1', '카페 인테리어 리뉴얼', 1, @ku8, '2025-01-12 10:00:00');
 SET @k3c4 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko3, '힐링스파앤리조트', '1208045231', 'sales', '숙박/레저', '강원도 춘천시 동면 순환대로 902', '로비·객실 대규모 리뉴얼', 0, 1, @ku8, '2025-03-05 09:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko3, '힐링스파앤리조트', '1208045231', 'sales', '숙박/레저', '강원도 춘천시 동면 순환대로 902', '로비·객실 대규모 리뉴얼', 1, @ku8, '2025-03-05 09:00:00');
 SET @k3c5 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko3, '(주)한국인테리어자재', '1148123041', 'purchase', '건자재', '경기도 고양시 덕양구 화중로 130 건자재상가 301', '주요 마감재/목재 공급사', 0, 1, @ku9, '2024-10-03 09:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko3, '(주)한국인테리어자재', '1148123041', 'purchase', '건자재', '경기도 고양시 덕양구 화중로 130 건자재상가 301', '주요 마감재/목재 공급사', 1, @ku9, '2024-10-03 09:00:00');
 SET @k3c6 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko3, '신한조명(주)', '1308134512', 'purchase', '조명', '서울시 성동구 성수이로 75 신한조명', '조명 기기 공급 및 설치 자재', 0, 1, @ku9, '2024-10-10 09:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko3, '신한조명(주)', '1308134512', 'purchase', '조명', '서울시 성동구 성수이로 75 신한조명', '조명 기기 공급 및 설치 자재', 1, @ku9, '2024-10-10 09:00:00');
 SET @k3c7 = LAST_INSERT_ID();
 
 -- 담당자
@@ -791,7 +791,7 @@ VALUES ('청원식자재유통(주)', '1158047823', 0, 1, 0, '2024-10-15 09:00:0
 SET @ko4 = LAST_INSERT_ID();
 
 INSERT INTO COAPP_CORE_USER (open_idno, user_name, mail_idno, pass_hash, logi_mthd, user_auth, crea_date)
-VALUES ('local:ceo@cheongwonfood.co.kr', '신동철', 'ceo@cheongwonfood.co.kr', '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-10-15 09:00:00');
+VALUES ('local:ceo@food.co.kr', '신동철', 'ceo@food.co.kr', '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-10-15 09:00:00');
 SET @ku10 = LAST_INSERT_ID();
 
 INSERT INTO COAPP_CORE_COMPANY_USER (comp_idno, user_idno, comp_role, memb_stat, crea_idno) VALUES
@@ -801,28 +801,28 @@ INSERT INTO COAPP_BILLING_SUBSCRIPTION (comp_idno, plan_idno, subs_stat, star_da
 VALUES (@ko4, 4, 'active', '2024-10-15', '2027-12-31', @ku10);
 
 -- 거래처
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko4, '(주)대성급식', '1088023451', 'sales', '단체급식', '서울시 강서구 마곡중앙로 161', '학교·기업 급식 식자재 정기 납품', 1, 1, @ku10, '2024-10-18 09:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko4, '(주)대성급식', '1088023451', 'sales', '단체급식', '서울시 강서구 마곡중앙로 161', '학교·기업 급식 식자재 정기 납품', 1, @ku10, '2024-10-18 09:00:00');
 SET @k4c1 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko4, '행복한학교식당', '1208034512', 'sales', '학교/교육', '경기도 용인시 기흥구 동백중앙로 191', '학교 급식 전용 식자재 납품처', 0, 1, @ku10, '2024-10-25 10:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko4, '행복한학교식당', '1208034512', 'sales', '학교/교육', '경기도 용인시 기흥구 동백중앙로 191', '학교 급식 전용 식자재 납품처', 1, @ku10, '2024-10-25 10:00:00');
 SET @k4c2 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko4, '편한세상카페(주)', '1068045231', 'sales', '카페/음식점', '서울시 마포구 홍익로 25', '카페 소모성 식자재. 주 2회 납품', 0, 1, @ku10, '2024-11-05 09:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko4, '편한세상카페(주)', '1068045231', 'sales', '카페/음식점', '서울시 마포구 홍익로 25', '카페 소모성 식자재. 주 2회 납품', 1, @ku10, '2024-11-05 09:00:00');
 SET @k4c3 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko4, '힘찬마트(주)', '2088034512', 'sales', '유통/마트', '경기도 파주시 문산읍 마장로 12', '소형 마트 신선식품 납품', 0, 1, @ku10, '2024-12-10 09:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko4, '힘찬마트(주)', '2088034512', 'sales', '유통/마트', '경기도 파주시 문산읍 마장로 12', '소형 마트 신선식품 납품', 1, @ku10, '2024-12-10 09:00:00');
 SET @k4c4 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko4, '(주)한국농수산물', '1108045231', 'purchase', '농수산물', '경기도 이천시 마장면 농공단지로 55', '채소·과일 주요 공급사', 0, 1, @ku10, '2024-10-16 09:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko4, '(주)한국농수산물', '1108045231', 'purchase', '농수산물', '경기도 이천시 마장면 농공단지로 55', '채소·과일 주요 공급사', 1, @ku10, '2024-10-16 09:00:00');
 SET @k4c5 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko4, '신선축산(주)', '1248034512', 'purchase', '축산물', '경기도 안성시 공도읍 만정리 축산농공', '육류·가공육 공급', 0, 1, @ku10, '2024-10-16 09:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko4, '신선축산(주)', '1248034512', 'purchase', '축산물', '경기도 안성시 공도읍 만정리 축산농공', '육류·가공육 공급', 1, @ku10, '2024-10-16 09:00:00');
 SET @k4c6 = LAST_INSERT_ID();
 
 -- 담당자
@@ -959,10 +959,10 @@ VALUES ('에코클린서비스', '2078134592', 0, 1, 0, '2024-11-01 09:00:00');
 SET @ko5 = LAST_INSERT_ID();
 
 INSERT INTO COAPP_CORE_USER (open_idno, user_name, mail_idno, pass_hash, logi_mthd, user_auth, crea_date)
-VALUES ('local:ceo@ecoclean.co.kr', '배정호', 'ceo@ecoclean.co.kr', '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-11-01 09:00:00');
+VALUES ('local:ceo@eco.co.kr', '배정호', 'ceo@eco.co.kr', '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-11-01 09:00:00');
 SET @ku11 = LAST_INSERT_ID();
 INSERT INTO COAPP_CORE_USER (open_idno, user_name, mail_idno, pass_hash, logi_mthd, user_auth, crea_date)
-VALUES ('local:mgr@ecoclean.co.kr', '황수현', 'mgr@ecoclean.co.kr', '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-11-01 09:10:00');
+VALUES ('local:mgr@eco.co.kr', '황수현', 'mgr@eco.co.kr', '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-11-01 09:10:00');
 SET @ku12 = LAST_INSERT_ID();
 
 INSERT INTO COAPP_CORE_COMPANY_USER (comp_idno, user_idno, comp_role, memb_stat, crea_idno) VALUES
@@ -973,24 +973,24 @@ INSERT INTO COAPP_BILLING_SUBSCRIPTION (comp_idno, plan_idno, subs_stat, star_da
 VALUES (@ko5, 4, 'active', '2024-11-01', '2027-12-31', @ku11);
 
 -- 거래처
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko5, '(주)위례오피스파크', '1088023451', 'sales', '오피스빌딩', '경기도 성남시 수정구 위례광장로 77', '주 3회 건물 전체 청소. 핵심 계약처', 1, 1, @ku11, '2024-11-05 09:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko5, '(주)위례오피스파크', '1088023451', 'sales', '오피스빌딩', '경기도 성남시 수정구 위례광장로 77', '주 3회 건물 전체 청소. 핵심 계약처', 1, @ku11, '2024-11-05 09:00:00');
 SET @k5c1 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko5, '신흥아파트관리단', '1208045231', 'sales', '공동주택', '경기도 하남시 미사강변대로 45', '지하주차장·공용부 월 2회 청소', 0, 1, @ku11, '2024-11-15 10:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko5, '신흥아파트관리단', '1208045231', 'sales', '공동주택', '경기도 하남시 미사강변대로 45', '지하주차장·공용부 월 2회 청소', 1, @ku11, '2024-11-15 10:00:00');
 SET @k5c2 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko5, '(주)판교테크센터', '2018034512', 'sales', '산업단지', '경기도 성남시 분당구 판교역로 235', '공장·사무동 주 1회 산업청소', 0, 1, @ku11, '2024-12-03 09:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko5, '(주)판교테크센터', '2018034512', 'sales', '산업단지', '경기도 성남시 분당구 판교역로 235', '공장·사무동 주 1회 산업청소', 1, @ku11, '2024-12-03 09:00:00');
 SET @k5c3 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko5, '서울성모병원 청소구역', '1038012341', 'sales', '의료/병원', '서울시 서초구 반포대로 222', '병원 외래·복도 전문 위생 청소', 0, 1, @ku11, '2025-02-10 09:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko5, '서울성모병원 청소구역', '1038012341', 'sales', '의료/병원', '서울시 서초구 반포대로 222', '병원 외래·복도 전문 위생 청소', 1, @ku11, '2025-02-10 09:00:00');
 SET @k5c4 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko5, '한샘청소용품(주)', '1148023451', 'purchase', '청소용품', '경기도 부천시 원미구 원미로 55', '세제·청소도구 정기 구매', 0, 1, @ku12, '2024-11-03 09:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko5, '한샘청소용품(주)', '1148023451', 'purchase', '청소용품', '경기도 부천시 원미구 원미로 55', '세제·청소도구 정기 구매', 1, @ku12, '2024-11-03 09:00:00');
 SET @k5c5 = LAST_INSERT_ID();
 
 -- 담당자
@@ -1113,10 +1113,10 @@ VALUES ('유니폼플러스', '1118045672', 0, 1, 0, '2024-10-20 09:00:00');
 SET @ko6 = LAST_INSERT_ID();
 
 INSERT INTO COAPP_CORE_USER (open_idno, user_name, mail_idno, pass_hash, logi_mthd, user_auth, crea_date)
-VALUES ('local:ceo@uniformplus.co.kr',   '류혜진', 'ceo@uniformplus.co.kr',   '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-10-20 09:00:00');
+VALUES ('local:ceo@uni.co.kr',   '류혜진', 'ceo@uni.co.kr',   '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-10-20 09:00:00');
 SET @ku13 = LAST_INSERT_ID();
 INSERT INTO COAPP_CORE_USER (open_idno, user_name, mail_idno, pass_hash, logi_mthd, user_auth, crea_date)
-VALUES ('local:sales@uniformplus.co.kr', '조현민', 'sales@uniformplus.co.kr', '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-10-20 09:10:00');
+VALUES ('local:sales@uni.co.kr', '조현민', 'sales@uni.co.kr', '$2b$10$E8crAi0VPdD9GyMWiZCPve1dX4d.zZX5usXGZqjFertohC7.yVdyW', 'email', 'user', '2024-10-20 09:10:00');
 SET @ku14 = LAST_INSERT_ID();
 
 INSERT INTO COAPP_CORE_COMPANY_USER (comp_idno, user_idno, comp_role, memb_stat, crea_idno) VALUES
@@ -1127,32 +1127,32 @@ INSERT INTO COAPP_BILLING_SUBSCRIPTION (comp_idno, plan_idno, subs_stat, star_da
 VALUES (@ko6, 4, 'active', '2024-10-20', '2027-12-31', @ku13);
 
 -- 거래처
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko6, '(주)현대호텔앤리조트', '1088034512', 'sales', '호텔/리조트', '서울시 강남구 삼성동 159 코엑스', '프론트·룸서비스·주방 유니폼 연간 계약', 1, 1, @ku14, '2024-10-25 09:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko6, '(주)현대호텔앤리조트', '1088034512', 'sales', '호텔/리조트', '서울시 강남구 삼성동 159 코엑스', '프론트·룸서비스·주방 유니폼 연간 계약', 1, @ku14, '2024-10-25 09:00:00');
 SET @k6c1 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko6, '대한항공 지상직팀', '1048023451', 'sales', '항공/운송', '서울시 강서구 하늘길 260 대한항공 본사', '지상직·탑승구 직원 유니폼 납품', 0, 1, @ku14, '2024-11-10 10:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko6, '대한항공 지상직팀', '1048023451', 'sales', '항공/운송', '서울시 강서구 하늘길 260 대한항공 본사', '지상직·탑승구 직원 유니폼 납품', 1, @ku14, '2024-11-10 10:00:00');
 SET @k6c2 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko6, '(주)GS25 운영지원', '1078012341', 'sales', '유통/편의점', '서울시 강남구 논현로 508 GS타워', '편의점 아르바이트 유니폼 대량 납품', 0, 1, @ku14, '2024-12-05 09:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko6, '(주)GS25 운영지원', '1078012341', 'sales', '유통/편의점', '서울시 강남구 논현로 508 GS타워', '편의점 아르바이트 유니폼 대량 납품', 1, @ku14, '2024-12-05 09:00:00');
 SET @k6c3 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko6, '신한은행 지점운영', '1028034512', 'sales', '금융/은행', '서울시 중구 세종대로 20 신한은행 본점', '전국 영업점 직원 유니폼 연간 계약', 0, 1, @ku14, '2025-01-20 09:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko6, '신한은행 지점운영', '1028034512', 'sales', '금융/은행', '서울시 중구 세종대로 20 신한은행 본점', '전국 영업점 직원 유니폼 연간 계약', 1, @ku14, '2025-01-20 09:00:00');
 SET @k6c4 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko6, '에이스병원그룹', '2068023451', 'sales', '의료/병원', '경기도 수원시 팔달구 중부대로 56 에이스병원', '의사·간호사·원무과 유니폼', 0, 1, @ku14, '2025-03-12 10:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko6, '에이스병원그룹', '2068023451', 'sales', '의료/병원', '경기도 수원시 팔달구 중부대로 56 에이스병원', '의사·간호사·원무과 유니폼', 1, @ku14, '2025-03-12 10:00:00');
 SET @k6c5 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko6, '한국원단(주)', '1148034512', 'purchase', '원단/섬유', '경기도 광명시 하안로 30 한국원단', '주요 원단 공급사', 0, 1, @ku14, '2024-10-22 09:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko6, '한국원단(주)', '1148034512', 'purchase', '원단/섬유', '경기도 광명시 하안로 30 한국원단', '주요 원단 공급사', 1, @ku14, '2024-10-22 09:00:00');
 SET @k6c6 = LAST_INSERT_ID();
 
-INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, favr_yesn, enab_yesn, crea_idno, crea_date) VALUES
-(@ko6, '봉제라인(주)', '2108023451', 'purchase', '봉제/제조', '경기도 시흥시 봉제공단로 88', '유니폼 봉제 위탁 공장', 0, 1, @ku14, '2024-10-22 09:00:00');
+INSERT INTO COAPP_CRM_CLIENT (comp_idno, clie_name, bizn_numb, clie_type, indu_type, clie_addr, clie_memo, enab_yesn, crea_idno, crea_date) VALUES
+(@ko6, '봉제라인(주)', '2108023451', 'purchase', '봉제/제조', '경기도 시흥시 봉제공단로 88', '유니폼 봉제 위탁 공장', 1, @ku14, '2024-10-22 09:00:00');
 SET @k6c7 = LAST_INSERT_ID();
 
 -- 담당자
@@ -1324,11 +1324,11 @@ INSERT INTO COAPP_CRM_EXPENSE (comp_idno, clie_idno, clie_name, expe_name, expe_
 -- 완료
 -- =================================================================
 -- 계정 목록:
--- [제조/유통] ceo@koreaindustry.co.kr / sales@koreaindustry.co.kr / acct@koreaindustry.co.kr
--- [IT/솔루션] ceo@nextsol.co.kr / lead@nextsol.co.kr / sales@nextsol.co.kr / acct@nextsol.co.kr
--- [건설/인테리어] ceo@thespacd.co.kr / acct@thespacd.co.kr
--- [식품/소모성] ceo@cheongwonfood.co.kr
--- [청소업체] ceo@ecoclean.co.kr / mgr@ecoclean.co.kr
--- [복장업체] ceo@uniformplus.co.kr / sales@uniformplus.co.kr
+-- [제조/유통] ceo@ind.co.kr / sales@ind.co.kr / acct@ind.co.kr
+-- [IT/솔루션] ceo@sol.co.kr / lead@sol.co.kr / sales@sol.co.kr / acct@sol.co.kr
+-- [건설/인테리어] ceo@space.co.kr / acct@space.co.kr
+-- [식품/소모성] ceo@food.co.kr
+-- [청소업체] ceo@eco.co.kr / mgr@eco.co.kr
+-- [복장업체] ceo@uni.co.kr / sales@uni.co.kr
 -- 모든 계정 비밀번호: Demo1234!
 -- =================================================================
