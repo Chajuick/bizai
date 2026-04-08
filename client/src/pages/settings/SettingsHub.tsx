@@ -249,13 +249,15 @@ export default function SettingsHub() {
 
 
       {/* #region Push Notification Card */}
-      {pushSupported && vapid?.publicKey && (
-        <div className="rounded-2xl border border-slate-100 bg-white p-4 mb-4">
-          <div className="flex items-center gap-2 mb-3">
-            <Bell size={14} className="text-slate-400" />
-            <p className="text-xs text-slate-400">푸시 알림</p>
-          </div>
+      <div className="rounded-2xl border border-slate-100 bg-white p-4 mb-4">
+        <div className="flex items-center gap-2 mb-3">
+          <Bell size={14} className="text-slate-400" />
+          <p className="text-xs text-slate-400">푸시 알림</p>
+        </div>
 
+        {!pushSupported ? (
+          <p className="text-xs text-slate-400">이 브라우저는 푸시 알림을 지원하지 않습니다.</p>
+        ) : (
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold text-slate-900">
@@ -268,7 +270,7 @@ export default function SettingsHub() {
 
             <button
               onClick={() => { void handleNotifToggle(); }}
-              disabled={subscribeMut.isPending || unsubscribeMut.isPending}
+              disabled={subscribeMut.isPending || unsubscribeMut.isPending || !vapid?.publicKey}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
                 isSubscribed
                   ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
@@ -282,8 +284,8 @@ export default function SettingsHub() {
               )}
             </button>
           </div>
-        </div>
-      )}
+        )}
+      </div>
       {/* #endregion */}
 
       {/* #region Section Links */}
