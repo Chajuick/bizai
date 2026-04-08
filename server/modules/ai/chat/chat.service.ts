@@ -2,6 +2,8 @@
 
 import type { ServiceCtx } from "../../../core/serviceCtx";
 import { invokeLLM, type Tool, type Message } from "../../../core/llm";
+import { getDb } from "../../../core/db";
+import { aiService } from "../ai.service";
 
 import { saleService } from "../../crm/sale/sale.service";
 import { expenseService } from "../../crm/expense/expense.service";
@@ -192,6 +194,27 @@ export const chatService = {
     ];
 
     // tool use 루프 (최대 5회 반복)
+    let totalInpt = 0;
+    let totalOuts = 0;
+    let lastModel = "";
+
+    const recordChat = async (reply: string) => {
+      try {
+        await aiService.recordUsage(getDb(), {
+          comp_idno: ctx.comp_idno,
+          user_idno: ctx.user_idno,
+          feat_code: "chat",
+          mode_name: lastModel,
+          tokn_inpt: totalInpt,
+          tokn_outs: totalOuts,
+          meta_json: { turns: messages.length },
+        });
+      } catch {
+        // 사용량 기록 실패는 무시 (응답은 정상 반환)
+      }
+      return reply;
+    };
+
     for (let i = 0; i < 5; i++) {
       let result;
       try {
@@ -203,12 +226,16 @@ export const chatService = {
         });
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
-        // Rate limit 등 LLM 오류는 사용자 메시지로 반환 (500 throw 방지)
         if (msg.includes("rate_limit") || msg.includes("429") || msg.includes("TPM") || msg.includes("tokens per")) {
           return "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.";
         }
         return `AI 오류가 발생했습니다: ${msg}`;
       }
+
+      // 토큰 누적
+      totalInpt += result.usage?.prompt_tokens ?? 0;
+      totalOuts += result.usage?.completion_tokens ?? 0;
+      if (result.model) lastModel = result.model;
 
       const choice = result.choices[0];
       if (!choice) break;
@@ -222,7 +249,7 @@ export const chatService = {
           : Array.isArray(message.content)
             ? message.content.map(p => (p.type === "text" ? p.text : "")).join("")
             : "";
-        return content || "죄송합니다, 답변을 생성하지 못했습니다.";
+        return recordChat(content || "죄송합니다, 답변을 생성하지 못했습니다.");
       }
 
       // assistant 메시지 (tool_calls 포함) 추가 — content는 Groq 스펙상 null 허용
@@ -251,7 +278,7 @@ export const chatService = {
       }
     }
 
-    return "죄송합니다, 일시적인 오류가 발생했습니다.";
+    return recordChat("죄송합니다, 일시적인 오류가 발생했습니다.");
   },
 };
 
