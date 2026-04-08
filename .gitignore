@@ -104,6 +104,7 @@ ehthumbs.db
 .claude/
 .manus/
 .manus-logs/
+.playwright-mcp/
 
 # =========================
 # Docs / temp
