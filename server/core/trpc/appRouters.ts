@@ -14,8 +14,10 @@ import { shipmentRouter } from "../../modules/crm/shipment/shipment.router";
 import { dashboardRouter } from "../../modules/crm/dashboard/dashboard.router";
 import { fileRouter } from "../../modules/crm/file/file.router";
 import { expenseRouter } from "../../modules/crm/expense/expense.router";
+import { searchRouter } from "../../modules/crm/search/search.router";
 import { companyRouter } from "../../modules/org/company/company.router";
 import { billingRouter } from "../../modules/billing/billing.router";
+import { chatRouter } from "../../modules/ai/chat/chat.router";
 // #endregion
 
 // #region appRouter (Root — single source of truth)
@@ -51,6 +53,12 @@ export const appRouter = router({
   }),
   // #endregion
 
+  // #region AI
+  ai: router({
+    chat: chatRouter,
+  }),
+  // #endregion
+
   // #region CRM
   crm: router({
     client: clientRouter,
@@ -61,6 +69,7 @@ export const appRouter = router({
     dashboard: dashboardRouter,
     files: fileRouter,
     expense: expenseRouter,
+    search: searchRouter,
   }),
   // #endregion
 });

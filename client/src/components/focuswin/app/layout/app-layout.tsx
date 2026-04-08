@@ -14,6 +14,7 @@ import {
   LogOut,
   Menu,
   Receipt,
+  Search,
   Settings,
   ShoppingCart,
   TrendingUp,
@@ -28,6 +29,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/focuswin/c
 import { useWorkspaceSwitcher } from "@/hooks/focuswin/company/useWorkspaceSwitcher";
 import { COMPANY } from "@/config/company";
 import TokenWarningBanner from "@/components/focuswin/common/feedback/TokenWarningBanner";
+import GlobalSearch from "@/components/focuswin/app/search/GlobalSearch";
+import { useGlobalSearch } from "@/hooks/focuswin/search/useGlobalSearch";
+import AiChat from "@/components/focuswin/common/chat/AiChat";
 
 // ─── Nav items (업무 중심) ───────────────────────────────────────────────────
 const navItems = [
@@ -198,6 +202,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [, navigate] = useLocation();
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const search = useGlobalSearch();
 
   const isActive = (path: string) => {
     if (path === "/") return location === "/";
@@ -215,6 +220,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="h-[100dvh] overflow-hidden flex bg-[color:var(--blueprint-bg)]">
+      <GlobalSearch {...search} />
       {/* ─── Desktop Sidebar ──────────────────────────────────────────────── */}
       <aside
         className="hidden lg:flex flex-col w-64 shrink-0 border-r"
@@ -242,6 +248,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {/* Nav */}
         <nav className="flex-1 p-4">
           <p className="bp-section-header mb-3">NAVIGATION</p>
+          {/* 검색 버튼 */}
+          <button
+            onClick={search.openSearch}
+            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-2xl text-sm font-semibold text-slate-500 hover:bg-slate-50 hover:text-slate-900 transition mb-2"
+          >
+            <Search size={18} className="text-slate-400" />
+            <span className="flex-1 text-left">검색</span>
+            <span className="text-[10px] text-slate-300 font-mono border border-slate-200 rounded px-1 py-0.5">/</span>
+          </button>
           <div className="space-y-1">
             {navItems.map(item => {
               const Icon = item.icon;
@@ -376,18 +391,26 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <span className="font-black text-slate-900 text-sm">BizAI</span>
           </div>
 
-          {/* Mobile: 설정 아이콘 버튼 */}
-          <button onClick={() => navigate("/settings")} className="p-2 text-slate-500 hover:text-slate-900 rounded-xl hover:bg-slate-50 transition" aria-label="설정">
-            <Settings size={18} />
-          </button>
+          {/* Mobile: 검색 + 설정 */}
+          <div className="flex items-center gap-0.5">
+            <button onClick={search.openSearch} className="p-2 text-slate-500 hover:text-slate-900 rounded-xl hover:bg-slate-50 transition" aria-label="검색">
+              <Search size={18} />
+            </button>
+            <button onClick={() => navigate("/settings")} className="p-2 text-slate-500 hover:text-slate-900 rounded-xl hover:bg-slate-50 transition" aria-label="설정">
+              <Settings size={18} />
+            </button>
+          </div>
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 min-h-0 overflow-hidden pb-24 lg:pb-6" style={{ scrollbarGutter: "stable both-edges" }}>
+        <main className="flex-1 min-h-0 overflow-hidden pb-[calc(72px+env(safe-area-inset-bottom))] lg:pb-6" style={{ scrollbarGutter: "stable both-edges" }}>
           <TokenWarningBanner />
           <div className="page-enter h-full min-h-0">{children}</div>
         </main>
       </div>
+
+      {/* ─── AI Chat ──────────────────────────────────────────────────────── */}
+      <AiChat />
 
       {/* ─── Mobile Bottom Nav ────────────────────────────────────────────── */}
       <nav className="mobile-nav lg:hidden pt-2">
