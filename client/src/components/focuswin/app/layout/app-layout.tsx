@@ -289,7 +289,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
       {/* ─── Mobile Sidebar Overlay ───────────────────────────────────────── */}
       {sidebarOpen && (
-        <div className="lg:hidden fixed inset-0 z-50 flex">
+        <div className="lg:hidden fixed inset-0 z-[200] flex">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-[2px]" onClick={() => setSidebarOpen(false)} />
 
           <aside
