@@ -359,6 +359,10 @@ async function invokeAnthropicAPI(params: InvokeParams): Promise<InvokeResult> {
   if (system) payload.system = system;
   if (anthropicTools?.length) payload.tools = anthropicTools;
 
+  // Anthropic도 temperature / top_p 지원
+  if (params.temperature !== undefined) payload.temperature = params.temperature;
+  if (params.top_p !== undefined) payload.top_p = params.top_p;
+
   // tool_choice 변환
   const tc = params.toolChoice ?? params.tool_choice;
   if (tc === "auto") payload.tool_choice = { type: "auto" };
