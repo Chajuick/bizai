@@ -47,7 +47,7 @@ export default function ScheduleDetailPage() {
       <PageScaffold
         kicker="SCHEDULE DETAIL"
         title={
-          <span className="flex items-center gap-2 flex-wrap">
+          <span className="flex flex-col items-start gap-1">
             {schedule?.sche_name ?? "일정 상세"}
             {schedule && !vm.isEditing && effectiveStat && (
               <StatusBadge status={effectiveStat} />

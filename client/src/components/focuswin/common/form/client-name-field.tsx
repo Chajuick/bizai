@@ -28,7 +28,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { trpc } from "@/lib/trpc";
-import { Check, ChevronDown, Loader2, Plus, Building2, CalendarDays, User2, History, Clock3 } from "lucide-react";
+import { Check, ChevronDown, Loader2, Plus, Building2, CalendarDays, User2, History } from "lucide-react";
 import { toast } from "sonner";
 
 import { handleApiError } from "@/lib/handleApiError";
@@ -489,16 +489,6 @@ export default function ClientNameField({
                     최근 방문 {formatDate(clientPreview.last_vist_date)}
                   </span>
 
-                  <span
-                    className="
-          inline-flex items-center gap-1 rounded-full
-          bg-primary/8 px-2.5 py-1
-          text-[11px] font-semibold text-primary
-        "
-                  >
-                    <Clock3 size={11} />
-                    예정 일정 {clientPreview.open_schedule_count}건
-                  </span>
                 </div>
               </div>
 

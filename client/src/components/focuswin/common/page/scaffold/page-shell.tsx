@@ -24,7 +24,7 @@ export default function PageShell({
     <div
       className={cn(
         "mx-auto w-full px-0 lg:px-6 py-0 lg:py-2",
-        "h-full min-h-0",
+        "h-full min-h-0 overflow-y-auto",
         maxW,
         outerClassName
       )}

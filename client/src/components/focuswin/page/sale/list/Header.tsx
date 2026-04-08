@@ -1,10 +1,12 @@
 // client/src/components/focuswin/page/sale/list/Header.tsx
 
+import { Download } from "lucide-react";
 import SearchInput from "@/components/focuswin/common/form/search-input";
 import TabPills from "@/components/focuswin/common/ui/tab-pills";
 import DateRangeFilter from "@/components/focuswin/common/filters/date-range-filter";
 import StatCards from "@/components/focuswin/common/cards/stat-cards";
 import { useSaleListVM } from "@/hooks/focuswin/sale/useSaleListVM";
+import { exportSalesToExcel } from "@/lib/sale-export";
 
 type Props = {
   vm: ReturnType<typeof useSaleListVM>;
@@ -36,6 +38,15 @@ export default function SaleListHeader({ vm, className }: Props) {
             placeholder="거래처, 담당자, 내용으로 검색…"
           />
         </div>
+        <button
+          onClick={() => void exportSalesToExcel(vm.items, vm.dateRange.label)}
+          disabled={vm.items.length === 0}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-2xl border border-slate-200 bg-white text-slate-600 text-xs font-semibold hover:bg-slate-50 transition disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+          title="엑셀로 내보내기"
+        >
+          <Download size={13} />
+          <span className="hidden sm:inline">엑셀</span>
+        </button>
       </div>
 
       <div className="mt-2">
