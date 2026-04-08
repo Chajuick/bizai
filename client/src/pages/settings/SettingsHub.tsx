@@ -6,6 +6,8 @@ import { useEffect, useState } from "react";
 
 import {
   BarChart3,
+  Bell,
+  BellOff,
   ChevronRight,
   CreditCard,
   Settings,
@@ -21,6 +23,7 @@ import { Button } from "@/components/ui/button";
 
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
+import { subscribePush, unsubscribePush } from "@/lib/push";
 // #endregion
 
 
@@ -56,6 +59,8 @@ export default function SettingsHub() {
   const { data: context } = trpc.company.getMyCompanyContext.useQuery();
   const { data: billing } = trpc.billing.getSummary.useQuery();
   const { data: usage } = trpc.billing.getUsageSummary.useQuery();
+  const { data: vapid } = trpc.notification.getVapidPublicKey.useQuery();
+  const { data: notifStatus, refetch: refetchNotif } = trpc.notification.getStatus.useQuery();
   // #endregion
 
 
@@ -78,6 +83,9 @@ export default function SettingsHub() {
       setEditing(false);
     },
   });
+
+  const subscribeMut   = trpc.notification.subscribe.useMutation({ onSuccess: () => { void refetchNotif(); } });
+  const unsubscribeMut = trpc.notification.unsubscribe.useMutation({ onSuccess: () => { void refetchNotif(); } });
   // #endregion
 
 
@@ -86,6 +94,26 @@ export default function SettingsHub() {
 
   const usageWarning =
     usage?.warning_level === "warning" || usage?.warning_level === "exceeded";
+
+  const pushSupported =
+    typeof window !== "undefined" &&
+    "serviceWorker" in navigator &&
+    "PushManager" in window;
+
+  const isSubscribed = notifStatus?.subscribed ?? false;
+
+  const handleNotifToggle = async () => {
+    if (!vapid?.publicKey) return;
+    if (isSubscribed) {
+      const endpoint = await unsubscribePush();
+      if (endpoint) unsubscribeMut.mutate({ endpoint });
+    } else {
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") return;
+      const sub = await subscribePush(vapid.publicKey);
+      if (sub) subscribeMut.mutate(sub);
+    }
+  };
   // #endregion
 
 
@@ -219,6 +247,44 @@ export default function SettingsHub() {
       {/* #endregion */}
 
 
+
+      {/* #region Push Notification Card */}
+      {pushSupported && vapid?.publicKey && (
+        <div className="rounded-2xl border border-slate-100 bg-white p-4 mb-4">
+          <div className="flex items-center gap-2 mb-3">
+            <Bell size={14} className="text-slate-400" />
+            <p className="text-xs text-slate-400">푸시 알림</p>
+          </div>
+
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-slate-900">
+                {isSubscribed ? "알림 켜짐" : "알림 꺼짐"}
+              </p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                일정 임박, 수주 미진행 알림
+              </p>
+            </div>
+
+            <button
+              onClick={() => { void handleNotifToggle(); }}
+              disabled={subscribeMut.isPending || unsubscribeMut.isPending}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
+                isSubscribed
+                  ? "bg-blue-50 text-blue-600 hover:bg-blue-100"
+                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+              }`}
+            >
+              {isSubscribed ? (
+                <><Bell size={13} /> 켜짐</>
+              ) : (
+                <><BellOff size={13} /> 꺼짐</>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+      {/* #endregion */}
 
       {/* #region Section Links */}
       <div className="space-y-2">

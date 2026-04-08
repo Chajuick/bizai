@@ -108,6 +108,11 @@ export const ENV = {
   geminiApiKey: optional("GEMINI_API_KEY"),
   geminiModel: optional("GEMINI_MODEL", "gemini-2.5-flash"),
 
+  // --- web push (VAPID)
+  vapidPublicKey:  optional("VAPID_PUBLIC_KEY"),
+  vapidPrivateKey: optional("VAPID_PRIVATE_KEY"),
+  vapidEmail:      optional("VAPID_EMAIL", "mailto:admin@example.com"),
+
   // --- security
   allowedAudioHosts: optional("ALLOWED_AUDIO_HOSTS"),
   allowedAudioHostsList: csv("ALLOWED_AUDIO_HOSTS"),

@@ -17,6 +17,7 @@ import { createContext } from "./trpc/context";
 import { registerOAuthRoutes } from "./oauth";
 import { serveStatic, setupVite } from "./vite";
 import { runBillingSweepJobs, runStaleJobRecovery, runOrphanFileCleanup, runAiJobWorker } from "../jobs/billing.jobs";
+import { runScheduleReminderJob, runOrderStaleJob } from "../jobs/notification.jobs";
 import { listAvailableModels } from "./vision";
 // #endregion
 
@@ -146,10 +147,12 @@ async function main() {
     // #endregion
 
     // #region Background Jobs
-    setInterval(runBillingSweepJobs, 10 * 60 * 1000);   // 10분마다: 만료 구독 free 전환
-    setInterval(runStaleJobRecovery, 5 * 60 * 1000);     // 5분마다: stale AI job 복구
-    setInterval(runOrphanFileCleanup, 60 * 60 * 1000);  // 1시간마다: 고아 파일 정리
-    setInterval(runAiJobWorker, 5_000);                   //  5초마다: AI 분석 큐 워커
+    setInterval(runBillingSweepJobs, 10 * 60 * 1000);       // 10분마다: 만료 구독 free 전환
+    setInterval(runStaleJobRecovery, 5 * 60 * 1000);         // 5분마다: stale AI job 복구
+    setInterval(runOrphanFileCleanup, 60 * 60 * 1000);      // 1시간마다: 고아 파일 정리
+    setInterval(runAiJobWorker, 5_000);                       //  5초마다: AI 분석 큐 워커
+    setInterval(runScheduleReminderJob, 15 * 60 * 1000);     // 15분마다: 일정 임박 알림
+    setInterval(runOrderStaleJob, 60 * 60 * 1000);           //  1시간마다: 수주 미진행 알림
     // #endregion
 }
 

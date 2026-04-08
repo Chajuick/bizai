@@ -22,6 +22,7 @@ export * from "./core/company.schema";
 export * from "./core/user.schema";
 export * from "./core/company-user.schema";
 export * from "./core/company_invite.schema";
+export * from "./core/push-subscription.schema";
 
 // Global file system (cross-domain)
 export * from "./core/file.schema";

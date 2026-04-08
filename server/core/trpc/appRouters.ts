@@ -18,6 +18,7 @@ import { searchRouter } from "../../modules/crm/search/search.router";
 import { companyRouter } from "../../modules/org/company/company.router";
 import { billingRouter } from "../../modules/billing/billing.router";
 import { chatRouter } from "../../modules/ai/chat/chat.router";
+import { notificationRouter } from "../../modules/notification/notification.router";
 // #endregion
 
 // #region appRouter (Root — single source of truth)
@@ -57,6 +58,10 @@ export const appRouter = router({
   ai: router({
     chat: chatRouter,
   }),
+  // #endregion
+
+  // #region Notification
+  notification: notificationRouter,
   // #endregion
 
   // #region CRM
